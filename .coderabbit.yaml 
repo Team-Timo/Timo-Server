@@ -1,0 +1,122 @@
+# CodeRabbit configuration
+# https://docs.coderabbit.ai/guides/configure-coderabbit
+
+language: "ko-KR"
+
+reviews:
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - develop
+
+  profile: "chill"
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: false
+
+  path_filters:
+    - "!**/*.md"
+    - "!**/docs/**"
+    - "!**/build/**"
+    - "!**/.gradle/**"
+    - "!**/out/**"
+    - "!**/target/**"
+    - "!**/*.yml.example"
+    - "!**/*.yaml.example"
+
+  path_instructions:
+    - path: "src/main/java/**/domain/**/*.java"
+      instructions: |
+        - 도메인 단위로 책임이 잘 분리되어 있는지 확인해 주세요.
+        - Controller, Service, Repository, Entity, DTO의 책임이 서로 섞이지 않았는지 확인해 주세요.
+        - 비즈니스 규칙이 Service에 과도하게 몰려 있지 않고 적절한 도메인 모델로 표현되어 있는지 확인해 주세요.
+        - 도메인 간 의존성이 과하게 얽히지 않았는지 확인해 주세요.
+
+    - path: "src/main/java/**/domain/**/controller/**/*.java"
+      instructions: |
+        - Controller에 비즈니스 로직이 들어가지 않았는지 확인해 주세요.
+        - 요청/응답 DTO 검증이 적절한지 확인해 주세요.
+        - HTTP 상태 코드와 에러 응답이 일관적인지 확인해 주세요.
+        - 인증/인가가 필요한 API에서 보안 처리가 누락되지 않았는지 확인해 주세요.
+
+    - path: "src/main/java/**/domain/**/service/**/*.java"
+      instructions: |
+        - 트랜잭션 경계가 적절한지 확인해 주세요.
+        - 비즈니스 로직이 명확하고 테스트 가능하게 작성되어 있는지 확인해 주세요.
+        - 외부 시스템 호출, 데이터 접근, 도메인 규칙이 과하게 섞이지 않았는지 확인해 주세요.
+        - 예외 처리와 실패 케이스 처리가 충분한지 확인해 주세요.
+
+    - path: "src/main/java/**/domain/**/repository/**/*.java"
+      instructions: |
+        - Repository가 데이터 접근 책임만 가지는지 확인해 주세요.
+        - 쿼리 성능과 N+1 문제가 없는지 확인해 주세요.
+        - 복잡한 쿼리의 가독성과 유지보수성이 적절한지 확인해 주세요.
+        - 필요한 경우 인덱스 고려가 되어 있는지 확인해 주세요.
+
+    - path: "src/main/java/**/domain/**/entity/**/*.java"
+      instructions: |
+        - Entity에 필요한 도메인 규칙과 상태 변경 메서드가 적절히 캡슐화되어 있는지 확인해 주세요.
+        - Setter 남용이나 public 필드 노출이 없는지 확인해 주세요.
+        - JPA 연관관계, cascade, fetch 전략이 적절한지 확인해 주세요.
+        - equals/hashCode 구현이 필요한 경우 안전하게 작성되어 있는지 확인해 주세요.
+
+    - path: "src/main/java/**/domain/**/dto/**/*.java"
+      instructions: |
+        - DTO가 API 요청/응답 목적에 맞게 분리되어 있는지 확인해 주세요.
+        - Entity가 API 응답으로 직접 노출되지 않는지 확인해 주세요.
+        - Validation annotation이 필요한 곳에 적절히 적용되어 있는지 확인해 주세요.
+        - 민감 정보가 응답 DTO에 포함되지 않았는지 확인해 주세요.
+
+    - path: "src/main/java/**/global/**/*.java"
+      instructions: |
+        - Spring Boot 설정이 과도하게 복잡하거나 전역 상태에 의존하지 않는지 확인해 주세요.
+        - Configuration, Filter, Interceptor, Security 설정의 책임이 명확한지 확인해 주세요.
+        - Bean 순환 참조 가능성이 없는지 확인해 주세요.
+        - 환경변수, 토큰, AWS 자격증명 등 민감 정보가 코드나 로그에 노출되지 않는지 확인해 주세요.
+
+    - path: "src/main/java/**/*.java"
+      instructions: |
+        - Spring Boot와 Java 코드 스타일을 기준으로 리뷰해 주세요.
+        - null 처리, 예외 처리, 트랜잭션 경계가 적절한지 확인해 주세요.
+        - 성능 문제나 불필요한 중복 로직이 있는지 확인해 주세요.
+        - 클래스와 메서드의 책임이 너무 커지지 않았는지 확인해 주세요.
+
+    - path: "src/test/**/*.java"
+      instructions: |
+        - 중요한 비즈니스 로직에 테스트가 충분한지 확인해 주세요.
+        - Given-When-Then 구조가 명확한지 확인해 주세요.
+        - Mock을 과도하게 사용하지 않았는지 확인해 주세요.
+        - 단위 테스트와 통합 테스트의 목적이 명확히 구분되어 있는지 확인해 주세요.
+        - Testcontainers 사용이 필요한 경우 적절히 구성되어 있는지 확인해 주세요.
+
+    - path: ".github/workflows/**/*.yml"
+      instructions: |
+        - GitHub Actions에서 Secret이나 민감 정보가 노출되지 않는지 확인해 주세요.
+        - 불필요하게 오래 걸리는 Job이나 중복 실행이 없는지 확인해 주세요.
+        - 캐시, 병렬 실행, 권한 최소화가 적절히 적용되어 있는지 확인해 주세요.
+
+    - path: ".github/workflows/**/*.yaml"
+      instructions: |
+        - GitHub Actions에서 Secret이나 민감 정보가 노출되지 않는지 확인해 주세요.
+        - 불필요하게 오래 걸리는 Job이나 중복 실행이 없는지 확인해 주세요.
+        - 캐시, 병렬 실행, 권한 최소화가 적절히 적용되어 있는지 확인해 주세요.
+
+    - path: "**/docker-compose*.yml"
+      instructions: |
+        - Docker Compose 설정에서 민감 정보가 노출되지 않는지 확인해 주세요.
+        - 환경변수 사용 방식이 적절한지 확인해 주세요.
+        - 서비스 간 의존성, 포트 노출, 볼륨 설정이 안전한지 확인해 주세요.
+        - Health check가 필요한 서비스에 적절히 설정되어 있는지 확인해 주세요.
+
+    - path: "**/docker-compose*.yaml"
+      instructions: |
+        - Docker Compose 설정에서 민감 정보가 노출되지 않는지 확인해 주세요.
+        - 환경변수 사용 방식이 적절한지 확인해 주세요.
+        - 서비스 간 의존성, 포트 노출, 볼륨 설정이 안전한지 확인해 주세요.
+        - Health check가 필요한 서비스에 적절히 설정되어 있는지 확인해 주세요.
+
+chat:
+  auto_reply: true
