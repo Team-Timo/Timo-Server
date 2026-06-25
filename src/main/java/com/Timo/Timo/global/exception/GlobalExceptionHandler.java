@@ -13,7 +13,9 @@ import com.Timo.Timo.global.exception.code.ErrorCode;
 import com.Timo.Timo.global.exception.dto.ErrorDto;
 
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -46,6 +48,7 @@ public class GlobalExceptionHandler {
 		Exception exception,
 		HttpServletRequest request
 	) {
+		log.error("Unexpected exception occurred.", exception);
 		return createErrorResponse(ErrorCode.INTERNAL_SERVER_ERROR, request);
 	}
 
