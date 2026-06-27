@@ -75,7 +75,7 @@ jobs:
             ];
 
             for (const rule of titleRules) {
-              if (rule.patterns.some(pattern => pattern.test(title) || pattern.test(body))) {
+              if (rule.patterns.some(pattern => title.includes(pattern))) {
                 labels.add(rule.label);
               }
             }
