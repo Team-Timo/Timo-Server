@@ -8,13 +8,12 @@ on:
 
 permissions:
   issues: write
-  pull-requests: write
 
 jobs:
   label:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/github-script@v7
+      - uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
         with:
           script: |
             const isIssue = context.eventName === 'issues';
@@ -31,52 +30,52 @@ jobs:
             const titleRules = [
               {
                 label: '✨ feat',
-                patterns: ['[feat]', 'feat:']
+                patterns: [/\[feat\]/, /(?:^|[^a-z0-9])feat:/]
               },
               {
                 label: '🛠️ fix',
-                patterns: ['[fix]', 'fix:']
+                patterns: [/\[fix\]/, /(?:^|[^a-z0-9])fix:/]
               },
               {
                 label: '🚨 hotfix',
-                patterns: ['[hotfix]', 'hotfix:']
+                patterns: [/\[hotfix\]/, /(?:^|[^a-z0-9])hotfix:/]
               },
               {
                 label: '📃 docs',
-                patterns: ['[docs]', 'docs:']
+                patterns: [/\[docs\]/, /(?:^|[^a-z0-9])docs:/]
               },
               {
                 label: '🔁 refactor',
-                patterns: ['[refactor]', 'refactor:']
+                patterns: [/\[refactor\]/, /(?:^|[^a-z0-9])refactor:/]
               },
               {
                 label: '📝 chore',
-                patterns: ['[chore]', 'chore:']
+                patterns: [/\[chore\]/, /(?:^|[^a-z0-9])chore:/]
               },
               {
                 label: '🧪 test',
-                patterns: ['[test]', 'test:']
+                patterns: [/\[test\]/, /(?:^|[^a-z0-9])test:/]
               },
               {
                 label: '✏️ style',
-                patterns: ['[style]', 'style:']
+                patterns: [/\[style\]/, /(?:^|[^a-z0-9])style:/]
               },
               {
                 label: '✒️ comment',
-                patterns: ['[comment]', 'comment:']
+                patterns: [/\[comment\]/, /(?:^|[^a-z0-9])comment:/]
               },
               {
                 label: '📄 rename',
-                patterns: ['[rename]', 'rename:']
+                patterns: [/\[rename\]/, /(?:^|[^a-z0-9])rename:/]
               },
               {
                 label: '♻️ remove',
-                patterns: ['[remove]', 'remove:']
+                patterns: [/\[remove\]/, /(?:^|[^a-z0-9])remove:/]
               }
             ];
 
             for (const rule of titleRules) {
-              if (rule.patterns.some(pattern => title.includes(pattern) || body.includes(pattern))) {
+              if (rule.patterns.some(pattern => pattern.test(title) || pattern.test(body))) {
                 labels.add(rule.label);
               }
             }
@@ -87,9 +86,28 @@ jobs:
               'laura-jung': '🍀️ 윤아'
             };
 
+            const managedLabels = new Set([
+              ...titleRules.map(rule => rule.label),
+              ...Object.values(authorLabels)
+            ]);
+
             if (authorLabels[author]) {
               labels.add(authorLabels[author]);
             }
+
+            const currentLabels = (item.labels || []).map(label => label.name || label);
+            const labelsToRemove = currentLabels.filter(label => managedLabels.has(label));
+
+            await Promise.all(labelsToRemove.map(label => github.rest.issues.removeLabel({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: item.number,
+              name: label
+            }).catch(error => {
+              if (error.status !== 404) {
+                throw error;
+              }
+            })));
 
             if (labels.size > 0) {
               await github.rest.issues.addLabels({
