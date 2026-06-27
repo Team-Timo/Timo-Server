@@ -57,7 +57,7 @@ public class GlobalExceptionHandler {
 		HttpServletRequest request
 	) {
 		ErrorDto response = new ErrorDto(
-			LocalDateTime.now().toString(),
+			LocalDateTime.now(),
 			errorCode.getHttpStatus().value(),
 			errorCode.getCode(),
 			errorCode.getMessage(),
