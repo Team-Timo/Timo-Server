@@ -1,0 +1,101 @@
+name: Auto Label
+
+on:
+  issues:
+    types: [opened, edited]
+  pull_request_target:
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const isIssue = context.eventName === 'issues';
+            const item = isIssue
+              ? context.payload.issue
+              : context.payload.pull_request;
+
+            const title = item.title.toLowerCase();
+            const body = (item.body || '').toLowerCase();
+            const author = item.user.login;
+
+            const labels = new Set();
+
+            const titleRules = [
+              {
+                label: '✨ feat',
+                patterns: ['[feat]', 'feat:']
+              },
+              {
+                label: '🛠️ fix',
+                patterns: ['[fix]', 'fix:']
+              },
+              {
+                label: '🚨 hotfix',
+                patterns: ['[hotfix]', 'hotfix:']
+              },
+              {
+                label: '📃 docs',
+                patterns: ['[docs]', 'docs:']
+              },
+              {
+                label: '🔁 refactor',
+                patterns: ['[refactor]', 'refactor:']
+              },
+              {
+                label: '📝 chore',
+                patterns: ['[chore]', 'chore:']
+              },
+              {
+                label: '🧪 test',
+                patterns: ['[test]', 'test:']
+              },
+              {
+                label: '✏️ style',
+                patterns: ['[style]', 'style:']
+              },
+              {
+                label: '✒️ comment',
+                patterns: ['[comment]', 'comment:']
+              },
+              {
+                label: '📄 rename',
+                patterns: ['[rename]', 'rename:']
+              },
+              {
+                label: '♻️ remove',
+                patterns: ['[remove]', 'remove:']
+              }
+            ];
+
+            for (const rule of titleRules) {
+              if (rule.patterns.some(pattern => title.includes(pattern) || body.includes(pattern))) {
+                labels.add(rule.label);
+              }
+            }
+
+            const authorLabels = {
+              'Jy000n': '🌸 자윤',
+              'aneykrap': '🌼 예나',
+              'laura-jung': '🍀️ 윤아'
+            };
+
+            if (authorLabels[author]) {
+              labels.add(authorLabels[author]);
+            }
+
+            if (labels.size > 0) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: item.number,
+                labels: [...labels]
+              });
+            }
