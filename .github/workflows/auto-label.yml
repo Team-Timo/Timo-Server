@@ -1,0 +1,119 @@
+name: Auto Label
+
+on:
+  issues:
+    types: [opened, edited]
+  pull_request_target:
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  issues: write
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        with:
+          script: |
+            const isIssue = context.eventName === 'issues';
+            const item = isIssue
+              ? context.payload.issue
+              : context.payload.pull_request;
+
+            const title = item.title.toLowerCase();
+            const body = (item.body || '').toLowerCase();
+            const author = item.user.login;
+
+            const labels = new Set();
+
+            const titleRules = [
+              {
+                label: '✨ feat',
+                patterns: [/\[feat\]/, /(?:^|[^a-z0-9])feat:/]
+              },
+              {
+                label: '🛠️ fix',
+                patterns: [/\[fix\]/, /(?:^|[^a-z0-9])fix:/]
+              },
+              {
+                label: '🚨 hotfix',
+                patterns: [/\[hotfix\]/, /(?:^|[^a-z0-9])hotfix:/]
+              },
+              {
+                label: '📃 docs',
+                patterns: [/\[docs\]/, /(?:^|[^a-z0-9])docs:/]
+              },
+              {
+                label: '🔁 refactor',
+                patterns: [/\[refactor\]/, /(?:^|[^a-z0-9])refactor:/]
+              },
+              {
+                label: '📝 chore',
+                patterns: [/\[chore\]/, /(?:^|[^a-z0-9])chore:/]
+              },
+              {
+                label: '🧪 test',
+                patterns: [/\[test\]/, /(?:^|[^a-z0-9])test:/]
+              },
+              {
+                label: '✏️ style',
+                patterns: [/\[style\]/, /(?:^|[^a-z0-9])style:/]
+              },
+              {
+                label: '✒️ comment',
+                patterns: [/\[comment\]/, /(?:^|[^a-z0-9])comment:/]
+              },
+              {
+                label: '📄 rename',
+                patterns: [/\[rename\]/, /(?:^|[^a-z0-9])rename:/]
+              },
+              {
+                label: '♻️ remove',
+                patterns: [/\[remove\]/, /(?:^|[^a-z0-9])remove:/]
+              }
+            ];
+
+            for (const rule of titleRules) {
+              if (rule.patterns.some(pattern => title.includes(pattern))) {
+                labels.add(rule.label);
+              }
+            }
+
+            const authorLabels = {
+              'Jy000n': '🌸 자윤',
+              'aneykrap': '🌼 예나',
+              'laura-jung': '🍀️ 윤아'
+            };
+
+            const managedLabels = new Set([
+              ...titleRules.map(rule => rule.label),
+              ...Object.values(authorLabels)
+            ]);
+
+            if (authorLabels[author]) {
+              labels.add(authorLabels[author]);
+            }
+
+            const currentLabels = (item.labels || []).map(label => label.name || label);
+            const labelsToRemove = currentLabels.filter(label => managedLabels.has(label));
+
+            await Promise.all(labelsToRemove.map(label => github.rest.issues.removeLabel({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: item.number,
+              name: label
+            }).catch(error => {
+              if (error.status !== 404) {
+                throw error;
+              }
+            })));
+
+            if (labels.size > 0) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: item.number,
+                labels: [...labels]
+              });
+            }
