@@ -1,6 +1,6 @@
 plugins {
 	id 'java'
-가	id 'org.springframework.boot' version '3.5.15'
+	id 'org.springframework.boot' version '3.5.15'
 	id 'io.spring.dependency-management' version '1.1.7'
 }
 
@@ -19,7 +19,7 @@ repositories {
 
 dependencies {
 	// Spring Web
-	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
 
 	// Database
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
@@ -32,7 +32,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 
 	// API Documentation
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3'
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.17'
 
 	// Lombok
 	compileOnly 'org.projectlombok:lombok'
