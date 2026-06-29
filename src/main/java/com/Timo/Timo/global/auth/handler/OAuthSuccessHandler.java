@@ -56,6 +56,6 @@ public class OAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
         .queryParam("accessToken", accessToken)
         .build().toUriString();
 
-    getRedirectStrategy().sendRedirect(request, response, redirectUri);
+    getRedirectStrategy().sendRedirect(request, response, redirectUrl);
   }
 }
