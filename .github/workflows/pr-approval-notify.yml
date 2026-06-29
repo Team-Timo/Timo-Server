@@ -1,154 +1,154 @@
-  name: PR 승인 완료 Slack 알림
-  on:
-    pull_request_review:
-      types: [submitted, dismissed]
-    pull_request:
-      types: [synchronize]
+name: PR 승인 완료 Slack 알림
+on:
+  pull_request_review:
+    types: [submitted, dismissed]
+  pull_request:
+    types: [synchronize,ready_for_review]
 
-  permissions:
-    pull-requests: read
-    issues: write
+permissions:
+  pull-requests: read
+  issues: write
 
-  env:
-    REQUIRED_APPROVALS: "2"
-    NOTIFIED_LABEL: "slack-approval-notified"
+env:
+  REQUIRED_APPROVALS: "2"
+  NOTIFIED_LABEL: "slack-approval-notified"
 
-  concurrency:
-    group: pr-approval-notify-${{ github.event.pull_request.number }}
-    cancel-in-progress: false
+concurrency:
+  group: pr-approval-notify-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
 
-  jobs:
-    notify:
-      if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
-      runs-on: ubuntu-latest
+jobs:
+  notify:
+    if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
 
-      steps:
-        - name: 승인 상태 확인 및 Slack 알림 전송
-          uses: actions/github-script@v8
-          env:
-            SLACK_PR_WEBHOOK_URL: ${{ secrets.SLACK_PR_WEBHOOK_URL }}
-            SLACK_USER_MAP: ${{ secrets.SLACK_USER_MAP }}
-          with:
-            script: |
-              const { owner, repo } = context.repo;
-              const pr = context.payload.pull_request;
-              
-              const requiredApprovals = Number(process.env.REQUIRED_APPROVALS);
-              const markerLabel = process.env.NOTIFIED_LABEL;
-              const webhookUrl = process.env.SLACK_PR_WEBHOOK_URL;
-              const rawUserMap = process.env.SLACK_USER_MAP;
-              
-              if (!webhookUrl) {
-                throw new Error("Repository Secret 'SLACK_PR_WEBHOOK_URL'이 없습니다.");
+    steps:
+      - name: 승인 상태 확인 및 Slack 알림 전송
+        uses: actions/github-script@v8
+        env:
+          SLACK_PR_WEBHOOK_URL: ${{ secrets.SLACK_PR_WEBHOOK_URL }}
+          SLACK_USER_MAP: ${{ secrets.SLACK_USER_MAP }}
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const pr = context.payload.pull_request;
+            
+            const requiredApprovals = Number(process.env.REQUIRED_APPROVALS);
+            const markerLabel = process.env.NOTIFIED_LABEL;
+            const webhookUrl = process.env.SLACK_PR_WEBHOOK_URL;
+            const rawUserMap = process.env.SLACK_USER_MAP;
+            
+            if (!webhookUrl) {
+              throw new Error("Repository Secret 'SLACK_PR_WEBHOOK_URL'이 없습니다.");
+            }
+            
+            if (!rawUserMap) {
+              throw new Error("Repository Secret 'SLACK_USER_MAP'이 없습니다.");
+            }
+            
+            const reviews = await github.paginate(
+              github.rest.pulls.listReviews,
+              {
+                owner,
+                repo,
+                pull_number: pr.number,
+                per_page: 100
               }
-              
-              if (!rawUserMap) {
-                throw new Error("Repository Secret 'SLACK_USER_MAP'이 없습니다.");
+            );
+            
+            const latestOpinionByReviewer = new Map();
+            
+            for (const review of reviews) {
+              const reviewerLogin = review.user?.login;
+            
+              if (!reviewerLogin || reviewerLogin === pr.user.login) {
+                continue;
               }
-              
-              const reviews = await github.paginate(
-                github.rest.pulls.listReviews,
-                {
-                  owner,
-                  repo,
-                  pull_number: pr.number,
-                  per_page: 100
-                }
-              );
-              
-              const latestOpinionByReviewer = new Map();
-              
-              for (const review of reviews) {
-                const reviewerLogin = review.user?.login;
-              
-                if (!reviewerLogin || reviewerLogin === pr.user.login) {
-                  continue;
-                }
-              
-                if (
-                  ["APPROVED", "CHANGES_REQUESTED", "DISMISSED"]
-                    .includes(review.state)
-                ) {
-                  latestOpinionByReviewer.set(reviewerLogin, review.state);
-                }
+            
+              if (
+                ["APPROVED", "CHANGES_REQUESTED", "DISMISSED"]
+                  .includes(review.state)
+              ) {
+                latestOpinionByReviewer.set(reviewerLogin, review.state);
               }
-              
-              const approvers = [...latestOpinionByReviewer.entries()]
-                .filter(([, state]) => state === "APPROVED")
-                .map(([login]) => login);
-              
-              const labels = await github.paginate(
-                github.rest.issues.listLabelsOnIssue,
-                {
-                  owner,
-                  repo,
-                  issue_number: pr.number,
-                  per_page: 100
-                }
-              );
-              
-              const alreadyNotified = labels.some(
-                (label) => label.name === markerLabel
-              );
-              
-              const approvalsCompleted =
-                approvers.length >= requiredApprovals;
-              
-              if (!approvalsCompleted) {
-                if (alreadyNotified) {
-                  await github.rest.issues.removeLabel({
-                    owner,
-                    repo,
-                    issue_number: pr.number,
-                    name: markerLabel
-                  });
-                }
-              
-                return;
-              }
-              
-              if (alreadyNotified) {
-                return;
-              }
-              
-              let slackUserMap;
-              
-              try {
-                slackUserMap = JSON.parse(rawUserMap);
-              } catch {
-                throw new Error(
-                  "SLACK_USER_MAP은 올바른 JSON 형식이어야 합니다."
-                );
-              }
-              
-              const slackMemberId = slackUserMap[pr.user.login];
-              
-              if (!slackMemberId) {
-                throw new Error(
-                  `SLACK_USER_MAP에 '${pr.user.login}'의 Slack 멤버 ID가 없습니다.`
-                );
-              }
-              
-              const text = [
-                `<@${slackMemberId}> 리뷰 승인 완료 🧞`,
-                `<${pr.html_url}|PR 보러가기>`
-              ].join("\n");
-              
-              const slackResponse = await fetch(webhookUrl, {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json; charset=utf-8"
-                },
-                body: JSON.stringify({ text })
-              });
-              
-              if (!slackResponse.ok) {
-                throw new Error("Slack 알림 전송에 실패했습니다.");
-              }
-    
-              await github.rest.issues.addLabels({
+            }
+            
+            const approvers = [...latestOpinionByReviewer.entries()]
+              .filter(([, state]) => state === "APPROVED")
+              .map(([login]) => login);
+            
+            const labels = await github.paginate(
+              github.rest.issues.listLabelsOnIssue,
+              {
                 owner,
                 repo,
                 issue_number: pr.number,
-                labels: [markerLabel]
-              });
+                per_page: 100
+              }
+            );
+            
+            const alreadyNotified = labels.some(
+              (label) => label.name === markerLabel
+            );
+            
+            const approvalsCompleted =
+              approvers.length >= requiredApprovals;
+            
+            if (!approvalsCompleted) {
+              if (alreadyNotified) {
+                await github.rest.issues.removeLabel({
+                  owner,
+                  repo,
+                  issue_number: pr.number,
+                  name: markerLabel
+                });
+              }
+            
+              return;
+            }
+            
+            if (alreadyNotified) {
+              return;
+            }
+            
+            let slackUserMap;
+            
+            try {
+              slackUserMap = JSON.parse(rawUserMap);
+            } catch {
+              throw new Error(
+                "SLACK_USER_MAP은 올바른 JSON 형식이어야 합니다."
+              );
+            }
+            
+            const slackMemberId = slackUserMap[pr.user.login];
+            
+            if (!slackMemberId) {
+              throw new Error(
+                `SLACK_USER_MAP에 '${pr.user.login}'의 Slack 멤버 ID가 없습니다.`
+              );
+            }
+            
+            const text = [
+              `<@${slackMemberId}> 리뷰 승인 완료 🧞`,
+              `<${pr.html_url}|PR 보러가기>`
+            ].join("\n");
+            
+            const slackResponse = await fetch(webhookUrl, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json; charset=utf-8"
+              },
+              body: JSON.stringify({ text })
+            });
+            
+            if (!slackResponse.ok) {
+              throw new Error("Slack 알림 전송에 실패했습니다.");
+            }
+  
+            await github.rest.issues.addLabels({
+              owner,
+              repo,
+              issue_number: pr.number,
+              labels: [markerLabel]
+            });
