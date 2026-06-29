@@ -10,8 +10,8 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class RefreshTokenService {
 
-  private final RedisTemplate<String, String> redisTemplate;  // Redis 저장소 접근
-  private final JwtTokenProvider jwtTokenProvider;   // 토큰 만료 시간 가져오기
+  private final RedisTemplate<String, String> redisTemplate;
+  private final JwtTokenProvider jwtTokenProvider;
 
   private static final String KEY_PREFIX = "refresh:";
 
@@ -20,7 +20,7 @@ public class RefreshTokenService {
         KEY_PREFIX + email,
         refreshToken,
         jwtTokenProvider.getRefreshTokenExpiry(),
-        TimeUnit.MILLISECONDS   // Redis에서 자동 삭제됨
+        TimeUnit.MILLISECONDS
     );
   }
 
