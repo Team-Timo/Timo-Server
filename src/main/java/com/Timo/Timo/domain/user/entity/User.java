@@ -1,4 +1,4 @@
-package com.Timo.Timo.domain.entity.user;
+package com.Timo.Timo.domain.user.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
