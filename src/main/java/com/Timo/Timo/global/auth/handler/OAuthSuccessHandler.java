@@ -3,6 +3,7 @@ package com.Timo.Timo.global.auth.handler;
 import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.REDIRECT_URI;
 
 import com.Timo.Timo.global.auth.dto.CustomUserDetails;
+import com.Timo.Timo.global.auth.service.RefreshTokenService;
 import com.Timo.Timo.global.jwt.provider.JwtTokenProvider;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -33,7 +34,7 @@ public class OAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
       HttpServletResponse response,
       Authentication authentication
   ) throws IOException {
-0
+
     CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
     String email = userDetails.getUser().getEmail();
 
@@ -42,7 +43,7 @@ public class OAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     refreshTokenService.save(email, refreshToken);
 
-    RequestCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
+    ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
         .httpOnly(true)
         .secure(false)    // TODO: 배포 시 true
         .path("/")
@@ -55,6 +56,6 @@ public class OAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
         .queryParam("accessToken", accessToken)
         .build().toUriString();
 
-    getRedirectStrategy().sendRedirect(request, resoponse, redirectUri);
+    getRedirectStrategy().sendRedirect(request, response, redirectUri);
   }
 }
