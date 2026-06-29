@@ -36,7 +36,6 @@ public class User {
   @Column(nullable = false)
   private Provider provider;
 
-  // TODO : 변경 가능한 건지 기획에게 확인 필요 (피그마에 관련 의견 남겨둠)
   public void update(String name, String picture){
     this.name = name;
     this.picture = picture;
