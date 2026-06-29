@@ -1,7 +1,9 @@
 package com.Timo.Timo.global.config;
 
+import com.Timo.Timo.global.auth.handler.OAuthFailureHandler;
 import com.Timo.Timo.global.auth.handler.OAuthSuccessHandler;
 import com.Timo.Timo.global.auth.service.CustomOAuth2UserService;
+import com.Timo.Timo.global.jwt.filter.JwtAuthenticationFilter;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
