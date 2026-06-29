@@ -3,6 +3,7 @@ package com.Timo.Timo.global.auth.handler;
 import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.REDIRECT_URI;
 
 import com.Timo.Timo.global.auth.dto.CustomUserDetails;
+import com.Timo.Timo.global.jwt.provider.JwtTokenProvider;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -20,8 +21,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 @RequiredArgsConstructor
 public class OAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
-  private final JwtTokenProvider jwtTokenProvider;    // access/refresh JWT 생성
-  private final RefreshTokenService refreshTokenService;  // refreshToken DB 저장
+  private final JwtTokenProvider jwtTokenProvider;
+  private final RefreshTokenService refreshTokenService;
 
   @Value("${app.oauth2.redirect-uri}")
   private String redirectUri;
