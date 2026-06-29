@@ -75,14 +75,14 @@ jobs:
             ];
 
             for (const rule of titleRules) {
-              if (rule.patterns.some(pattern => title.includes(pattern))) {
+              if (rule.patterns.some(pattern => pattern.test(title))) {
                 labels.add(rule.label);
               }
             }
 
             const authorLabels = {
               'Jy000n': '🌸 자윤',
-              'aneykrap': '🌼 예나',
+              'aneykrap': '🌵 예나',
               'laura-jung': '🍀️ 윤아'
             };
 
