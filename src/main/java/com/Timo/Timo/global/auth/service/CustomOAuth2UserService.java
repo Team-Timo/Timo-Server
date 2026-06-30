@@ -3,6 +3,7 @@ package com.Timo.Timo.global.auth.service;
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.repository.UserRepository;
 import com.Timo.Timo.global.auth.dto.CustomUserDetails;
+import com.Timo.Timo.global.exception.code.ErrorCode;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -32,10 +33,10 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
     String name = (String) attributes.get("name");
     String picture = (String) attributes.get("picture");
 
-    if (!StringUtils.hasText(email)){
+    if (!StringUtils.hasText(email)) {
       throw new OAuth2AuthenticationException(
-          new OAuth2Error("invalid_user_info"),
-          "OAuth2 user email is required"
+          new OAuth2Error(ErrorCode.OAUTH2_INVALID_USER_INFO.getCode()),
+          ErrorCode.OAUTH2_INVALID_USER_INFO.getMessage()
       );
     }
 
