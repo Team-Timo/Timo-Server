@@ -1,5 +1,6 @@
 package com.Timo.Timo.global.config;
 
+import com.Timo.Timo.global.auth.handler.JwtAuthenticationEntryPoint;
 import com.Timo.Timo.global.auth.handler.OAuthFailureHandler;
 import com.Timo.Timo.global.auth.handler.OAuthSuccessHandler;
 import com.Timo.Timo.global.auth.service.CustomOAuth2UserService;
@@ -32,7 +33,7 @@ public class SecurityConfig {
   private final CustomOAuth2UserService customOAuth2UserService;
   private final OAuthSuccessHandler oAuthSuccessHandler;
   private final OAuthFailureHandler oAuthFailureHandler;
-  private final AuthenticationEntryPoint authenticationEntryPoint;
+  private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
 	@Bean
@@ -63,33 +64,12 @@ public class SecurityConfig {
             .failureHandler(oAuthFailureHandler)
         )
         .exceptionHandling(exception ->
-            exception.authenticationEntryPoint(authenticationEntryPoint)
+            exception.authenticationEntryPoint(jwtAuthenticationEntryPoint)
         )
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
     return http.build();
 	}
-
-  @Bean
-  public AuthenticationEntryPoint authenticationEntryPoint(ObjectMapper objectMapper) {
-
-    return (request, response, authException) -> {
-      ErrorCode errorCode = ErrorCode.UNAUTHORIZED;
-
-      ErrorDto errorDto = new ErrorDto(
-          LocalDateTime.now(),
-          errorCode.getHttpStatus().value(),
-          errorCode.getCode(),
-          errorCode.getMessage(),
-          request.getRequestURI()
-      );
-
-      response.setStatus(errorCode.getHttpStatus().value());
-      response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-      response.setCharacterEncoding("UTF-8");
-      response.getWriter().write(objectMapper.writeValueAsString(errorDto));
-    };
-  }
 
   @Bean
   public CorsConfigurationSource corsConfigurationSource() {
