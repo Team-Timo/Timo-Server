@@ -20,7 +20,7 @@ public class RefreshTokenService {
         KEY_PREFIX + email,
         refreshToken,
         jwtTokenProvider.getRefreshTokenExpiry(),
-        TimeUnit.MILLISECONDS
+        TimeUnit.SECONDS
     );
   }
 
