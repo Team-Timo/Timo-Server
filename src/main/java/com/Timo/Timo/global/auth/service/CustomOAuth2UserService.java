@@ -9,8 +9,11 @@ import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserServ
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -19,6 +22,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
   private final UserRepository userRepository;
 
   @Override
+  @Transactional
   public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
     OAuth2UserService<OAuth2UserRequest, OAuth2User> delegate = new DefaultOAuth2UserService();
     OAuth2User oAuth2User = delegate.loadUser(userRequest);
@@ -27,6 +31,13 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
     String email = (String) attributes.get("email");
     String name = (String) attributes.get("name");
     String picture = (String) attributes.get("picture");
+
+    if (!StringUtils.hasText(email)){
+      throw new OAuth2AuthenticationException(
+          new OAuth2Error("invalid_user_info"),
+          "OAuth2 user email is required"
+      );
+    }
 
     User user = userRepository.findByEmail(email)
         .map(existing -> {
