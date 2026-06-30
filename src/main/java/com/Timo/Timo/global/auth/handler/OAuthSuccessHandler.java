@@ -14,7 +14,6 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
-import org.springframework.web.util.UriComponentsBuilder;
 
 @Component
 @RequiredArgsConstructor
@@ -41,19 +40,24 @@ public class OAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     refreshTokenService.save(email, refreshToken);
 
-    ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
+    ResponseCookie accessCookie = ResponseCookie.from("accessToken", accessToken)
         .httpOnly(true)
         .secure(false)    // TODO: 배포 시 true
         .path("/")
         .maxAge(Duration.ofSeconds(jwtTokenProvider.getRefreshTokenExpiry()))
         .sameSite("Lax")
         .build();
-    response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+    response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
 
-    String redirectUrl = UriComponentsBuilder.fromUriString(redirectUri)
-        .queryParam("accessToken", accessToken)
-        .build().toUriString();
+    ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", refreshToken)
+        .httpOnly(true)
+        .secure(false)    // TODO: 배포 시 true
+        .path("/")
+        .maxAge(Duration.ofSeconds(jwtTokenProvider.getRefreshTokenExpiry()))
+        .sameSite("Lax")
+        .build();
+    response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
 
-    getRedirectStrategy().sendRedirect(request, response, redirectUrl);
+    getRedirectStrategy().sendRedirect(request, response, redirectUri);
   }
 }
