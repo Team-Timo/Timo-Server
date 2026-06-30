@@ -1,6 +1,7 @@
 package com.Timo.Timo.global.auth.service;
 
 import com.Timo.Timo.global.jwt.provider.JwtTokenProvider;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -33,6 +34,6 @@ public class RefreshTokenService {
   }
 
   public boolean isValid(String email, String refreshToken){
-    return refreshToken.equals(get(email));
+    return Objects.equals(refreshToken, get(email));
   }
 }
