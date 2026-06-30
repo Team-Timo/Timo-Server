@@ -45,7 +45,7 @@ public class OAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
         .secure(false)    // TODO: 배포 시 true
         .path("/")
         .maxAge(Duration.ofSeconds(jwtTokenProvider.getRefreshTokenExpiry()))
-        .sameSite("Lax")
+        .sameSite("Strict")
         .build();
     response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
 
@@ -54,7 +54,7 @@ public class OAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
         .secure(false)    // TODO: 배포 시 true
         .path("/")
         .maxAge(Duration.ofSeconds(jwtTokenProvider.getRefreshTokenExpiry()))
-        .sameSite("Lax")
+        .sameSite("Strict")
         .build();
     response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
 
