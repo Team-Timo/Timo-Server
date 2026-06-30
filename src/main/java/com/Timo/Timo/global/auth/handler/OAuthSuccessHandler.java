@@ -1,7 +1,5 @@
 package com.Timo.Timo.global.auth.handler;
 
-import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.REDIRECT_URI;
-
 import com.Timo.Timo.global.auth.dto.CustomUserDetails;
 import com.Timo.Timo.global.auth.service.RefreshTokenService;
 import com.Timo.Timo.global.jwt.provider.JwtTokenProvider;
@@ -47,12 +45,12 @@ public class OAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
         .httpOnly(true)
         .secure(false)    // TODO: 배포 시 true
         .path("/")
-        .maxAge(Duration.ofDays(7))
+        .maxAge(Duration.ofSeconds(jwtTokenProvider.getRefreshTokenExpiry()))
         .sameSite("Lax")
         .build();
     response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
-    String redirectUrl = UriComponentsBuilder.fromUriString(REDIRECT_URI)
+    String redirectUrl = UriComponentsBuilder.fromUriString(redirectUri)
         .queryParam("accessToken", accessToken)
         .build().toUriString();
 
