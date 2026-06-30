@@ -25,6 +25,9 @@ public class OAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
   @Value("${app.oauth2.redirect-uri}")
   private String redirectUri;
 
+  @Value("${app.auth.cookie-secure:false}")
+  private boolean cookieSecure;
+
   @Override
   public void onAuthenticationSuccess(
       HttpServletRequest request,
@@ -42,7 +45,7 @@ public class OAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     ResponseCookie accessCookie = ResponseCookie.from("accessToken", accessToken)
         .httpOnly(true)
-        .secure(false)    // TODO: 배포 시 true
+        .secure(cookieSecure)
         .path("/")
         .maxAge(Duration.ofSeconds(jwtTokenProvider.getRefreshTokenExpiry()))
         .sameSite("Strict")
@@ -51,7 +54,7 @@ public class OAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", refreshToken)
         .httpOnly(true)
-        .secure(false)    // TODO: 배포 시 true
+        .secure(cookieSecure)
         .path("/")
         .maxAge(Duration.ofSeconds(jwtTokenProvider.getRefreshTokenExpiry()))
         .sameSite("Strict")
