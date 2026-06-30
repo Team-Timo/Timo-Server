@@ -33,7 +33,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     String token = resolveToken(request);
 
-    if(token!=null && jwtTokenProvider.validateToken(token)){
+    if(token!=null && jwtTokenProvider.validateAccessToken(token)){
       String email = jwtTokenProvider.getEmail(token);
       userRepository.findByEmail(email).ifPresent(user -> {
         CustomUserDetails userDetails = new CustomUserDetails(user, Map.of());

@@ -46,14 +46,23 @@ public class JwtTokenProvider {
         .compact();
   }
 
-  public boolean validateToken(String token){
+  public boolean validateAccessToken(String token){
+    return validateToken(token, "access");
+  }
+
+  public boolean validateRefreshToken(String token){
+    return validateToken(token, "refresh");
+  }
+
+  private boolean validateToken(String token, String expectedType){
     try {
-      getClaims(token);
-      return true;
+      Claims claims = getClaims(token);
+      return expectedType.equals(claims.get("type", String.class));
     } catch (JwtException | IllegalArgumentException e){
       return false;
     }
   }
+
 
   public String getEmail(String token){
     return getClaims(token).getSubject();
