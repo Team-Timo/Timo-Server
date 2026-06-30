@@ -63,7 +63,6 @@ public class JwtTokenProvider {
     }
   }
 
-
   public String getEmail(String token){
     return getClaims(token).getSubject();
   }
@@ -74,6 +73,10 @@ public class JwtTokenProvider {
         .build()
         .parseSignedClaims(token)
         .getPayload();
+  }
+
+  public long getAccessTokenExpiry() {
+    return accessTokenExpirySeconds;
   }
 
   public long getRefreshTokenExpiry() {
