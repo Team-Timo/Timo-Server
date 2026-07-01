@@ -3,13 +3,15 @@ package com.Timo.Timo.global.auth.handler;
 import com.Timo.Timo.global.auth.dto.CustomUserDetails;
 import com.Timo.Timo.global.auth.service.RefreshTokenService;
 import com.Timo.Timo.global.jwt.provider.JwtTokenProvider;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
@@ -21,6 +23,7 @@ public class OAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
   private final JwtTokenProvider jwtTokenProvider;
   private final RefreshTokenService refreshTokenService;
+  private final ObjectMapper objectMapper;
 
   @Value("${app.oauth2.redirect-uri}")
   private String redirectUri;
@@ -43,15 +46,6 @@ public class OAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     refreshTokenService.save(email, refreshToken);
 
-    ResponseCookie accessCookie = ResponseCookie.from("accessToken", accessToken)
-        .httpOnly(true)
-        .secure(cookieSecure)
-        .path("/")
-        .maxAge(Duration.ofSeconds(jwtTokenProvider.getAccessTokenExpiry()))
-        .sameSite("Strict")
-        .build();
-    response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
-
     ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", refreshToken)
         .httpOnly(true)
         .secure(cookieSecure)
@@ -59,8 +53,11 @@ public class OAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
         .maxAge(Duration.ofSeconds(jwtTokenProvider.getRefreshTokenExpiry()))
         .sameSite("Strict")
         .build();
-    response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
 
-    getRedirectStrategy().sendRedirect(request, response, redirectUri);
+    response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+    response.setCharacterEncoding("UTF-8");
+    response.getWriter().write(
+        objectMapper.writeValueAsString(Map.of("accessToken", accessToken))
+    );
   }
 }
