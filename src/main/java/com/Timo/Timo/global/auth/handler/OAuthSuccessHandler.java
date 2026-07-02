@@ -4,7 +4,6 @@ import com.Timo.Timo.global.auth.dto.CustomUserDetails;
 import com.Timo.Timo.global.auth.service.AuthCodeService;
 import com.Timo.Timo.global.auth.service.RefreshTokenService;
 import com.Timo.Timo.global.jwt.provider.JwtTokenProvider;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
