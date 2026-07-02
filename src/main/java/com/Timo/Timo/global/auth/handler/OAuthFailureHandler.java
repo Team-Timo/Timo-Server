@@ -21,6 +21,6 @@ public class OAuthFailureHandler extends SimpleUrlAuthenticationFailureHandler {
       HttpServletResponse response,
       AuthenticationException exception
   ) throws IOException {
-    authErrorResponseWriter.write(response, ErrorCode.UNAUTHORIZED, request.getRequestURI());
+    authErrorResponseWriter.write(response, ErrorCode.OAUTH_LOGIN_FAILED, request.getRequestURI());
   }
 }
