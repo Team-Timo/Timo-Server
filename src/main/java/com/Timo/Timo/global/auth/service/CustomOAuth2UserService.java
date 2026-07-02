@@ -31,7 +31,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
     Map<String, Object> attributes = oAuth2User.getAttributes();
     String email = (String) attributes.get("email");
     String name = (String) attributes.get("name");
-    String picture = (String) attributes.get("picture");
+    String imageUrl = (String) attributes.get("picture");
 
     if (!StringUtils.hasText(email)) {
       throw new OAuth2AuthenticationException(
@@ -42,14 +42,14 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 
     User user = userRepository.findByEmail(email)
         .map(existing -> {
-          existing.update(name, picture);
+          existing.update(name, imageUrl);
           return existing;
         })
         .orElseGet(() -> userRepository.save(
             User.builder()
                 .email(email)
                 .name(name)
-                .picture(picture)
+                .imageUrl(imageUrl)
                 .provider(User.Provider.GOOGLE)
                 .build()
         ));

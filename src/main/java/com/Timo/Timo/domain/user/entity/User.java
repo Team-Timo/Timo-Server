@@ -30,15 +30,15 @@ public class User {
   private String email;
 
   private String name;
-  private String picture;
+  private String imageUrl;
 
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
   private Provider provider;
 
-  public void update(String name, String picture){
+  public void update(String name, String imageUrl){
     this.name = name;
-    this.picture = picture;
+    this.imageUrl = imageUrl;
   }
 
   public enum Provider { GOOGLE }
