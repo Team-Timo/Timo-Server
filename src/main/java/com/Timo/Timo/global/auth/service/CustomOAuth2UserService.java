@@ -29,6 +29,9 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
     OAuth2UserService<OAuth2UserRequest, OAuth2User> delegate = new DefaultOAuth2UserService();
     OAuth2User oAuth2User = delegate.loadUser(userRequest);
 
+    String registrationId = userRequest.getClientRegistration().getRegistrationId();
+    Provider provider = Provider.valueOf(registrationId.toUpperCase());
+
     Map<String, Object> attributes = oAuth2User.getAttributes();
     String email = (String) attributes.get("email");
     String name = (String) attributes.get("name");
@@ -51,7 +54,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                 .email(email)
                 .name(name)
                 .imageUrl(imageUrl)
-                .provider(Provider.GOOGLE)
+                .provider(provider)
                 .build()
         ));
 
