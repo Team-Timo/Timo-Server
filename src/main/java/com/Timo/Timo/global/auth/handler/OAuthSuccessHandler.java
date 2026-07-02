@@ -42,9 +42,7 @@ public class OAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
     CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
     Long userId = userDetails.getUser().getId();
 
-    String accessToken = jwtTokenProvider.generateAccessToken(userId);
     String refreshToken = jwtTokenProvider.generateRefreshToken(userId);
-
     refreshTokenService.save(String.valueOf(userId), refreshToken);
 
     ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", refreshToken)
@@ -56,11 +54,12 @@ public class OAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
         .build();
     response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
 
-    response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-    response.setCharacterEncoding("UTF-8");
-    response.getWriter().write(
-        objectMapper.writeValueAsString(Map.of("accessToken", accessToken))
-    );
+    // 1회성 code 생성 → URL 파라미터로 전달
+    String code = authCodeService.generateAndSave(String.valueOf(userId));
+
+    String redirectUrl = UriComponentsBuilder.fromUriString(redirectUri)
+        .queryParam("code", code)
+        .build().toUriString();
 
     getRedirectStrategy().sendRedirect(request, response, redirectUri);
   }
