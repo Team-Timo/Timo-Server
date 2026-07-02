@@ -59,5 +59,7 @@ public class OAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
     response.getWriter().write(
         objectMapper.writeValueAsString(Map.of("accessToken", accessToken))
     );
+
+    getRedirectStrategy().sendRedirect(request, response, redirectUri);
   }
 }
