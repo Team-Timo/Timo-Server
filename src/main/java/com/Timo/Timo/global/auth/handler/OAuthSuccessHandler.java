@@ -39,12 +39,12 @@ public class OAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
   ) throws IOException {
 
     CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-    String email = userDetails.getUser().getEmail();
+    Long userId = userDetails.getUser().getId();
 
-    String accessToken = jwtTokenProvider.generateAccessToken(email);
-    String refreshToken = jwtTokenProvider.generateRefreshToken(email);
+    String accessToken = jwtTokenProvider.generateAccessToken(userId);
+    String refreshToken = jwtTokenProvider.generateRefreshToken(userId);
 
-    refreshTokenService.save(email, refreshToken);
+    refreshTokenService.save(String.valueOf(userId), refreshToken);
 
     ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", refreshToken)
         .httpOnly(true)

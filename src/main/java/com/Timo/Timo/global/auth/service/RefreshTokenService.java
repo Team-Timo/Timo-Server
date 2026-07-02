@@ -16,9 +16,9 @@ public class RefreshTokenService {
 
   private static final String KEY_PREFIX = "refresh:";
 
-  public void save(String email, String refreshToken){
+  public void save(String userId, String refreshToken){
     redisTemplate.opsForValue().set(
-        KEY_PREFIX + email,
+        KEY_PREFIX + userId,
         refreshToken,
         jwtTokenProvider.getRefreshTokenExpiry(),
         TimeUnit.SECONDS
@@ -29,11 +29,11 @@ public class RefreshTokenService {
     return redisTemplate.opsForValue().get(KEY_PREFIX + email);
   }
 
-  public void delete(String email){
-    redisTemplate.delete(KEY_PREFIX + email);
+  public void delete(String userId){
+    redisTemplate.delete(KEY_PREFIX + userId);
   }
 
-  public boolean isValid(String email, String refreshToken){
-    return Objects.equals(refreshToken, get(email));
+  public boolean isValid(String userId, String refreshToken){
+    return Objects.equals(refreshToken, get(userId));
   }
 }

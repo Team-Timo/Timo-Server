@@ -26,9 +26,9 @@ public class JwtTokenProvider {
     return Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
   }
 
-  public String generateAccessToken(String email){
+  public String generateAccessToken(Long userId){
     return Jwts.builder()
-        .subject(email)
+        .subject(String.valueOf(userId))
         .claim("type", "access")
         .issuedAt(new Date())
         .expiration(new Date(System.currentTimeMillis() +  accessTokenExpirySeconds * 1000))
@@ -36,9 +36,9 @@ public class JwtTokenProvider {
         .compact();
   }
 
-  public String generateRefreshToken(String email){
+  public String generateRefreshToken(Long userId){
     return Jwts.builder()
-        .subject(email)
+        .subject(String.valueOf(userId))
         .claim("type", "refresh")
         .issuedAt(new Date())
         .expiration(new Date(System.currentTimeMillis() +  refreshTokenExpirySeconds * 1000))
@@ -63,8 +63,8 @@ public class JwtTokenProvider {
     }
   }
 
-  public String getEmail(String token){
-    return getClaims(token).getSubject();
+  public Long getUserId(String token){
+    return Long.parseLong(getClaims(token).getSubject());
   }
 
   private Claims getClaims(String token){
