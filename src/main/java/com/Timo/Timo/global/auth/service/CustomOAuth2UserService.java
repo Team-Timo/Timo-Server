@@ -1,6 +1,7 @@
 package com.Timo.Timo.global.auth.service;
 
 import com.Timo.Timo.domain.user.entity.User;
+import com.Timo.Timo.domain.user.enums.Provider;
 import com.Timo.Timo.domain.user.repository.UserRepository;
 import com.Timo.Timo.global.auth.dto.CustomUserDetails;
 import com.Timo.Timo.global.exception.code.ErrorCode;
@@ -50,7 +51,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                 .email(email)
                 .name(name)
                 .imageUrl(imageUrl)
-                .provider(User.Provider.GOOGLE)
+                .provider(Provider.GOOGLE)
                 .build()
         ));
 
