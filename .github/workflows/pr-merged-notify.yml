@@ -1,0 +1,42 @@
+name: PR 머지 완료 Slack 알림
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  notify:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Slack 머지 완료 알림 전송
+        uses: actions/github-script@v8
+        env:
+          SLACK_PR_WEBHOOK_URL: ${{ secrets.SLACK_PR_WEBHOOK_URL }}
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const webhookUrl = process.env.SLACK_PR_WEBHOOK_URL;
+            
+            if (!webhookUrl) {
+              throw new Error("Repository Secret 'SLACK_PR_WEBHOOK_URL'이 없습니다.");
+            }
+            
+            const text = [
+              "<!channel> PR이 머지되었어요!",
+              `<${pr.html_url}|PR 보러가기>`
+            ].join("\n");
+            
+            const slackResponse = await fetch(webhookUrl, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json; charset=utf-8"
+              },
+              body: JSON.stringify({ text }),
+              signal: AbortSignal.timeout(10_000)
+            });
+            
+            if (!slackResponse.ok) {
+              throw new Error("Slack 알림 전송에 실패했습니다.");
+            }
