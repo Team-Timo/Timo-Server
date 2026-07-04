@@ -1,4 +1,4 @@
-package com.Timo.Timo.global.auth.dto;
+package com.Timo.Timo.global.auth.principal;
 
 import com.Timo.Timo.domain.user.entity.User;
 import java.util.Collection;
