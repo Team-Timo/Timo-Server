@@ -11,7 +11,7 @@ public class AuthTokenResponse {
   private final String accessToken;
 
   @JsonProperty("isNewUser")
-  private final boolean isNewUser;
+  private final Boolean isNewUser;
 
   private final AuthTokenResponse.UserInfo user;
 
