@@ -45,7 +45,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
       );
     }
 
-    User user = userRepository.findByEmail(email)
+    User user = userRepository.findByProviderAndProviderId(provider, providerId)
         .map(existing -> {
           existing.update(name, imageUrl);
           return existing;
