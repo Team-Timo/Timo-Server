@@ -1,7 +1,7 @@
 package com.Timo.Timo.domain.user.entity;
 
 import com.Timo.Timo.domain.user.enums.Provider;
-import com.Timo.Timo.global.common.BaseEntity;
+import com.Timo.Timo.global.common.BaseTimeEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -25,7 +25,7 @@ import lombok.NoArgsConstructor;
 )
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class User extends BaseEntity {
+public class User extends BaseTimeEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
