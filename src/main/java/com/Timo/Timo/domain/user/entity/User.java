@@ -34,12 +34,16 @@ public class User {
   @Column(nullable = false)
   private Provider provider;
 
+  @Column(nullable = false)
+  private boolean onboardingCompleted;
+
   @Builder
   private User(String email, String name, String imageUrl, Provider provider) {
     this.email = email;
     this.name = name;
     this.imageUrl = imageUrl;
     this.provider = provider;
+    this.onboardingCompleted = false;
   }
 
   public void update(String name, String imageUrl){
@@ -47,4 +51,7 @@ public class User {
     this.imageUrl = imageUrl;
   }
 
+  public void completeOnboarding() {
+    this.onboardingCompleted = true;
+  }
 }
