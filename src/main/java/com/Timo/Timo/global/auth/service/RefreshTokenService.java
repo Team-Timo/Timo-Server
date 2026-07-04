@@ -25,8 +25,8 @@ public class RefreshTokenService {
     );
   }
 
-  public String get(String email){
-    return redisTemplate.opsForValue().get(KEY_PREFIX + email);
+  public String get(String userId){
+    return redisTemplate.opsForValue().get(KEY_PREFIX + userId);
   }
 
   public void delete(String userId){
