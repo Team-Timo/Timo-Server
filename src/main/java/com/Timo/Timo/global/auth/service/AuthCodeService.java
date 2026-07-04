@@ -13,7 +13,7 @@ public class AuthCodeService {
   private final RedisTemplate<String, String> redisTemplate;
 
   private static final String KEY_PREFIX = "auth:code:";
-  private static final long CODE_EXPIRY_SECONDS = 30L;
+  private static final long CODE_EXPIRY_SECONDS = 300L;
 
   public String generateAndSave(String userId, boolean onboardingCompleted) {
     String code = UUID.randomUUID().toString();
