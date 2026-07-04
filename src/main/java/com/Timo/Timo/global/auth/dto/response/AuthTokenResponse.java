@@ -1,7 +1,6 @@
 package com.Timo.Timo.global.auth.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.nimbusds.openid.connect.sdk.claims.UserInfo;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -14,7 +13,7 @@ public class AuthTokenResponse {
   @JsonProperty("isNewUser")
   private final boolean isNewUser;
 
-  private final UserInfo user;
+  private final AuthTokenResponse.UserInfo user;
 
   @Getter
   @Builder
