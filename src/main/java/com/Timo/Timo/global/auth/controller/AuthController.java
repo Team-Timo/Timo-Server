@@ -4,10 +4,10 @@ import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.repository.UserRepository;
 import com.Timo.Timo.global.auth.dto.response.AuthTokenResponse;
 import com.Timo.Timo.global.auth.exception.AuthErrorCode;
+import com.Timo.Timo.global.auth.exception.AuthSuccessCode;
 import com.Timo.Timo.global.auth.handler.AuthErrorResponseWriter;
 import com.Timo.Timo.global.auth.service.AuthCodeService;
 import com.Timo.Timo.global.exception.code.ErrorCode;
-import com.Timo.Timo.global.exception.code.SuccessCode;
 import com.Timo.Timo.global.jwt.provider.JwtTokenProvider;
 import com.Timo.Timo.global.response.BaseResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -88,7 +88,7 @@ public class AuthController {
     response.setHeader("Cache-Control", "no-store");
     response.getWriter().write(
         objectMapper.writeValueAsString(
-            BaseResponse.onSuccess(SuccessCode.LOGIN, authTokenResponse)
+            BaseResponse.onSuccess(AuthSuccessCode.LOGIN, authTokenResponse)
         )
     );
   }
