@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "Auth", description = "인증 관련 API")
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 public class AuthController {
 

@@ -47,8 +47,8 @@ public class SecurityConfig {
 					"/v3/api-docs/**",
           "/login/**",
           "/oauth2/**",
-          "/api/auth/reissue",
-          "/api/auth/token"
+          "/api/v1/auth/reissue",
+          "/api/v1/auth/token"
 				).permitAll()
 				.anyRequest().authenticated())
         .oauth2Login(oauth2 -> oauth2
