@@ -7,6 +7,7 @@ import com.Timo.Timo.global.auth.principal.CustomUserDetails;
 import com.Timo.Timo.global.exception.code.ErrorCode;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
@@ -33,8 +34,8 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
     Provider provider = Provider.valueOf(registrationId.toUpperCase());
 
     Map<String, Object> attributes = oAuth2User.getAttributes();
-    String email = (String) attributes.get("email");
     String name = (String) attributes.get("name");
+    String email = (String) attributes.get("email");
     String imageUrl = (String) attributes.get("picture");
     String providerId = (String) attributes.get("sub");
 
@@ -45,20 +46,29 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
       );
     }
 
-    User user = userRepository.findByProviderAndProviderId(provider, providerId)
-        .map(existing -> {
-          existing.update(name, imageUrl);
-          return existing;
-        })
-        .orElseGet(() -> userRepository.save(
-            User.builder()
-                .name(name)
-                .email(email)
-                .profileImageUrl(imageUrl)
-                .provider(provider)
-                .providerId(providerId)
-                .build()
-        ));
+    User user;
+    try {
+      user = userRepository.findByProviderAndProviderId(provider, providerId)
+          .map(existing -> {
+            existing.update(name, imageUrl);
+            return existing;
+          })
+          .orElseGet(() -> userRepository.save(
+              User.builder()
+                  .name(name)
+                  .email(email)
+                  .profileImageUrl(imageUrl)
+                  .provider(provider)
+                  .providerId(providerId)
+                  .build()
+          ));
+    } catch (DataIntegrityViolationException e) {
+      user = userRepository.findByProviderAndProviderId(provider, providerId)
+          .orElseThrow(() -> new OAuth2AuthenticationException(
+              new OAuth2Error(ErrorCode.OAUTH2_INVALID_USER_INFO.getCode()),
+              ErrorCode.OAUTH2_INVALID_USER_INFO.getMessage()
+          ));
+    }
 
     return new CustomUserDetails(user, attributes);
   }
