@@ -62,6 +62,12 @@ public class User extends BaseEntity {
   @Column(name = "onboarding_completed", nullable = false)
   private boolean onboardingCompleted;
 
+  @Column(name = "calendar_connected", nullable = false)
+  private boolean calendarConnected;
+
+  @Column(name = "calendar_email")
+  private String calendarEmail;
+
   @Builder
   private User(
       Provider provider,
@@ -81,6 +87,9 @@ public class User extends BaseEntity {
     this.bedTime = LocalTime.of(23, 0);
     this.predictionAccuracy = 0L;
     this.onboardingCompleted = false;
+
+    this.calendarConnected = false;
+    this.calendarEmail = null;
   }
 
   public void update(String name, String profileImageUrl) {
