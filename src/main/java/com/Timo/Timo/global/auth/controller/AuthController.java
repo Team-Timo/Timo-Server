@@ -45,12 +45,13 @@ public class AuthController {
   ) throws IOException {
 
     String code = body.get("code");
-    String value = authCodeService.getAndDelete(code);
 
     if (code == null) {
       authErrorResponseWriter.write(response, ErrorCode.BAD_REQUEST, request.getRequestURI());
       return;
     }
+
+    String value = authCodeService.getAndDelete(code);
 
     if (value == null) {
       authErrorResponseWriter.write(response, AuthErrorCode.INVALID_AUTH_CODE, request.getRequestURI());
