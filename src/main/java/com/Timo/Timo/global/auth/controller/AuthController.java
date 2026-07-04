@@ -37,14 +37,18 @@ public class AuthController {
       HttpServletResponse response
   ) throws IOException {
     String code = body.get("code");
-    String userId = authCodeService.getAndDelete(code);
+    String value = authCodeService.getAndDelete(code);
 
-    if (userId == null) {
+    if (value == null) {
       authErrorResponseWriter.write(response, ErrorCode.INVALID_AUTH_CODE, request.getRequestURI());
       return;
     }
 
-    String accessToken = jwtTokenProvider.generateAccessToken(Long.parseLong(userId));
+    String[] parts = value.split(":");
+    Long userId = Long.parseLong(parts[0]);
+    boolean onboardingCompleted = Boolean.parseBoolean(parts[1]);
+
+    String accessToken = jwtTokenProvider.generateAccessToken(userId);
 
     response.setContentType(MediaType.APPLICATION_JSON_VALUE);
     response.setCharacterEncoding("UTF-8");

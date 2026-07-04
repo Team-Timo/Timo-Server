@@ -15,11 +15,11 @@ public class AuthCodeService {
   private static final String KEY_PREFIX = "auth:code:";
   private static final long CODE_EXPIRY_SECONDS = 30L;
 
-  public String generateAndSave(String userId) {
+  public String generateAndSave(String userId, boolean onboardingCompleted) {
     String code = UUID.randomUUID().toString();
     redisTemplate.opsForValue().set(
         KEY_PREFIX + code,
-        userId,
+        userId + ":" + onboardingCompleted,
         CODE_EXPIRY_SECONDS,
         TimeUnit.SECONDS
     );

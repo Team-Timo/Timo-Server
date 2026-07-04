@@ -62,7 +62,10 @@ public class OAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
         .build();
     response.addHeader(HttpHeaders.SET_COOKIE, sessionCookie.toString());
 
-    String code = authCodeService.generateAndSave(String.valueOf(userId));
+    String code = authCodeService.generateAndSave(
+        String.valueOf(userId),
+        userDetails.getUser().isOnboardingCompleted()
+    );
 
     String redirectUrl = UriComponentsBuilder.fromUriString(redirectUri)
         .queryParam("code", code)
