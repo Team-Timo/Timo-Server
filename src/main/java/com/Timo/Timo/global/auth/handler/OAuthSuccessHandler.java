@@ -1,6 +1,6 @@
 package com.Timo.Timo.global.auth.handler;
 
-import com.Timo.Timo.global.auth.dto.CustomUserDetails;
+import com.Timo.Timo.global.auth.principal.CustomUserDetails;
 import com.Timo.Timo.global.auth.service.AuthCodeService;
 import com.Timo.Timo.global.auth.service.RefreshTokenService;
 import com.Timo.Timo.global.jwt.provider.JwtTokenProvider;

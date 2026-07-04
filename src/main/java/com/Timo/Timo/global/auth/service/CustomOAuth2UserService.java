@@ -3,7 +3,7 @@ package com.Timo.Timo.global.auth.service;
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.enums.Provider;
 import com.Timo.Timo.domain.user.repository.UserRepository;
-import com.Timo.Timo.global.auth.dto.CustomUserDetails;
+import com.Timo.Timo.global.auth.principal.CustomUserDetails;
 import com.Timo.Timo.global.exception.code.ErrorCode;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;

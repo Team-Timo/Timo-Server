@@ -1,7 +1,7 @@
 package com.Timo.Timo.global.jwt.filter;
 
 import com.Timo.Timo.domain.user.repository.UserRepository;
-import com.Timo.Timo.global.auth.dto.CustomUserDetails;
+import com.Timo.Timo.global.auth.principal.CustomUserDetails;
 import com.Timo.Timo.global.jwt.provider.JwtTokenProvider;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
