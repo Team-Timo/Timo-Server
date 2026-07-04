@@ -36,6 +36,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
     String email = (String) attributes.get("email");
     String name = (String) attributes.get("name");
     String imageUrl = (String) attributes.get("picture");
+    String providerId = (String) attributes.get("sub");
 
     if (!StringUtils.hasText(email)) {
       throw new OAuth2AuthenticationException(
@@ -51,10 +52,11 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         })
         .orElseGet(() -> userRepository.save(
             User.builder()
-                .email(email)
                 .name(name)
-                .imageUrl(imageUrl)
+                .email(email)
+                .profileImageUrl(imageUrl)
                 .provider(provider)
+                .providerId(providerId)
                 .build()
         ));
 
