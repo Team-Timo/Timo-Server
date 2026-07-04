@@ -48,6 +48,7 @@ public class AuthController {
 
     response.setContentType(MediaType.APPLICATION_JSON_VALUE);
     response.setCharacterEncoding("UTF-8");
+    response.setHeader("Cache-Control", "no-store");
     response.getWriter().write(
         objectMapper.writeValueAsString(Map.of("accessToken", accessToken))
     );
