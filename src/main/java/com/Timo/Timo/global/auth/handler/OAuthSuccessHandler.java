@@ -42,7 +42,7 @@ public class OAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
     Long userId = userDetails.getUser().getId();
 
     String refreshToken = jwtTokenProvider.generateRefreshToken(userId);
-    refreshTokenService.save(String.valueOf(userId), refreshToken);
+    String sessionId = refreshTokenService.save(String.valueOf(userId), refreshToken);
 
     ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", refreshToken)
         .httpOnly(true)
@@ -52,6 +52,15 @@ public class OAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
         .sameSite("Strict")
         .build();
     response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+
+    ResponseCookie sessionCookie = ResponseCookie.from("sessionId", sessionId)
+        .httpOnly(true)
+        .secure(cookieSecure)
+        .path("/api/auth")
+        .maxAge(Duration.ofSeconds(jwtTokenProvider.getRefreshTokenExpiry()))
+        .sameSite("Strict")
+        .build();
+    response.addHeader(HttpHeaders.SET_COOKIE, sessionCookie.toString());
 
     String code = authCodeService.generateAndSave(String.valueOf(userId));
 
