@@ -1,6 +1,7 @@
 package com.Timo.Timo.domain.user.entity;
 
 import com.Timo.Timo.domain.user.enums.Provider;
+import com.Timo.Timo.global.common.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -10,7 +11,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -25,7 +25,7 @@ import lombok.NoArgsConstructor;
 )
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class User {
+public class User extends BaseEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -62,37 +62,33 @@ public class User {
   @Column(name = "onboarding_completed", nullable = false)
   private boolean onboardingCompleted;
 
-  @Column(name = "created_at", nullable = false, updatable = false)
-  private LocalDateTime createdAt;
-
-  @Column(name = "updated_at", nullable = false)
-  private LocalDateTime updatedAt;
-
   @Builder
-  private User(String email, String name, String profileImageUrl,
-      Provider provider, String providerId) {
-    this.email = email;
-    this.name = name;
-    this.profileImageUrl = profileImageUrl;
+  private User(
+      Provider provider,
+      String providerId,
+      String name,
+      String email,
+      String profileImageUrl
+  ) {
     this.provider = provider;
     this.providerId = providerId;
+    this.name = name;
+    this.email = email;
+    this.profileImageUrl = profileImageUrl;
+
     this.language = "ko";
     this.wakeUpTime = LocalTime.of(7, 0);
     this.bedTime = LocalTime.of(23, 0);
     this.predictionAccuracy = 0L;
     this.onboardingCompleted = false;
-    this.createdAt = LocalDateTime.now();
-    this.updatedAt = LocalDateTime.now();
   }
 
   public void update(String name, String profileImageUrl) {
     this.name = name;
     this.profileImageUrl = profileImageUrl;
-    this.updatedAt = LocalDateTime.now();
   }
 
   public void completeOnboarding() {
     this.onboardingCompleted = true;
-    this.updatedAt = LocalDateTime.now();
   }
 }
