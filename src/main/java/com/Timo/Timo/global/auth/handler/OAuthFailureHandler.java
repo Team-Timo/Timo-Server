@@ -1,6 +1,6 @@
 package com.Timo.Timo.global.auth.handler;
 
-import com.Timo.Timo.global.exception.code.ErrorCode;
+import com.Timo.Timo.global.auth.exception.AuthErrorCode;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -21,6 +21,6 @@ public class OAuthFailureHandler extends SimpleUrlAuthenticationFailureHandler {
       HttpServletResponse response,
       AuthenticationException exception
   ) throws IOException {
-    authErrorResponseWriter.write(response, ErrorCode.OAUTH_LOGIN_FAILED, request.getRequestURI());
+    authErrorResponseWriter.write(response, AuthErrorCode.OAUTH_LOGIN_FAILED, request.getRequestURI());
   }
 }

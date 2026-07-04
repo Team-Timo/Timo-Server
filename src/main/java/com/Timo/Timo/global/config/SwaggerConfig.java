@@ -12,7 +12,7 @@ public class SwaggerConfig {
 		return new OpenAPI()
 				.info(new Info()
 						.title("Timo API")
-                        .description("Timo 서버 API 명세서")
+            .description("Timo 서버 API 명세서")
 						.version("v1"));
 	}
 }

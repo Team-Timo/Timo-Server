@@ -3,8 +3,8 @@ package com.Timo.Timo.global.auth.service;
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.enums.Provider;
 import com.Timo.Timo.domain.user.repository.UserRepository;
+import com.Timo.Timo.global.auth.exception.AuthErrorCode;
 import com.Timo.Timo.global.auth.principal.CustomUserDetails;
-import com.Timo.Timo.global.exception.code.ErrorCode;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -41,8 +41,8 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 
     if (!StringUtils.hasText(email)) {
       throw new OAuth2AuthenticationException(
-          new OAuth2Error(ErrorCode.OAUTH2_INVALID_USER_INFO.getCode()),
-          ErrorCode.OAUTH2_INVALID_USER_INFO.getMessage()
+          new OAuth2Error(AuthErrorCode.OAUTH2_INVALID_USER_INFO.getCode()),
+          AuthErrorCode.OAUTH2_INVALID_USER_INFO.getMessage()
       );
     }
 
@@ -65,8 +65,8 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
     } catch (DataIntegrityViolationException e) {
       user = userRepository.findByProviderAndProviderId(provider, providerId)
           .orElseThrow(() -> new OAuth2AuthenticationException(
-              new OAuth2Error(ErrorCode.OAUTH2_INVALID_USER_INFO.getCode()),
-              ErrorCode.OAUTH2_INVALID_USER_INFO.getMessage()
+              new OAuth2Error(AuthErrorCode.OAUTH2_INVALID_USER_INFO.getCode()),
+              AuthErrorCode.OAUTH2_INVALID_USER_INFO.getMessage()
           ));
     }
 

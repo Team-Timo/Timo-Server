@@ -3,6 +3,7 @@ package com.Timo.Timo.global.auth.controller;
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.repository.UserRepository;
 import com.Timo.Timo.global.auth.dto.response.AuthTokenResponse;
+import com.Timo.Timo.global.auth.exception.AuthErrorCode;
 import com.Timo.Timo.global.auth.handler.AuthErrorResponseWriter;
 import com.Timo.Timo.global.auth.service.AuthCodeService;
 import com.Timo.Timo.global.exception.code.ErrorCode;
@@ -52,7 +53,7 @@ public class AuthController {
     }
 
     if (value == null) {
-      authErrorResponseWriter.write(response, ErrorCode.INVALID_AUTH_CODE, request.getRequestURI());
+      authErrorResponseWriter.write(response, AuthErrorCode.INVALID_AUTH_CODE, request.getRequestURI());
       return;
     }
 
