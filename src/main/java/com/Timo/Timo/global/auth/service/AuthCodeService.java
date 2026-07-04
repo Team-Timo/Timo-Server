@@ -27,6 +27,11 @@ public class AuthCodeService {
   }
 
   public String getAndDelete(String code) {
-    return redisTemplate.opsForValue().getAndDelete(KEY_PREFIX + code);
+    String key = KEY_PREFIX + code;
+    String value = redisTemplate.opsForValue().get(key);
+    if (value != null) {
+      redisTemplate.delete(key);
+    }
+    return value;
   }
 }
