@@ -40,6 +40,7 @@ public class OAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
     Long userId = userDetails.getUser().getId();
+    boolean onboardingCompleted = userDetails.getUser().isOnboardingCompleted();
 
     String refreshToken = jwtTokenProvider.generateRefreshToken(userId);
     String sessionId = refreshTokenService.save(String.valueOf(userId), refreshToken);
@@ -47,7 +48,7 @@ public class OAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
     ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", refreshToken)
         .httpOnly(true)
         .secure(cookieSecure)
-        .path("/api/auth")
+        .path("/api/v1/auth")
         .maxAge(Duration.ofSeconds(jwtTokenProvider.getRefreshTokenExpiry()))
         .sameSite("Strict")
         .build();
@@ -56,7 +57,7 @@ public class OAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
     ResponseCookie sessionCookie = ResponseCookie.from("sessionId", sessionId)
         .httpOnly(true)
         .secure(cookieSecure)
-        .path("/api/auth")
+        .path("/api/v1/auth")
         .maxAge(Duration.ofSeconds(jwtTokenProvider.getRefreshTokenExpiry()))
         .sameSite("Strict")
         .build();
@@ -64,7 +65,7 @@ public class OAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     String code = authCodeService.generateAndSave(
         String.valueOf(userId),
-        userDetails.getUser().isOnboardingCompleted()
+        onboardingCompleted
     );
 
     String redirectUrl = UriComponentsBuilder.fromUriString(redirectUri)
