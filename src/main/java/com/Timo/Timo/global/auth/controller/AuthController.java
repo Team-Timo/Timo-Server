@@ -41,6 +41,6 @@ public class AuthController {
 
     return ResponseEntity.ok()
         .header("Cache-Control", "no-store")
-        .body(BaseResponse.onSuccess(AuthSuccessCode.LOGIN, authTokenResponse));
+        .body(BaseResponse.onSuccess(AuthSuccessCode.LOGIN_SUCCESS, authTokenResponse));
   }
 }
