@@ -58,7 +58,7 @@ public class AuthService {
   }
 
   public ReissueResult reissue(String refreshToken, String sessionId) {
-    
+
     if (refreshToken == null || sessionId == null
         || !jwtTokenProvider.validateRefreshToken(refreshToken)) {
       throw new CustomException(AuthErrorCode.INVALID_REFRESH_TOKEN);
@@ -91,6 +91,10 @@ public class AuthService {
   }
 
   public void withdraw(String accessToken, Long userId, String sessionId) {
+
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
     if (accessToken != null) {
       long remainingExpiry = jwtTokenProvider.getRemainingExpiry(accessToken);
       blacklistService.addToBlacklist(accessToken, remainingExpiry);
@@ -99,9 +103,6 @@ public class AuthService {
     if (sessionId != null) {
       refreshTokenService.deleteRefreshToken(String.valueOf(userId), sessionId);
     }
-
-    User user = userRepository.findById(userId)
-        .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
     userRepository.delete(user);
   }
