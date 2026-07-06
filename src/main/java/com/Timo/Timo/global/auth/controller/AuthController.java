@@ -118,9 +118,11 @@ public class AuthController {
   @DeleteMapping("/users")
   public ResponseEntity<BaseResponse<Void>> withdraw(
       @AuthenticationPrincipal CustomUserDetails userDetails,
-      @CookieValue(name = "sessionId", required = false) String sessionId
+      @CookieValue(name = "sessionId", required = false) String sessionId,
+      HttpServletRequest request
   ) {
-    authService.withdraw(userDetails.getUser().getId(), sessionId);
+    String accessToken = resolveToken(request);
+    authService.withdraw(accessToken, userDetails.getUser().getId(), sessionId);
 
     return ResponseEntity.ok()
         .header(HttpHeaders.SET_COOKIE,

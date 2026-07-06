@@ -20,7 +20,7 @@ public class AuthService {
   private final JwtTokenProvider jwtTokenProvider;
   private final UserRepository userRepository;
   private final RefreshTokenService refreshTokenService;
-  private final BlackListService blackListService;
+  private final BlackListService blacklistService;
 
   public AuthTokenResponse exchangeCodeForToken(String code) {
 
@@ -80,14 +80,22 @@ public class AuthService {
   }
 
   public void logout(String accessToken, Long userId, String sessionId) {
-    if(accessToken !=null){
+    if (accessToken != null) {
       long remainingExpiry = jwtTokenProvider.getRemainingExpiry(accessToken);
-      blackListService.addToBlackList(accessToken, remainingExpiry);
+      blacklistService.addToBlacklist(accessToken, remainingExpiry);
     }
-    refreshTokenService.deleteRefreshToken(String.valueOf(userId), sessionId);
+
+    if (sessionId != null) {
+      refreshTokenService.deleteRefreshToken(String.valueOf(userId), sessionId);
+    }
   }
 
-  public void withdraw(Long userId, String sessionId) {
+  public void withdraw(String accessToken, Long userId, String sessionId) {
+    if (accessToken != null) {
+      long remainingExpiry = jwtTokenProvider.getRemainingExpiry(accessToken);
+      blacklistService.addToBlacklist(accessToken, remainingExpiry);
+    }
+
     if (sessionId != null) {
       refreshTokenService.deleteRefreshToken(String.valueOf(userId), sessionId);
     }
