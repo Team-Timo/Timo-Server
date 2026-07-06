@@ -28,7 +28,7 @@ public class OAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
   @Value("${app.oauth2.redirect-uri}")
   private String redirectUri;
 
-  @Value("${app.auth.cookie-secure:false}")
+  @Value("${app.auth.cookie-secure}")
   private boolean cookieSecure;
 
   @Override
