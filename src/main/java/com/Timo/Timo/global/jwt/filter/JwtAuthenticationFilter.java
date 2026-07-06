@@ -37,7 +37,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     if(token!=null
         && jwtTokenProvider.validateAccessToken(token)
-        && blacklistService.isBlackListed(token)){
+        && !blacklistService.isBlackListed(token)){
       Long userId = jwtTokenProvider.getUserId(token);
       userRepository.findById(userId).ifPresent(user -> {
         CustomUserDetails userDetails = new CustomUserDetails(user, Map.of());
