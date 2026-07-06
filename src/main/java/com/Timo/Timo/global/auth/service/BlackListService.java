@@ -18,7 +18,7 @@ public class BlackListService {
         KEY_PREFIX + accessToken,
         "logout",
         remainingExpiry,
-        TimeUnit.MILLISECONDS
+        TimeUnit.SECONDS
     );
   }
 
