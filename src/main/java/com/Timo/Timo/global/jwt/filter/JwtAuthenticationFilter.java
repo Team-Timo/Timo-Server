@@ -3,6 +3,7 @@ package com.Timo.Timo.global.jwt.filter;
 import com.Timo.Timo.domain.user.repository.UserRepository;
 import com.Timo.Timo.global.auth.principal.CustomUserDetails;
 import com.Timo.Timo.global.auth.service.BlackListService;
+import com.Timo.Timo.global.auth.utils.TokenExtractor;
 import com.Timo.Timo.global.jwt.provider.JwtTokenProvider;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -33,7 +34,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       FilterChain filterChain
   ) throws ServletException, IOException {
 
-    String token = resolveToken(request);
+    String token = TokenExtractor.resolveToken(request);
 
     if(token!=null
         && jwtTokenProvider.validateAccessToken(token)
@@ -51,14 +52,5 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     filterChain.doFilter(request, response);
-  }
-
-  private String resolveToken(HttpServletRequest request) {
-
-    String bearer = request.getHeader("Authorization");
-    if (StringUtils.hasText(bearer) && bearer.startsWith("Bearer ")) {
-      return bearer.substring(7);
-    }
-    return null;
   }
 }
