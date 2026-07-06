@@ -4,7 +4,7 @@ spring:
       - org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration
 
   datasource:
-    url: jdbc:mysql://localhost:3306/timo
+    url: ${DB_URL:jdbc:mysql://localhost:3306/timo}
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:root}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -24,8 +24,8 @@ spring:
 
   data:
     redis:
-      host: localhost
-      port: 6379
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
 
 app:
   oauth2:
