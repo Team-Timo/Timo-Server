@@ -29,7 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "Auth", description = "인증 관련 API")
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 public class AuthController {
 
@@ -47,7 +47,7 @@ public class AuthController {
       @ApiResponse(responseCode = "404", description = "존재하지 않는 사용자"),
       @ApiResponse(responseCode = "500", description = "서버 내부 오류")
   })
-  @PostMapping("/auth/token")
+  @PostMapping("/token")
   public ResponseEntity<BaseResponse<AuthTokenResponse>> token(
       @RequestBody Map<String, String> body
   ) {
@@ -65,7 +65,7 @@ public class AuthController {
       @ApiResponse(responseCode = "401", description = "유효하지 않거나 만료된 리프레시 토큰"),
       @ApiResponse(responseCode = "500", description = "서버 내부 오류")
   })
-  @PostMapping("/auth/reissue")
+  @PostMapping("/reissue")
   public ResponseEntity<BaseResponse<Map<String, String>>> reissue(
       @CookieValue(name = "refreshToken", required=false) String refreshToken,
       @CookieValue(name = "sessionId", required = false) String sessionId
@@ -90,7 +90,7 @@ public class AuthController {
       @ApiResponse(responseCode = "401", description = "인증이 필요합니다"),
       @ApiResponse(responseCode = "500", description = "서버 내부 오류")
   })
-  @PostMapping("/auth/logout")
+  @PostMapping("/logout")
   public ResponseEntity<BaseResponse<Void>> logout(
       @AuthenticationPrincipal CustomUserDetails userDetails,
       @CookieValue(name = "sessionId", required = false) String sessionId,
@@ -115,7 +115,7 @@ public class AuthController {
       @ApiResponse(responseCode = "500", description = "서버 내부 오류")
   })
 
-  @DeleteMapping("/users")
+  @DeleteMapping("/withdraw")
   public ResponseEntity<BaseResponse<Void>> withdraw(
       @AuthenticationPrincipal CustomUserDetails userDetails,
       @CookieValue(name = "sessionId", required = false) String sessionId,
