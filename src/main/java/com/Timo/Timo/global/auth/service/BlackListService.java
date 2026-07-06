@@ -13,7 +13,7 @@ public class BlackListService {
 
   private static final String KEY_PREFIX = "blacklist:";
 
-  public void addToBlackList(String accessToken, long remainingExpiry){
+  public void addToBlacklist(String accessToken, long remainingExpiry){
     redisTemplate.opsForValue().set(
         KEY_PREFIX + accessToken,
         "logout",
