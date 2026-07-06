@@ -9,7 +9,7 @@ public class CookieUtil {
     return ResponseCookie.from(name, value)
         .httpOnly(true)
         .secure(secure)
-        .path("/auth")
+        .path("/api/v1/auth")
         .maxAge(Duration.ofSeconds(maxAgeSeconds))
         .sameSite("Strict")
         .build();
@@ -19,7 +19,7 @@ public class CookieUtil {
     return ResponseCookie.from(name, "")
         .httpOnly(true)
         .secure(secure)
-        .path("/auth")
+        .path("/api/v1/auth")
         .maxAge(0)
         .sameSite("Strict")
         .build();
