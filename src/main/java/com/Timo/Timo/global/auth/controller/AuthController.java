@@ -6,6 +6,7 @@ import com.Timo.Timo.global.auth.exception.AuthSuccessCode;
 import com.Timo.Timo.global.auth.principal.CustomUserDetails;
 import com.Timo.Timo.global.auth.service.AuthService;
 import com.Timo.Timo.global.auth.utils.CookieUtil;
+import com.Timo.Timo.global.auth.utils.TokenExtractor;
 import com.Timo.Timo.global.jwt.provider.JwtTokenProvider;
 import com.Timo.Timo.global.response.BaseResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -20,7 +21,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -98,7 +98,7 @@ public class AuthController {
       @CookieValue(name = "sessionId", required = false) String sessionId,
       HttpServletRequest request
   ) {
-    String accessToken = resolveToken(request);
+    String accessToken = TokenExtractor.resolveToken(request);
     authService.logout(accessToken, userDetails.getUser().getId(), sessionId);
 
     return ResponseEntity.ok()
@@ -123,7 +123,7 @@ public class AuthController {
       @CookieValue(name = "sessionId", required = false) String sessionId,
       HttpServletRequest request
   ) {
-    String accessToken = resolveToken(request);
+    String accessToken = TokenExtractor.resolveToken(request);
     authService.withdraw(accessToken, userDetails.getUser().getId(), sessionId);
 
     return ResponseEntity.ok()
@@ -132,13 +132,5 @@ public class AuthController {
         .header(HttpHeaders.SET_COOKIE,
             CookieUtil.expireCookie("sessionId", cookieSecure).toString())
         .body(BaseResponse.onSuccess(AuthSuccessCode.WITHDRAW_SUCCESS, null));
-  }
-
-  private String resolveToken(HttpServletRequest request) {
-    String bearer = request.getHeader("Authorization");
-    if (StringUtils.hasText(bearer) && bearer.startsWith("Bearer ")) {
-      return bearer.substring(7);
-    }
-    return null;
   }
 }
