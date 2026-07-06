@@ -19,6 +19,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -100,5 +101,28 @@ public class AuthController {
         .header(HttpHeaders.SET_COOKIE,
             CookieUtil.expireCookie("sessionId", cookieSecure).toString())
         .body(BaseResponse.onSuccess(AuthSuccessCode.LOGOUT_SUCCESS, null));
+  }
+
+  @Operation(summary = "회원 탈퇴", description = "회원 탈퇴 및 모든 데이터를 영구 삭제합니다.")
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "회원 탈퇴 성공"),
+      @ApiResponse(responseCode = "401", description = "인증이 필요합니다"),
+      @ApiResponse(responseCode = "404", description = "존재하지 않는 사용자"),
+      @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+  })
+
+  @DeleteMapping("/withdraw")
+  public ResponseEntity<BaseResponse<Void>> withdraw(
+      @AuthenticationPrincipal CustomUserDetails userDetails,
+      @CookieValue(name = "sessionId", required = false) String sessionId
+  ) {
+    authService.withdraw(userDetails.getUser().getId(), sessionId);
+
+    return ResponseEntity.ok()
+        .header(HttpHeaders.SET_COOKIE,
+            CookieUtil.expireCookie("refreshToken", cookieSecure).toString())
+        .header(HttpHeaders.SET_COOKIE,
+            CookieUtil.expireCookie("sessionId", cookieSecure).toString())
+        .body(BaseResponse.onSuccess(AuthSuccessCode.WITHDRAW_SUCCESS, null));
   }
 }

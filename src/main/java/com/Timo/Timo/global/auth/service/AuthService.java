@@ -81,4 +81,15 @@ public class AuthService {
   public void logout(Long userId, String sessionId) {
     refreshTokenService.deleteRefreshToken(String.valueOf(userId), sessionId);
   }
+
+  public void withdraw(Long userId, String sessionId) {
+    if (sessionId != null) {
+      refreshTokenService.deleteRefreshToken(String.valueOf(userId), sessionId);
+    }
+
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+    userRepository.delete(user);
+  }
 }
