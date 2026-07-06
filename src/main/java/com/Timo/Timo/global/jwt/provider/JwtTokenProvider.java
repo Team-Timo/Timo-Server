@@ -82,4 +82,9 @@ public class JwtTokenProvider {
   public long getRefreshTokenExpiry() {
     return refreshTokenExpirySeconds;
   }
+
+  public long getRemainingExpiry(String token){
+    Date expiration = getClaims(token).getExpiration();
+    return (expiration.getTime() - System.currentTimeMillis()) / 1000;
+  }
 }
