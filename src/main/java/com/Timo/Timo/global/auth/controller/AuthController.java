@@ -1,5 +1,6 @@
 package com.Timo.Timo.global.auth.controller;
 
+import com.Timo.Timo.global.auth.docs.AuthControllerDocs;
 import com.Timo.Timo.global.auth.dto.ReissueResult;
 import com.Timo.Timo.global.auth.dto.response.AuthTokenResponse;
 import com.Timo.Timo.global.auth.exception.AuthSuccessCode;
@@ -9,9 +10,6 @@ import com.Timo.Timo.global.auth.utils.CookieUtil;
 import com.Timo.Timo.global.auth.utils.TokenExtractor;
 import com.Timo.Timo.global.jwt.provider.JwtTokenProvider;
 import com.Timo.Timo.global.response.BaseResponse;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
@@ -31,7 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
-public class AuthController {
+public class AuthController implements AuthControllerDocs {
 
   private final AuthService authService;
   private final JwtTokenProvider jwtTokenProvider;
@@ -39,14 +37,7 @@ public class AuthController {
   @Value("${app.auth.cookie-secure}")
   private boolean cookieSecure;
 
-  @Operation(summary = "AccessToken 발급", description = "1회성 code로 AccessToken을 발급합니다.")
-  @ApiResponses({
-      @ApiResponse(responseCode = "200", description = "로그인 성공"),
-      @ApiResponse(responseCode = "400", description = "code 누락"),
-      @ApiResponse(responseCode = "401", description = "유효하지 않거나 만료된 인증 코드"),
-      @ApiResponse(responseCode = "404", description = "존재하지 않는 사용자"),
-      @ApiResponse(responseCode = "500", description = "서버 내부 오류")
-  })
+  @Override
   @PostMapping("/token")
   public ResponseEntity<BaseResponse<AuthTokenResponse>> token(
       @RequestBody Map<String, String> body
@@ -59,12 +50,7 @@ public class AuthController {
         .body(BaseResponse.onSuccess(AuthSuccessCode.LOGIN_SUCCESS, authTokenResponse));
   }
 
-  @Operation(summary = "AccessToken 재발급", description = "RefreshToken으로 AccessToken을 재발급합니다.")
-  @ApiResponses({
-      @ApiResponse(responseCode = "200", description = "재발급 성공"),
-      @ApiResponse(responseCode = "401", description = "유효하지 않거나 만료된 리프레시 토큰"),
-      @ApiResponse(responseCode = "500", description = "서버 내부 오류")
-  })
+  @Override
   @PostMapping("/reissue")
   public ResponseEntity<BaseResponse<Map<String, String>>> reissue(
       @CookieValue(name = "refreshToken", required=false) String refreshToken,
@@ -84,12 +70,7 @@ public class AuthController {
             Map.of("accessToken", result.getAccessToken())));
   }
 
-  @Operation(summary = "로그아웃", description = "현재 세션을 로그아웃합니다.")
-  @ApiResponses({
-      @ApiResponse(responseCode = "200", description = "로그아웃 성공"),
-      @ApiResponse(responseCode = "401", description = "인증이 필요합니다"),
-      @ApiResponse(responseCode = "500", description = "서버 내부 오류")
-  })
+  @Override
   @PostMapping("/logout")
   public ResponseEntity<BaseResponse<Void>> logout(
       @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -107,14 +88,7 @@ public class AuthController {
         .body(BaseResponse.onSuccess(AuthSuccessCode.LOGOUT_SUCCESS, null));
   }
 
-  @Operation(summary = "회원 탈퇴", description = "회원 탈퇴 및 모든 데이터를 영구 삭제합니다.")
-  @ApiResponses({
-      @ApiResponse(responseCode = "200", description = "회원 탈퇴 성공"),
-      @ApiResponse(responseCode = "401", description = "인증이 필요합니다"),
-      @ApiResponse(responseCode = "404", description = "존재하지 않는 사용자"),
-      @ApiResponse(responseCode = "500", description = "서버 내부 오류")
-  })
-
+  @Override
   @DeleteMapping("/withdraw")
   public ResponseEntity<BaseResponse<Void>> withdraw(
       @AuthenticationPrincipal CustomUserDetails userDetails,
