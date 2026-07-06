@@ -17,7 +17,7 @@ public class RefreshTokenService {
 
   private static final String KEY_PREFIX = "refresh:";
 
-  public String save(String userId, String refreshToken){
+  public String saveRefreshToken(String userId, String refreshToken){
     String sessionId = UUID.randomUUID().toString();
     redisTemplate.opsForValue().set(
         KEY_PREFIX + userId + ":" + sessionId,
@@ -28,15 +28,15 @@ public class RefreshTokenService {
     return sessionId;
   }
 
-  public String get(String userId, String sessionId) {
+  public String getRefreshToken(String userId, String sessionId) {
     return redisTemplate.opsForValue().get(KEY_PREFIX + userId + ":" + sessionId);
   }
 
-  public void delete(String userId, String sessionId) {
+  public void deleteRefreshToken(String userId, String sessionId) {
     redisTemplate.delete(KEY_PREFIX + userId + ":" + sessionId);
   }
 
-  public boolean isValid(String userId, String sessionId, String refreshToken) {
-    return Objects.equals(refreshToken, get(userId, sessionId));
+  public boolean isRefreshTokenValid(String userId, String sessionId, String refreshToken) {
+    return Objects.equals(refreshToken, getRefreshToken(userId, sessionId));
   }
 }
