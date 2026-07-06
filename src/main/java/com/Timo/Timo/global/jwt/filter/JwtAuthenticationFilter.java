@@ -2,6 +2,7 @@ package com.Timo.Timo.global.jwt.filter;
 
 import com.Timo.Timo.domain.user.repository.UserRepository;
 import com.Timo.Timo.global.auth.principal.CustomUserDetails;
+import com.Timo.Timo.global.auth.service.BlackListService;
 import com.Timo.Timo.global.jwt.provider.JwtTokenProvider;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -23,6 +24,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
   private final JwtTokenProvider jwtTokenProvider;
   private final UserRepository userRepository;
+  private final BlackListService blacklistService;
 
   @Override
   protected void doFilterInternal(
@@ -33,7 +35,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     String token = resolveToken(request);
 
-    if(token!=null && jwtTokenProvider.validateAccessToken(token)){
+    if(token!=null
+        && jwtTokenProvider.validateAccessToken(token)
+        && blacklistService.isBlackListed(token)){
       Long userId = jwtTokenProvider.getUserId(token);
       userRepository.findById(userId).ifPresent(user -> {
         CustomUserDetails userDetails = new CustomUserDetails(user, Map.of());
