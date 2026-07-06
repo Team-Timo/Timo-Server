@@ -81,5 +81,24 @@ public class AuthController {
             Map.of("accessToken", result.getAccessToken())));
   }
 
+  @Operation(summary = "로그아웃", description = "현재 세션을 로그아웃합니다.")
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "로그아웃 성공"),
+      @ApiResponse(responseCode = "401", description = "인증이 필요합니다"),
+      @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+  })
+  @PostMapping("/logout")
+  public ResponseEntity<BaseResponse<Void>> logout(
+      @AuthenticationPrincipal CustomUserDetails userDetails,
+      @CookieValue(name = "sessionId", required = false) String sessionId
+  ) {
+    authService.logout(userDetails.getUser().getId(), sessionId);
 
+    return ResponseEntity.ok()
+        .header(HttpHeaders.SET_COOKIE,
+            CookieUtil.expireCookie("refreshToken", cookieSecure).toString())
+        .header(HttpHeaders.SET_COOKIE,
+            CookieUtil.expireCookie("sessionId", cookieSecure).toString())
+        .body(BaseResponse.onSuccess(AuthSuccessCode.LOGOUT_SUCCESS, null));
+  }
 }
