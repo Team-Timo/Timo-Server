@@ -78,4 +78,7 @@ public class AuthService {
     return new ReissueResult(newAccessToken, newRefreshToken, newSessionId);
   }
 
+  public void logout(Long userId, String sessionId) {
+    refreshTokenService.deleteRefreshToken(String.valueOf(userId), sessionId);
+  }
 }
