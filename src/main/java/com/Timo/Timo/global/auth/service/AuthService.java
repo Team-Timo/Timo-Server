@@ -3,6 +3,7 @@ package com.Timo.Timo.global.auth.service;
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.exception.UserErrorCode;
 import com.Timo.Timo.domain.user.repository.UserRepository;
+import com.Timo.Timo.global.auth.dto.ReissueResult;
 import com.Timo.Timo.global.auth.dto.response.AuthTokenResponse;
 import com.Timo.Timo.global.auth.exception.AuthErrorCode;
 import com.Timo.Timo.global.exception.CustomException;
@@ -18,8 +19,10 @@ public class AuthService {
   private final AuthCodeService authCodeService;
   private final JwtTokenProvider jwtTokenProvider;
   private final UserRepository userRepository;
+  private final RefreshTokenService refreshTokenService;
 
   public AuthTokenResponse exchangeCodeForToken(String code) {
+
     if (code == null) {
       throw new CustomException(ErrorCode.BAD_REQUEST);
     }
@@ -51,5 +54,27 @@ public class AuthService {
             .build()
         )
         .build();
+  }
+
+  public ReissueResult reissue(String refreshToken, String sessionId) {
+
+    if (refreshToken == null || sessionId == null
+        || !jwtTokenProvider.validateRefreshToken(refreshToken)) {
+      throw new CustomException(AuthErrorCode.INVALID_REFRESH_TOKEN);
+    }
+
+    Long userId = jwtTokenProvider.getUserId(refreshToken);
+
+    if (!refreshTokenService.isRefreshTokenValid(String.valueOf(userId), sessionId, refreshToken)){
+      throw new CustomException(AuthErrorCode.INVALID_REFRESH_TOKEN);
+    }
+
+    refreshTokenService.deleteRefreshToken(String.valueOf(userId), sessionId);
+
+    String newAccessToken  = jwtTokenProvider.generateAccessToken(userId);
+    String newRefreshToken = jwtTokenProvider.generateRefreshToken(userId);
+    String newSessionId    = refreshTokenService.saveRefreshToken(String.valueOf(userId), newRefreshToken);
+
+    return new ReissueResult(newAccessToken, newRefreshToken, newSessionId);
   }
 }
