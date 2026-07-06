@@ -1,6 +1,7 @@
 package com.Timo.Timo.global.auth.docs;
 
 import com.Timo.Timo.global.auth.dto.request.AuthTokenRequest;
+import com.Timo.Timo.global.auth.dto.response.AuthReissueResponse;
 import com.Timo.Timo.global.auth.dto.response.AuthTokenResponse;
 import com.Timo.Timo.global.auth.principal.CustomUserDetails;
 import com.Timo.Timo.global.exception.dto.ErrorDto;
@@ -24,11 +25,11 @@ public interface AuthControllerDocs {
   @Operation(
       summary = "AccessToken 발급",
       description = """
-        1회성 인증 코드(code)를 AccessToken으로 교환합니다.  
-        - isNewUser: 이번 요청으로 신규 회원가입이 이루어졌는지 여부입니다. true면 아직 온보딩을 진행한 적이 없는 사용자입니다.
-        - user.onboardingCompleted: 온보딩(초기 설정) 완료 여부입니다. false면 온보딩 화면으로, true면 홈 화면으로 이동시켜 주세요.
-        - isNewUser가 true인 경우 user.onboardingCompleted는 항상 false입니다. 기존 가입자가 온보딩을 중단한 경우에도 isNewUser는 false, onboardingCompleted는 false로 반환될 수 있습니다.
-        - RefreshToken과 sessionId는 Set-Cookie 헤더로 전달되며, 응답 바디에는 포함되지 않습니다.
+        1회성 인증 코드(code)를 AccessToken으로 교환 
+        - isNewUser: 이번 요청으로 신규 회원가입이 이루어졌는지 여부 (true면 아직 온보딩을 진행한 적이 없는 사용자)
+        - user.onboardingCompleted: 온보딩 완료 여부 (false면 온보딩 화면으로, true면 홈 화면으로 이동)
+        - 기존 가입자가 온보딩을 중단한 경우에도 isNewUser는 false, onboardingCompleted는 false로 반환될 수 가능
+        - RefreshToken과 sessionId는 Set-Cookie 헤더로 전달되며, 응답 바디에는 포함되지 않음
 			"""
   )
  @io.swagger.v3.oas.annotations.parameters.RequestBody(
@@ -92,9 +93,10 @@ public interface AuthControllerDocs {
   @Operation(
       summary = "AccessToken 재발급",
       description = """
-			쿠키로 전달된 RefreshToken과 sessionId를 검증하여 AccessToken을 재발급합니다.
-			재발급 성공 시 RefreshToken과 sessionId 쿠키가 갱신됩니다.
+			쿠키로 전달된 RefreshToken과 sessionId를 검증하여 AccessToken 재발급
+			재발급 성공 시 RefreshToken과 sessionId 쿠키 갱신
 			"""
+
   )
   @ApiResponses({
       @ApiResponse(
@@ -119,7 +121,7 @@ public interface AuthControllerDocs {
           )
       )
   })
-  ResponseEntity<BaseResponse<Map<String, String>>> reissue(
+  ResponseEntity<BaseResponse<AuthReissueResponse>> reissue(
       @CookieValue(name = "refreshToken", required = false) String refreshToken,
       @CookieValue(name = "sessionId", required = false) String sessionId
   );
