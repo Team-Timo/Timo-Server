@@ -3,6 +3,7 @@ package com.Timo.Timo.global.auth.controller;
 import com.Timo.Timo.global.auth.docs.AuthControllerDocs;
 import com.Timo.Timo.global.auth.dto.ReissueResult;
 import com.Timo.Timo.global.auth.dto.request.AuthTokenRequest;
+import com.Timo.Timo.global.auth.dto.response.AuthReissueResponse;
 import com.Timo.Timo.global.auth.dto.response.AuthTokenResponse;
 import com.Timo.Timo.global.auth.exception.AuthSuccessCode;
 import com.Timo.Timo.global.auth.principal.CustomUserDetails;
@@ -13,7 +14,6 @@ import com.Timo.Timo.global.jwt.provider.JwtTokenProvider;
 import com.Timo.Timo.global.response.BaseResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -52,11 +52,14 @@ public class AuthController implements AuthControllerDocs {
 
   @Override
   @PostMapping("/reissue")
-  public ResponseEntity<BaseResponse<Map<String, String>>> reissue(
+  public ResponseEntity<BaseResponse<AuthReissueResponse>> reissue(
       @CookieValue(name = "refreshToken", required=false) String refreshToken,
       @CookieValue(name = "sessionId", required = false) String sessionId
   ) {
     ReissueResult result = authService.reissue(refreshToken, sessionId);
+    AuthReissueResponse authReissueResponse = AuthReissueResponse.builder()
+        .accessToken(result.getAccessToken())
+        .build();
 
     return ResponseEntity.ok()
         .header(HttpHeaders.SET_COOKIE,
@@ -66,8 +69,7 @@ public class AuthController implements AuthControllerDocs {
             CookieUtil.createCookie("sessionId", result.getSessionId(),
                 jwtTokenProvider.getRefreshTokenExpiry(), cookieSecure).toString())
         .header("Cache-Control", "no-store")
-        .body(BaseResponse.onSuccess(AuthSuccessCode.REISSUE_SUCCESS,
-            Map.of("accessToken", result.getAccessToken())));
+        .body(BaseResponse.onSuccess(AuthSuccessCode.REISSUE_SUCCESS, authReissueResponse));
   }
 
   @Override
