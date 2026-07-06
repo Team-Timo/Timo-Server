@@ -1,5 +1,6 @@
 package com.Timo.Timo.global.auth.docs;
 
+import com.Timo.Timo.global.auth.dto.request.AuthTokenRequest;
 import com.Timo.Timo.global.auth.dto.response.AuthTokenResponse;
 import com.Timo.Timo.global.auth.principal.CustomUserDetails;
 import com.Timo.Timo.global.exception.dto.ErrorDto;
@@ -26,6 +27,7 @@ public interface AuthControllerDocs {
         최초 로그인인 경우 isNewUser가 true로 반환됩니다.
         RefreshToken은 Set-Cookie 헤더로 전달됩니다.
 			"""
+
   )
   @ApiResponses({
       @ApiResponse(
@@ -67,7 +69,7 @@ public interface AuthControllerDocs {
       )
   })
   ResponseEntity<BaseResponse<AuthTokenResponse>> token(
-      @RequestBody Map<String, String> body
+      @RequestBody AuthTokenRequest body
   );
 
   @Operation(
