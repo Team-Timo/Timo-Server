@@ -43,7 +43,7 @@ public class OAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
     boolean onboardingCompleted = userDetails.getUser().isOnboardingCompleted();
 
     String refreshToken = jwtTokenProvider.generateRefreshToken(userId);
-    String sessionId = refreshTokenService.save(String.valueOf(userId), refreshToken);
+    String sessionId = refreshTokenService.saveRefreshToken(String.valueOf(userId), refreshToken);
 
     ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", refreshToken)
         .httpOnly(true)
