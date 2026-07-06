@@ -11,6 +11,7 @@ import com.Timo.Timo.global.exception.code.ErrorCode;
 import com.Timo.Timo.global.jwt.provider.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -90,6 +91,7 @@ public class AuthService {
     }
   }
 
+  @Transactional
   public void withdraw(String accessToken, Long userId, String sessionId) {
 
     User user = userRepository.findById(userId)
