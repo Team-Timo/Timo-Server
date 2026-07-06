@@ -2,6 +2,7 @@ package com.Timo.Timo.global.auth.controller;
 
 import com.Timo.Timo.global.auth.docs.AuthControllerDocs;
 import com.Timo.Timo.global.auth.dto.ReissueResult;
+import com.Timo.Timo.global.auth.dto.request.AuthTokenRequest;
 import com.Timo.Timo.global.auth.dto.response.AuthTokenResponse;
 import com.Timo.Timo.global.auth.exception.AuthSuccessCode;
 import com.Timo.Timo.global.auth.principal.CustomUserDetails;
@@ -40,10 +41,9 @@ public class AuthController implements AuthControllerDocs {
   @Override
   @PostMapping("/token")
   public ResponseEntity<BaseResponse<AuthTokenResponse>> token(
-      @RequestBody Map<String, String> body
+      @RequestBody AuthTokenRequest request
   ) {
-    String code = body.get("code");
-    AuthTokenResponse authTokenResponse = authService.exchangeCodeForToken(code);
+    AuthTokenResponse authTokenResponse = authService.exchangeCodeForToken(request.code());
 
     return ResponseEntity.ok()
         .header("Cache-Control", "no-store")
