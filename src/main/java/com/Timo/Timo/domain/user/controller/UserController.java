@@ -10,8 +10,6 @@ import com.Timo.Timo.domain.user.docs.UserControllerDocs;
 import com.Timo.Timo.domain.user.dto.response.UserProfileResponse;
 import com.Timo.Timo.domain.user.exception.UserSuccessCode;
 import com.Timo.Timo.domain.user.service.UserService;
-import com.Timo.Timo.global.exception.CustomException;
-import com.Timo.Timo.global.exception.code.ErrorCode;
 import com.Timo.Timo.global.auth.principal.CustomUserDetails;
 import com.Timo.Timo.global.response.BaseResponse;
 
@@ -31,24 +29,11 @@ public class UserController implements UserControllerDocs {
 	public ResponseEntity<BaseResponse<UserProfileResponse>> getMyProfile(
 		@AuthenticationPrincipal CustomUserDetails userDetails
 	) {
-		Long userId = extractUserId(userDetails);
+		Long userId = userDetails.getUserId();
 		UserProfileResponse response = userService.getMyProfile(userId);
 
 		return ResponseEntity.ok(
 			BaseResponse.onSuccess(UserSuccessCode.PROFILE_RETRIEVED, response)
 		);
-	}
-
-	private Long extractUserId(CustomUserDetails userDetails) {
-		if (userDetails == null || userDetails.getUser() == null) {
-			throw new CustomException(ErrorCode.UNAUTHORIZED);
-		}
-
-		Long userId = userDetails.getUser().getId();
-		if (userId == null) {
-			throw new CustomException(ErrorCode.UNAUTHORIZED);
-		}
-
-		return userId;
 	}
 }
