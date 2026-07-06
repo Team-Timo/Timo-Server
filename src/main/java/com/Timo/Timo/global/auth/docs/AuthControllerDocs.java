@@ -8,6 +8,7 @@ import com.Timo.Timo.global.response.BaseResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -23,11 +24,27 @@ public interface AuthControllerDocs {
   @Operation(
       summary = "AccessToken 발급",
       description = """
-        1회성 인증 코드(code)를 AccessToken으로 교환합니다.
-        최초 로그인인 경우 isNewUser가 true로 반환됩니다.
-        RefreshToken은 Set-Cookie 헤더로 전달됩니다.
+        1회성 인증 코드(code)를 AccessToken으로 교환합니다.  
+        - isNewUser: 이번 요청으로 신규 회원가입이 이루어졌는지 여부입니다. true면 아직 온보딩을 진행한 적이 없는 사용자입니다.
+        - user.onboardingCompleted: 온보딩(초기 설정) 완료 여부입니다. false면 온보딩 화면으로, true면 홈 화면으로 이동시켜 주세요.
+        - isNewUser가 true인 경우 user.onboardingCompleted는 항상 false입니다. 기존 가입자가 온보딩을 중단한 경우에도 isNewUser는 false, onboardingCompleted는 false로 반환될 수 있습니다.
+        - RefreshToken과 sessionId는 Set-Cookie 헤더로 전달되며, 응답 바디에는 포함되지 않습니다.
 			"""
-
+  )
+ @io.swagger.v3.oas.annotations.parameters.RequestBody(
+      content = @Content(
+          mediaType = "application/json",
+          schema = @Schema(implementation = AuthTokenRequest.class),
+          examples = @ExampleObject(
+              name = "로그인 요청",
+              value =
+                  """
+                  {
+                    "code": "550e8400-e29b-41d4-a716-446655440000"
+                  }
+                  """
+          )
+      )
   )
   @ApiResponses({
       @ApiResponse(
