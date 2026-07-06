@@ -13,12 +13,14 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -93,9 +95,11 @@ public class AuthController {
   @PostMapping("/auth/logout")
   public ResponseEntity<BaseResponse<Void>> logout(
       @AuthenticationPrincipal CustomUserDetails userDetails,
-      @CookieValue(name = "sessionId", required = false) String sessionId
+      @CookieValue(name = "sessionId", required = false) String sessionId,
+      HttpServletRequest request
   ) {
-    authService.logout(userDetails.getUser().getId(), sessionId);
+    String accessToken = resolveToken(request);
+    authService.logout(accessToken, userDetails.getUser().getId(), sessionId);
 
     return ResponseEntity.ok()
         .header(HttpHeaders.SET_COOKIE,
@@ -126,5 +130,13 @@ public class AuthController {
         .header(HttpHeaders.SET_COOKIE,
             CookieUtil.expireCookie("sessionId", cookieSecure).toString())
         .body(BaseResponse.onSuccess(AuthSuccessCode.WITHDRAW_SUCCESS, null));
+  }
+
+  private String resolveToken(HttpServletRequest request) {
+    String bearer = request.getHeader("Authorization");
+    if (StringUtils.hasText(bearer) && bearer.startsWith("Bearer ")) {
+      return bearer.substring(7);
+    }
+    return null;
   }
 }

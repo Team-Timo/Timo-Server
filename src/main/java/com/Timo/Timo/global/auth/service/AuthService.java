@@ -20,6 +20,7 @@ public class AuthService {
   private final JwtTokenProvider jwtTokenProvider;
   private final UserRepository userRepository;
   private final RefreshTokenService refreshTokenService;
+  private final BlackListService blackListService;
 
   public AuthTokenResponse exchangeCodeForToken(String code) {
 
@@ -78,7 +79,11 @@ public class AuthService {
     return new ReissueResult(newAccessToken, newRefreshToken, newSessionId);
   }
 
-  public void logout(Long userId, String sessionId) {
+  public void logout(String accessToken, Long userId, String sessionId) {
+    if(accessToken !=null){
+      long remainingExpiry = jwtTokenProvider.getRemainingExpiry(accessToken);
+      blackListService.addToBlackList(accessToken, remainingExpiry);
+    }
     refreshTokenService.deleteRefreshToken(String.valueOf(userId), sessionId);
   }
 
