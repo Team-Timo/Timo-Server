@@ -1,24 +1,16 @@
 package com.Timo.Timo.global.auth.controller;
 
-import com.Timo.Timo.domain.user.entity.User;
-import com.Timo.Timo.domain.user.repository.UserRepository;
 import com.Timo.Timo.global.auth.dto.response.AuthTokenResponse;
-import com.Timo.Timo.global.auth.exception.AuthErrorCode;
 import com.Timo.Timo.global.auth.exception.AuthSuccessCode;
-import com.Timo.Timo.global.auth.handler.AuthErrorResponseWriter;
-import com.Timo.Timo.global.auth.service.AuthCodeService;
-import com.Timo.Timo.global.exception.code.ErrorCode;
-import com.Timo.Timo.global.jwt.provider.JwtTokenProvider;
+import com.Timo.Timo.global.auth.service.AuthService;
 import com.Timo.Timo.global.response.BaseResponse;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,67 +22,25 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AuthController {
 
-  private final AuthCodeService authCodeService;
-  private final JwtTokenProvider jwtTokenProvider;
-  private final AuthErrorResponseWriter authErrorResponseWriter;
-  private final UserRepository userRepository;
-  private final ObjectMapper objectMapper;
+  private final AuthService authService;
 
   @Operation(summary = "AccessToken 발급", description = "1회성 code로 AccessToken을 발급합니다.")
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "로그인 성공"),
+      @ApiResponse(responseCode = "400", description = "code 누락"),
+      @ApiResponse(responseCode = "401", description = "유효하지 않거나 만료된 인증 코드"),
+      @ApiResponse(responseCode = "404", description = "존재하지 않는 사용자"),
+      @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+  })
   @PostMapping("/token")
-  public void token(
-      @RequestBody Map<String, String> body,
-      HttpServletRequest request,
-      HttpServletResponse response
-  ) throws IOException {
-
+  public ResponseEntity<BaseResponse<AuthTokenResponse>> token(
+      @RequestBody Map<String, String> body
+  ) {
     String code = body.get("code");
+    AuthTokenResponse authTokenResponse = authService.exchangeCodeForToken(code);
 
-    if (code == null) {
-      authErrorResponseWriter.write(response, ErrorCode.BAD_REQUEST, request.getRequestURI());
-      return;
-    }
-
-    String value = authCodeService.getAndDelete(code);
-
-    if (value == null) {
-      authErrorResponseWriter.write(response, AuthErrorCode.INVALID_AUTH_CODE, request.getRequestURI());
-      return;
-    }
-
-    String[] parts = value.split(":");
-    Long userId = Long.parseLong(parts[0]);
-    boolean onboardingCompleted = Boolean.parseBoolean(parts[1]);
-    boolean isNewUser = !onboardingCompleted;
-
-    User user = userRepository.findById(userId).orElse(null);
-    if (user == null) {
-      authErrorResponseWriter.write(response, ErrorCode.NOT_FOUND, request.getRequestURI());
-      return;
-    }
-
-    String accessToken = jwtTokenProvider.generateAccessToken(userId);
-
-    AuthTokenResponse authTokenResponse = AuthTokenResponse.builder()
-        .accessToken(accessToken)
-        .isNewUser(isNewUser)
-        .user(AuthTokenResponse.UserInfo.builder()
-            .id(user.getId())
-            .name(user.getName())
-            .email(user.getEmail())
-            .profileImageUrl(user.getProfileImageUrl())
-            .onboardingCompleted(user.isOnboardingCompleted())
-            .build()
-        )
-        .build();
-
-    response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-    response.setCharacterEncoding("UTF-8");
-    response.setHeader("Cache-Control", "no-store");
-    response.getWriter().write(
-        objectMapper.writeValueAsString(
-            BaseResponse.onSuccess(AuthSuccessCode.LOGIN, authTokenResponse)
-        )
-    );
+    return ResponseEntity.ok()
+        .header("Cache-Control", "no-store")
+        .body(BaseResponse.onSuccess(AuthSuccessCode.LOGIN, authTokenResponse));
   }
 }
