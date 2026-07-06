@@ -58,7 +58,7 @@ public class AuthService {
   }
 
   public ReissueResult reissue(String refreshToken, String sessionId) {
-
+    
     if (refreshToken == null || sessionId == null
         || !jwtTokenProvider.validateRefreshToken(refreshToken)) {
       throw new CustomException(AuthErrorCode.INVALID_REFRESH_TOKEN);
