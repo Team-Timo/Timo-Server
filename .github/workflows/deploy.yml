@@ -1,13 +1,17 @@
 name: Deploy to EC2
 
 on:
+  # deploy 브랜치에 실제 커밋이 들어왔을 때 실행
   push:
     branches: [deploy]
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   deploy:
-    # PR이 머지된 경우에만 실행 (닫기만 한 건 무시)
-    if: github.event.pull_request.merged == true
+    # push 이벤트는 이미 deploy 브랜치에 들어온 커밋만 대상으로 함
     runs-on: ubuntu-latest
 
     steps:
@@ -15,7 +19,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. Docker Buildx 설정 (멀티 아키텍처 빌드용)
+      # 2. Docker Buildx 설정 (linux/amd64 이미지 빌드용)
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -49,7 +53,7 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             # ghcr.io 로그인
-            echo ${{ secrets.GHCR_TOKEN }} | sudo docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} --password-stdin
+            echo "${{ secrets.GHCR_TOKEN }}" | sudo docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
 
             # 최신 이미지 pull
             sudo docker pull ghcr.io/team-timo/timo-server:latest
