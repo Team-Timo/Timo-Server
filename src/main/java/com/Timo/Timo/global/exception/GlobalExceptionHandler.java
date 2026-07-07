@@ -3,6 +3,7 @@ package com.Timo.Timo.global.exception;
 import java.time.LocalDateTime;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -30,6 +31,14 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	public ResponseEntity<ErrorDto> handleMethodArgumentNotValidException(
 		MethodArgumentNotValidException exception,
+		HttpServletRequest request
+	) {
+		return createErrorResponse(ErrorCode.BAD_REQUEST, request);
+	}
+
+	@ExceptionHandler(HttpMessageNotReadableException.class)
+	public ResponseEntity<ErrorDto> handleHttpMessageNotReadableException(
+		HttpMessageNotReadableException exception,
 		HttpServletRequest request
 	) {
 		return createErrorResponse(ErrorCode.BAD_REQUEST, request);
