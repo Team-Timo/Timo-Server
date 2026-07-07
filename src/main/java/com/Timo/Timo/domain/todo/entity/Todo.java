@@ -2,6 +2,7 @@ package com.Timo.Timo.domain.todo.entity;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import com.Timo.Timo.domain.todo.enums.RepeatType;
@@ -54,6 +55,7 @@ public class Todo extends BaseTimeEntity {
 	@Column(name = "title", nullable = false, length = 30)
 	private String title;
 
+	@Getter(AccessLevel.NONE)
 	@OneToMany(mappedBy = "todo", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Subtask> subtasks = new ArrayList<>();
 
@@ -67,6 +69,7 @@ public class Todo extends BaseTimeEntity {
 	@Column(name = "repeat_type", nullable = false, length = 20)
 	private RepeatType repeatType;
 
+	@Getter(AccessLevel.NONE)
 	@ElementCollection
 	@CollectionTable(name = "todo_repeat_weekdays", joinColumns = @JoinColumn(name = "todo_id"))
 	@Enumerated(EnumType.STRING)
@@ -155,6 +158,14 @@ public class Todo extends BaseTimeEntity {
 			}
 		}
 		return todo;
+	}
+
+	public List<Subtask> getSubtasks() {
+		return Collections.unmodifiableList(subtasks);
+	}
+
+	public List<Weekday> getRepeatWeekdays() {
+		return Collections.unmodifiableList(repeatWeekdays);
 	}
 
 	private void addSubtask(Subtask subtask) {
