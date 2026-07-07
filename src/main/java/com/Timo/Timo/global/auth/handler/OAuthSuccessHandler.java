@@ -39,7 +39,7 @@ public class OAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
   ) throws IOException {
 
     CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-    Long userId = userDetails.getUser().getId();
+    Long userId = userDetails.getUserId();
     boolean onboardingCompleted = userDetails.getUser().isOnboardingCompleted();
 
     String refreshToken = jwtTokenProvider.generateRefreshToken(userId);

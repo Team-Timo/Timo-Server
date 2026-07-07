@@ -31,6 +31,10 @@ public class CustomUserDetails implements OAuth2User, UserDetails {
     return user.getEmail();
   }
 
+  public Long getUserId() {
+    return user.getId();
+  }
+
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {
     return List.of(new SimpleGrantedAuthority("ROLE_USER"));
