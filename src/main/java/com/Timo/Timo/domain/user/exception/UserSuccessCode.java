@@ -11,7 +11,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum UserSuccessCode implements BaseSuccessCode {
 
-	PROFILE_RETRIEVED(HttpStatus.OK, "프로필을 조회했습니다.");
+	PROFILE_RETRIEVED(HttpStatus.OK, "프로필을 조회했습니다."),
+  ONBOARDING_COMPLETED(HttpStatus.OK, "온보딩이 완료되었습니다.");
 
 	private final HttpStatus httpStatus;
 	private final String message;

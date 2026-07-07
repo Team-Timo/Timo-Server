@@ -1,4 +1,4 @@
-package com.Timo.Timo.domain.user;
+package com.Timo.Timo.domain.user.service;
 
 import com.Timo.Timo.domain.user.dto.request.OnboardingRequest;
 import com.Timo.Timo.domain.user.dto.response.OnboardingResponse;
