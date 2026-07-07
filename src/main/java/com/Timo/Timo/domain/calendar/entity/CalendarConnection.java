@@ -6,6 +6,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
@@ -26,7 +27,7 @@ public class CalendarConnection {
   private Long id;
 
   @OneToOne
-  @Column(name = "user_id", nullable = false, unique = true)
+  @JoinColumn(name = "user_id", nullable = false, unique = true)
   private User user;
 
   @Column(name = "calendar_email", nullable = false)
