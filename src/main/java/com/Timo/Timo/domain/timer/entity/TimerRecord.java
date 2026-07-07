@@ -2,7 +2,6 @@ package com.Timo.Timo.domain.timer.entity;
 
 import com.Timo.Timo.domain.timer.enums.TimerStatus;
 import com.Timo.Timo.domain.user.entity.User;
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
@@ -14,11 +13,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -72,9 +68,6 @@ public class TimerRecord {
   @Column(name = "created_at", nullable = false, updatable = false)
   private LocalDateTime createdAt;
 
-  @OneToMany(mappedBy = "timerRecord", cascade = CascadeType.ALL, orphanRemoval = true)
-  private final List<TimerSession> sessions = new ArrayList<>();
-
   @Builder
   private TimerRecord(User user, Todo todo, Integer plannedMinutes, LocalDateTime startedAt) {
     this.user = user;
@@ -91,10 +84,6 @@ public class TimerRecord {
 
   public void resume() {
     this.status = TimerStatus.RUNNING;
-  }
-
-  public void addSession(TimerSession session) {
-    this.sessions.add(session);
   }
 
   public boolean isRunning() {
