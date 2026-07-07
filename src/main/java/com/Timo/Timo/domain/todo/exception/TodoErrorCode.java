@@ -13,7 +13,7 @@ public enum TodoErrorCode implements BaseErrorCode {
 
 	INVALID_REQUEST(HttpStatus.BAD_REQUEST, "TODO_400", "필수 필드가 누락되었거나 형식이 올바르지 않습니다."),
 	INVALID_TITLE(HttpStatus.BAD_REQUEST, "TODO_400", "투두명은 한국어 20자/영어 30자를 초과할 수 없습니다."),
-	MAX_COUNT_EXCEEDED(HttpStatus.CONFLICT, "COMMON_409", "해당 날짜의 투두가 최대 개수(20개)를 초과했습니다.");
+	MAX_COUNT_EXCEEDED(HttpStatus.CONFLICT, "TODO_409", "해당 날짜의 투두가 최대 개수(20개)를 초과했습니다.");
 
 	private final HttpStatus httpStatus;
 	private final String code;
