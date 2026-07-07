@@ -1,4 +1,4 @@
-package com.Timo.Timo.domain.onboarding.dto.response;
+package com.Timo.Timo.domain.user.dto.response;
 
 import lombok.Builder;
 
