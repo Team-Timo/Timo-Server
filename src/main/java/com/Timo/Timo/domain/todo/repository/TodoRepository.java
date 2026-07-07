@@ -11,6 +11,8 @@ import com.Timo.Timo.domain.todo.entity.Todo;
 
 public interface TodoRepository extends JpaRepository<Todo, Long> {
 
+	long countByUser_IdAndDate(Long userId, LocalDate date);
+
 	@Query("""
 		select t from Todo t
 		where t.user.id = :userId
