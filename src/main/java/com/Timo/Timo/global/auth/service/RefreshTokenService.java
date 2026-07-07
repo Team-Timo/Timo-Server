@@ -2,6 +2,7 @@ package com.Timo.Timo.global.auth.service;
 
 import com.Timo.Timo.global.jwt.provider.JwtTokenProvider;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +35,13 @@ public class RefreshTokenService {
 
   public void deleteRefreshToken(String userId, String sessionId) {
     redisTemplate.delete(KEY_PREFIX + userId + ":" + sessionId);
+  }
+
+  public void deleteAllRefreshTokens(String userId) {
+    Set<String> keys = redisTemplate.keys(KEY_PREFIX + userId + ":*");
+    if (keys != null && !keys.isEmpty()) {
+      redisTemplate.delete(keys);
+    }
   }
 
   public boolean isRefreshTokenValid(String userId, String sessionId, String refreshToken) {
