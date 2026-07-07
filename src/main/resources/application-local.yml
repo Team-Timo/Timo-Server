@@ -37,3 +37,8 @@ jwt:
   secret: ${JWT_SECRET}
   access-token-expires-in-seconds: 1800
   refresh-token-expires-in-seconds: 1209600
+
+ai:
+  gemini:
+    api-key: ${GEMINI_API_KEY:}
+    model: ${GEMINI_MODEL:gemini-3.1-flash-lite}
