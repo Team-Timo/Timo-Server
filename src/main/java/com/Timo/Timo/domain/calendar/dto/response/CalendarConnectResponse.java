@@ -6,7 +6,7 @@ import lombok.Builder;
 @Builder
 public record CalendarConnectResponse(
     boolean calendarConnected,
-    String connectedEmail,
+    String calendarEmail,
     LocalDateTime connectedAt
 ) {
 
