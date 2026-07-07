@@ -113,6 +113,14 @@ public interface AuthControllerDocs {
           )
       ),
       @ApiResponse(
+          responseCode = "404",
+          description = "RefreshToken에 해당하는 사용자를 찾을 수 없는 경우 (탈퇴 등으로 삭제된 사용자)",
+          content = @Content(
+              mediaType = "application/json",
+              schema = @Schema(implementation = ErrorDto.class)
+          )
+      ),
+      @ApiResponse(
           responseCode = "500",
           description = "서버 내부 오류",
           content = @Content(
@@ -203,6 +211,7 @@ public interface AuthControllerDocs {
           )
       )
   })
+
   ResponseEntity<BaseResponse<Void>> withdraw(
       @Parameter(hidden = true) CustomUserDetails userDetails,
       @CookieValue(name = "sessionId", required = false) String sessionId,
