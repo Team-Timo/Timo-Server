@@ -36,9 +36,8 @@ public class AiTodoController implements AiTodoDocs {
 		@Valid @RequestBody RecommendDurationRequest request
 	) {
 		log.info(
-			"AI duration recommendation API called. userId={}, title={}, tagId={}",
+			"AI duration recommendation API called. userId={}, tagId={}",
 			userDetails.getUserId(),
-			request.title(),
 			request.tagId()
 		);
 
