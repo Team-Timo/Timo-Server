@@ -26,7 +26,7 @@ public class GeminiService {
 	@Value("${ai.gemini.api-key:}")
 	private String apiKey;
 
-	@Value("${ai.gemini.model:gemini-2.0-flash}")
+	@Value("${ai.gemini.model}")
 	private String model;
 
 	public String generateJson(String prompt) {
