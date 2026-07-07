@@ -5,18 +5,15 @@ import com.Timo.Timo.global.auth.dto.ReissueResult;
 import com.Timo.Timo.global.auth.dto.request.AuthTokenRequest;
 import com.Timo.Timo.global.auth.dto.response.AuthReissueResponse;
 import com.Timo.Timo.global.auth.dto.response.AuthTokenResponse;
-import com.Timo.Timo.global.auth.exception.AuthSuccessCode;
+import com.Timo.Timo.global.auth.factory.AuthResponseFactory;
 import com.Timo.Timo.global.auth.principal.CustomUserDetails;
 import com.Timo.Timo.global.auth.service.AuthService;
-import com.Timo.Timo.global.auth.utils.CookieUtil;
 import com.Timo.Timo.global.auth.utils.TokenExtractor;
-import com.Timo.Timo.global.jwt.provider.JwtTokenProvider;
 import com.Timo.Timo.global.response.BaseResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.CookieValue;
@@ -33,7 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController implements AuthControllerDocs {
 
   private final AuthService authService;
-  private final JwtTokenProvider jwtTokenProvider;
+  private final AuthResponseFactory authResponseFactory;
 
   @Value("${app.auth.cookie-secure}")
   private boolean cookieSecure;
@@ -44,10 +41,7 @@ public class AuthController implements AuthControllerDocs {
       @RequestBody AuthTokenRequest request
   ) {
     AuthTokenResponse authTokenResponse = authService.exchangeCodeForToken(request.code());
-
-    return ResponseEntity.ok()
-        .header("Cache-Control", "no-store")
-        .body(BaseResponse.onSuccess(AuthSuccessCode.LOGIN_SUCCESS, authTokenResponse));
+    return authResponseFactory.tokenResponse(authTokenResponse);
   }
 
   @Override
@@ -57,19 +51,7 @@ public class AuthController implements AuthControllerDocs {
       @CookieValue(name = "sessionId", required = false) String sessionId
   ) {
     ReissueResult result = authService.reissue(refreshToken, sessionId);
-    AuthReissueResponse authReissueResponse = AuthReissueResponse.builder()
-        .accessToken(result.getAccessToken())
-        .build();
-
-    return ResponseEntity.ok()
-        .header(HttpHeaders.SET_COOKIE,
-            CookieUtil.createCookie("refreshToken", result.getRefreshToken(),
-                jwtTokenProvider.getRefreshTokenExpiry(), cookieSecure).toString())
-        .header(HttpHeaders.SET_COOKIE,
-            CookieUtil.createCookie("sessionId", result.getSessionId(),
-                jwtTokenProvider.getRefreshTokenExpiry(), cookieSecure).toString())
-        .header("Cache-Control", "no-store")
-        .body(BaseResponse.onSuccess(AuthSuccessCode.REISSUE_SUCCESS, authReissueResponse));
+    return authResponseFactory.reissueResponse(result);
   }
 
   @Override
@@ -82,12 +64,7 @@ public class AuthController implements AuthControllerDocs {
     String accessToken = TokenExtractor.resolveToken(request);
     authService.logout(accessToken, userDetails.getUser().getId(), sessionId);
 
-    return ResponseEntity.ok()
-        .header(HttpHeaders.SET_COOKIE,
-            CookieUtil.expireCookie("refreshToken", cookieSecure).toString())
-        .header(HttpHeaders.SET_COOKIE,
-            CookieUtil.expireCookie("sessionId", cookieSecure).toString())
-        .body(BaseResponse.onSuccess(AuthSuccessCode.LOGOUT_SUCCESS, null));
+    return authResponseFactory.logoutResponse();
   }
 
   @Override
@@ -100,11 +77,6 @@ public class AuthController implements AuthControllerDocs {
     String accessToken = TokenExtractor.resolveToken(request);
     authService.withdraw(accessToken, userDetails.getUser().getId(), sessionId);
 
-    return ResponseEntity.ok()
-        .header(HttpHeaders.SET_COOKIE,
-            CookieUtil.expireCookie("refreshToken", cookieSecure).toString())
-        .header(HttpHeaders.SET_COOKIE,
-            CookieUtil.expireCookie("sessionId", cookieSecure).toString())
-        .body(BaseResponse.onSuccess(AuthSuccessCode.WITHDRAW_SUCCESS, null));
+    return authResponseFactory.withdrawResponse();
   }
 }
