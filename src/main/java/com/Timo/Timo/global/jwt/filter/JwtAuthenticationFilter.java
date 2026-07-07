@@ -2,6 +2,8 @@ package com.Timo.Timo.global.jwt.filter;
 
 import com.Timo.Timo.domain.user.repository.UserRepository;
 import com.Timo.Timo.global.auth.principal.CustomUserDetails;
+import com.Timo.Timo.global.auth.service.BlackListService;
+import com.Timo.Timo.global.auth.utils.TokenExtractor;
 import com.Timo.Timo.global.jwt.provider.JwtTokenProvider;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -14,7 +16,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 @Component
@@ -23,6 +24,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
   private final JwtTokenProvider jwtTokenProvider;
   private final UserRepository userRepository;
+  private final BlackListService blacklistService;
 
   @Override
   protected void doFilterInternal(
@@ -31,9 +33,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       FilterChain filterChain
   ) throws ServletException, IOException {
 
-    String token = resolveToken(request);
+    String token = TokenExtractor.resolveToken(request);
 
-    if(token!=null && jwtTokenProvider.validateAccessToken(token)){
+    if(token!=null
+        && jwtTokenProvider.validateAccessToken(token)
+        && !blacklistService.isBlackListed(token)){
       Long userId = jwtTokenProvider.getUserId(token);
       userRepository.findById(userId).ifPresent(user -> {
         CustomUserDetails userDetails = new CustomUserDetails(user, Map.of());
@@ -47,14 +51,5 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     filterChain.doFilter(request, response);
-  }
-
-  private String resolveToken(HttpServletRequest request) {
-
-    String bearer = request.getHeader("Authorization");
-    if (StringUtils.hasText(bearer) && bearer.startsWith("Bearer ")) {
-      return bearer.substring(7);
-    }
-    return null;
   }
 }

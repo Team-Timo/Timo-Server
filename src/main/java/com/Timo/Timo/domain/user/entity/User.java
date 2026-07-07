@@ -89,6 +89,10 @@ public class User extends BaseTimeEntity {
     this.onboardingCompleted = true;
   }
 
+  public void updateLanguage(Language language) {
+    this.language = language;
+  }
+
   @Builder
   private User(
       Provider provider,

@@ -24,5 +24,4 @@ public class AuthTokenResponse {
     private final String profileImageUrl;
     private final boolean onboardingCompleted;
   }
-
 }
