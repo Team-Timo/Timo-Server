@@ -40,5 +40,11 @@ jwt:
 
 ai:
   gemini:
-    api-key: ${GEMINI_API_KEY:}
-    model: ${GEMINI_MODEL:gemini-3.1-flash-lite}
+    api-key: ${GEMINI_API_KEY}
+    model: ${AI_MODEL_NAME}
+  rate-limit:
+    user-rpm: ${AI_USER_RPM}
+    global-rpm: ${AI_GLOBAL_RPM}
+    user-지rpd: ${AI_USER_RPD}
+    global-rpd: ${AI_GLOBAL_RPD}
+    global-tpm: ${AI_GLOBAL_TPM}
