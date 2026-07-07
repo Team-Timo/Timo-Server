@@ -39,6 +39,10 @@ public class TimerService {
     Todo todo = todoRepository.findById(todoId)
         .orElseThrow(() -> new CustomException(TodoErrorCode.TODO_NOT_FOUND));
 
+    if (!todo.getUser().getId().equals(userId)) {
+      throw new CustomException(TodoErrorCode.TODO_ACCESS_DENIED);
+    }
+
     if (todo.getEstimatedMinutes() == null) {
       throw new CustomException(TodoErrorCode.TODO_ESTIMATED_MINUTES_REQUIRED);
     }
