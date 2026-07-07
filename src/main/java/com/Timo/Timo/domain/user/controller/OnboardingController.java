@@ -4,6 +4,7 @@ import com.Timo.Timo.domain.user.docs.OnboardingControllerDocs;
 import com.Timo.Timo.domain.user.dto.request.OnboardingRequest;
 import com.Timo.Timo.domain.user.dto.response.OnboardingResponse;
 import com.Timo.Timo.domain.user.exception.UserSuccessCode;
+import com.Timo.Timo.domain.user.factory.OnboardingResponseFactory;
 import com.Timo.Timo.domain.user.service.OnboardingService;
 import com.Timo.Timo.global.auth.principal.CustomUserDetails;
 import com.Timo.Timo.global.response.BaseResponse;
@@ -34,8 +35,6 @@ public class OnboardingController implements OnboardingControllerDocs {
     Long userId = userDetails.getUserId();
     OnboardingResponse response = onboardingService.completeOnboarding(userId, request);
 
-    return ResponseEntity.ok(
-        BaseResponse.onSuccess(UserSuccessCode.ONBOARDING_COMPLETED, response)
-    );
+    return OnboardingResponseFactory.completed(response);
   }
 }
