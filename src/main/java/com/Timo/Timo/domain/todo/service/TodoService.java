@@ -33,7 +33,7 @@ public class TodoService {
 
 	@Transactional
 	public TodoCreateResponse createTodo(Long userId, TodoCreateRequest request) {
-		User user = userRepository.findById(userId)
+		User user = userRepository.findByIdForUpdate(userId)
 				.orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
 		validateTagExists(request.tagId());
