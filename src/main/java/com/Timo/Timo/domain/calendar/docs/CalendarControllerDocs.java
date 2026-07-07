@@ -22,8 +22,8 @@ public interface CalendarControllerDocs {
   @Operation(
       summary = "구글 캘린더 연동",
       description = """
-          구글 OAuth 동의 완료 후 발급된 authorizationCode로 구글 토큰을 교환하여 캘린더 연동
-          - 가입 시 사용한 구글 계정과 다른 계정으로 연동을 시도하면 거부됨
+          구글 OAuth 동의 완료 후 발급된 authorizationCode로 구글 토큰을 교환하여 캘린더 연동합니다.
+          가입 시 사용한 구글 계정과 다른 계정으로 연동을 시도하면 거부됩니다.
           """,
       security = @SecurityRequirement(name = "bearerAuth")
   )
@@ -46,7 +46,7 @@ public interface CalendarControllerDocs {
   @Operation(
       summary = "구글 캘린더 연동 해제",
       description = """
-          연동된 구글 캘린더 정보를 삭제하고 구글 토큰을 revoke
+          연동된 구글 캘린더 정보를 삭제하고 구글 토큰을 revoke합니다.
           """,
       security = @SecurityRequirement(name = "bearerAuth")
   )
