@@ -38,7 +38,7 @@ public class SecurityConfig {
 			.httpBasic(AbstractHttpConfigurer::disable)
       .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 			.sessionManagement(session -> session
-				.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+				.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
 			.authorizeHttpRequests(authorize -> authorize
 				.requestMatchers(
           "/",
