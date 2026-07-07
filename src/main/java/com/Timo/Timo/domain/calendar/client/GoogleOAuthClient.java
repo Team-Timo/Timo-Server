@@ -1,0 +1,68 @@
+package com.Timo.Timo.domain.calendar.client;
+
+import com.Timo.Timo.domain.calendar.dto.response.GoogleTokenResponse;
+import com.Timo.Timo.domain.calendar.dto.response.GoogleUserInfoResponse;
+import com.Timo.Timo.domain.calendar.exception.CalendarErrorCode;
+import com.Timo.Timo.global.exception.CustomException;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestClient;
+
+@Component
+public class GoogleOAuthClient {
+
+  private final RestClient restClient = RestClient.create();
+
+  @Value("${spring.security.oauth2.client.registration.google.client-id}")
+  private String clientId;
+
+  @Value("${spring.security.oauth2.client.registration.google.client-secret}")
+  private String clientSecret;
+
+  @Value("${app.oauth2.redirect-uri}")
+  private String redirectUri;
+
+  public GoogleTokenResponse exchangeToken(String authorizationCode){
+    MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+    body.add("code", authorizationCode);
+    body.add("client_id", clientId);
+    body.add("client_secret", clientSecret);
+    body.add("redirect_uri", redirectUri);
+    body.add("grant_type", "authorization_code");
+
+    try {
+      return restClient.post()
+          .uri("https://oauth2.googleapis.com/token")
+          .body(body)
+          .retrieve()
+          .body(GoogleTokenResponse.class);
+    } catch (Exception e) {
+      throw new CustomException(CalendarErrorCode.CALENDAR_401_AUTH_FAILED);
+    }
+  }
+
+  public GoogleUserInfoResponse fetchUserInfo(String accessToken){
+    try {
+      return restClient.get()
+          .uri("https://www.googleapis.com/oauth2/v2/userinfo")
+          .header("Authorization", "Bearer " + accessToken)
+          .retrieve()
+          .body(GoogleUserInfoResponse.class);
+    } catch (Exception e) {
+      throw new CustomException(CalendarErrorCode.CALENDAR_401_AUTH_FAILED);
+    }
+  }
+
+  public void revokeToken(String token) {
+    try {
+      restClient.post()
+          .uri("https://oauth2.googleapis.com/revoke?token=" + token)
+          .retrieve()
+          .toBodilessEntity();
+    } catch (Exception e) {
+      throw new CustomException(CalendarErrorCode.CALENDAR_500_REVOKE_FAILED);
+    }
+  }
+}
