@@ -11,6 +11,7 @@ import com.Timo.Timo.domain.tag.repository.TagRepository;
 import com.Timo.Timo.domain.todo.dto.request.TodoCreateRequest;
 import com.Timo.Timo.domain.todo.dto.response.TodoCreateResponse;
 import com.Timo.Timo.domain.todo.entity.Todo;
+import com.Timo.Timo.domain.todo.enums.RepeatType;
 import com.Timo.Timo.domain.todo.repository.TodoRepository;
 import com.Timo.Timo.domain.todo.vo.Duration;
 import com.Timo.Timo.domain.user.entity.User;
@@ -43,7 +44,7 @@ public class TodoService {
 		todoCapacityChecker.assertCapacity(userId, todoDates);
 
 		LocalDate startDate = request.date();
-		LocalDate endDate = request.date().plus(TodoDateCalculator.REPEAT_PERIOD);
+		LocalDate endDate = resolveEndDate(startDate, request.repeatType());
 
 		Todo todo = Todo.create(
 				user,
@@ -69,5 +70,12 @@ public class TodoService {
 		if (tagId != null && !tagRepository.existsById(tagId)) {
 			throw new CustomException(TagErrorCode.TAG_NOT_FOUND);
 		}
+	}
+
+	private LocalDate resolveEndDate(LocalDate startDate, RepeatType repeatType) {
+		if (repeatType == RepeatType.NONE) {
+			return startDate;
+		}
+		return startDate.plus(TodoDateCalculator.REPEAT_PERIOD);
 	}
 }
