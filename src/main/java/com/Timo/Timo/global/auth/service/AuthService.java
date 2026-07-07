@@ -67,6 +67,10 @@ public class AuthService {
 
     Long userId = jwtTokenProvider.getUserId(refreshToken);
 
+    if (!userRepository.existsById(userId)) {
+      throw new CustomException(UserErrorCode.USER_NOT_FOUND);
+    }
+
     if (!refreshTokenService.isRefreshTokenValid(String.valueOf(userId), sessionId, refreshToken)){
       throw new CustomException(AuthErrorCode.INVALID_REFRESH_TOKEN);
     }
@@ -102,9 +106,7 @@ public class AuthService {
       blacklistService.addToBlacklist(accessToken, remainingExpiry);
     }
 
-    if (sessionId != null) {
-      refreshTokenService.deleteRefreshToken(String.valueOf(userId), sessionId);
-    }
+    refreshTokenService.deleteAllRefreshTokens(String.valueOf(userId));
 
     userRepository.delete(user);
   }
