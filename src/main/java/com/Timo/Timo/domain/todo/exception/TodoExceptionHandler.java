@@ -8,12 +8,11 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import com.Timo.Timo.domain.todo.controller.TodoController;
 import com.Timo.Timo.global.exception.dto.ErrorDto;
 
 import jakarta.servlet.http.HttpServletRequest;
 
-@RestControllerAdvice(assignableTypes = TodoController.class)
+@RestControllerAdvice(basePackages = "com.Timo.Timo.domain.todo.controller")
 public class TodoExceptionHandler {
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)
