@@ -85,6 +85,9 @@ public class TodoDurationPromptBuilder {
 		}
 		return value
 			.replace("\\", "\\\\")
-			.replace("\"", "\\\"");
+			.replace("\"", "\\\"")
+			.replace("\n", " ")
+			.replace("\r", " ")
+			.replace("\t", " ");
 	}
 }
