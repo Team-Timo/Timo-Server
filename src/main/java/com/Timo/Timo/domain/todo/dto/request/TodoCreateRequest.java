@@ -31,7 +31,6 @@ public record TodoCreateRequest(
 		LocalDate date,
 
 		@NotBlank
-		@Pattern(regexp = "^\\d+:[0-5]\\d$", message = "duration은 mm:ss 형식이어야 합니다.")
 		String duration,
 
 		TodoPriority priority,
