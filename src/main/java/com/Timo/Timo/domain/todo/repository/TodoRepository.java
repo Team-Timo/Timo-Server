@@ -26,4 +26,22 @@ public interface TodoRepository extends JpaRepository<Todo, Long> {
 	long countByUser_IdAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
 			Long userId, LocalDate to, LocalDate from
 	);
+
+	@Query("""
+		select
+			ti.date as date,
+			count(ti.id) as totalCount,
+			sum(case when ti.completed = true then 1L else 0L end) as completedCount
+		from TodoInstance ti
+		join ti.todo t
+		where t.user.id = :userId
+		  and ti.date between :from and :to
+		group by ti.date
+		order by ti.date asc
+		""")
+	List<TodoDailyCompletionStats> findDailyCompletionStats(
+			@Param("userId") Long userId,
+			@Param("from") LocalDate from,
+			@Param("to") LocalDate to
+	);
 }
