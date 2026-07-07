@@ -1,0 +1,78 @@
+package com.Timo.Timo.domain.calendar.service;
+
+import com.Timo.Timo.domain.calendar.client.GoogleOAuthClient;
+import com.Timo.Timo.domain.calendar.dto.request.CalendarConnectRequest;
+import com.Timo.Timo.domain.calendar.dto.response.CalendarConnectResponse;
+import com.Timo.Timo.domain.calendar.dto.response.CalendarDisconnectResponse;
+import com.Timo.Timo.domain.calendar.dto.response.GoogleTokenResponse;
+import com.Timo.Timo.domain.calendar.dto.response.GoogleUserInfoResponse;
+import com.Timo.Timo.domain.calendar.entity.CalendarConnection;
+import com.Timo.Timo.domain.calendar.exception.CalendarErrorCode;
+import com.Timo.Timo.domain.calendar.repository.CalendarConnectionRepository;
+import com.Timo.Timo.domain.user.entity.User;
+import com.Timo.Timo.domain.user.exception.UserErrorCode;
+import com.Timo.Timo.domain.user.repository.UserRepository;
+import com.Timo.Timo.global.exception.CustomException;
+import java.time.LocalDateTime;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@RequiredArgsConstructor
+public class CalendarService {
+
+  private final CalendarConnectionRepository calendarConnectionRepository;
+  private final UserRepository userRepository;
+  private final GoogleOAuthClient googleOAuthClient;
+
+  @Transactional
+  public CalendarConnectResponse connect(Long userId, CalendarConnectRequest request) {
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+    if (calendarConnectionRepository.existsByUserId(userId)) {
+      throw new CustomException(CalendarErrorCode.CALENDAR_409_ALREADY_CONNECTED);
+    }
+
+    GoogleTokenResponse tokenResponse = googleOAuthClient.exchangeToken(request.authorizationCode());
+    GoogleUserInfoResponse userInfo = googleOAuthClient.fetchUserInfo(tokenResponse.accessToken());
+
+    validateSameAccount(user, userInfo);
+
+    CalendarConnection calendarConnection = CalendarConnection.builder()
+        .user(user)
+        .calendarEmail(userInfo.email())
+        .accessToken(tokenResponse.accessToken())
+        .refreshToken(tokenResponse.refreshToken())
+        .tokenExpiresAt(LocalDateTime.now().plusSeconds(tokenResponse.expiresIn()))
+        .build();
+
+    calendarConnectionRepository.save(calendarConnection);
+
+    return CalendarConnectResponse.builder()
+        .calendarConnected(true)
+        .calendarEmail(calendarConnection.getCalendarEmail())
+        .connectedAt(calendarConnection.getConnectedAt())
+        .build();
+  }
+
+  private void validateSameAccount(User user, GoogleUserInfoResponse userInfo) {
+    if (!user.getEmail().equalsIgnoreCase(userInfo.email())) {
+      throw new CustomException(CalendarErrorCode.CALENDAR_401_EMAIL_MISMATCH);
+    }
+  }
+
+  @Transactional
+  public CalendarDisconnectResponse disconnect(Long userId) {
+    CalendarConnection calendarConnection = calendarConnectionRepository.findByUserId(userId)
+        .orElseThrow(() -> new CustomException(CalendarErrorCode.CALENDAR_404_NOT_CONNECTED));
+
+    googleOAuthClient.revokeToken(calendarConnection.getAccessToken());
+    calendarConnectionRepository.delete(calendarConnection);
+
+    return CalendarDisconnectResponse.builder()
+        .calendarConnected(false)
+        .build();
+  }
+}
