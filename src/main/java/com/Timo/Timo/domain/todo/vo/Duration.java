@@ -20,8 +20,12 @@ public record Duration(int seconds) {
             throw new CustomException(TodoErrorCode.INVALID_REQUEST);
         }
 
-        int minutes = Integer.parseInt(matcher.group(1));
-        int seconds = Integer.parseInt(matcher.group(2));
-        return new Duration(minutes * 60 + seconds);
+        try {
+            int minutes = Integer.parseInt(matcher.group(1));
+            int seconds = Integer.parseInt(matcher.group(2));
+            return new Duration(Math.addExact(Math.multiplyExact(minutes, 60), seconds));
+        } catch (ArithmeticException | NumberFormatException e) {
+            throw new CustomException(TodoErrorCode.INVALID_REQUEST);
+        }
     }
 }
