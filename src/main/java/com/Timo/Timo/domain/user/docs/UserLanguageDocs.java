@@ -2,7 +2,8 @@ package com.Timo.Timo.domain.user.docs;
 
 import org.springframework.http.ResponseEntity;
 
-import com.Timo.Timo.domain.user.dto.response.UserProfileResponse;
+import com.Timo.Timo.domain.user.dto.request.UpdateLanguageRequest;
+import com.Timo.Timo.domain.user.dto.response.UpdateLanguageResponse;
 import com.Timo.Timo.global.auth.principal.CustomUserDetails;
 import com.Timo.Timo.global.exception.dto.ErrorDto;
 import com.Timo.Timo.global.response.BaseResponse;
@@ -10,28 +11,37 @@ import com.Timo.Timo.global.response.BaseResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
-public interface UserControllerDocs {
+public interface UserLanguageDocs {
 
 	@Operation(
-		summary = "내 프로필 조회",
+		summary = "서비스 언어 수정",
 		description = """
-			현재 로그인한 사용자의 프로필 정보를 조회합니다.
+			현재 로그인한 사용자의 서비스 언어를 변경합니다.
 
-			Swagger UI 오른쪽 위의 Authorize 버튼을 눌러 유효한 Access Token을 입력해야 합니다.
-			Access Token의 사용자 ID와 일치하는 사용자의 정보가 반환됩니다.
+			변경 가능한 값은 `KO`, `EN`입니다.
+			이름, 이메일, 프로필 이미지는 구글 계정 기반 정보이므로 해당 API에서 변경할 수 없습니다.
 			""",
 		security = @SecurityRequirement(name = "bearerAuth")
 	)
 	@ApiResponses({
 		@ApiResponse(
 			responseCode = "200",
-			description = "프로필 조회 성공",
+			description = "언어 설정 수정 성공",
 			useReturnTypeSchema = true
+		),
+		@ApiResponse(
+			responseCode = "400",
+			description = "language가 누락되었거나 KO, EN 이외의 값인 경우",
+			content = @Content(
+				mediaType = "application/json",
+				schema = @Schema(implementation = ErrorDto.class)
+			)
 		),
 		@ApiResponse(
 			responseCode = "401",
@@ -55,11 +65,18 @@ public interface UserControllerDocs {
 			content = @Content(
 				mediaType = "application/json",
 				schema = @Schema(implementation = ErrorDto.class)
-
 			)
 		)
 	})
-	ResponseEntity<BaseResponse<UserProfileResponse>> getMyProfile(
-		@Parameter(hidden = true) CustomUserDetails userDetails
+	ResponseEntity<BaseResponse<UpdateLanguageResponse>> updateLanguage(
+		@Parameter(hidden = true) CustomUserDetails userDetails,
+		@io.swagger.v3.oas.annotations.parameters.RequestBody(
+			required = true,
+			description = "변경할 서비스 언어",
+			content = @Content(
+				schema = @Schema(implementation = UpdateLanguageRequest.class)
+			)
+		)
+		UpdateLanguageRequest request
 	);
 }
