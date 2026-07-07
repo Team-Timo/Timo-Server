@@ -2,14 +2,12 @@ package com.Timo.Timo.domain.timer.controller;
 
 import com.Timo.Timo.domain.timer.docs.TimerControllerDocs;
 import com.Timo.Timo.domain.timer.dto.response.TimerStartResponse;
-import com.Timo.Timo.domain.timer.exception.TimerSuccessCode;
 import com.Timo.Timo.domain.timer.factory.TimerResponseFactory;
 import com.Timo.Timo.domain.timer.service.TimerService;
 import com.Timo.Timo.global.auth.principal.CustomUserDetails;
 import com.Timo.Timo.global.response.BaseResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
