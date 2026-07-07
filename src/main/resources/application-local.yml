@@ -1,0 +1,39 @@
+spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration
+
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/timo}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            authorization-grant-type: authorization_code
+            scope:
+              - email
+              - profile
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+app:
+  oauth2:
+    redirect-uri: http://localhost:5173/oauth/callback
+  auth:
+    cookie-secure: false
+
+jwt:
+  secret: ${JWT_SECRET}
+  access-token-expires-in-seconds: 1800
+  refresh-token-expires-in-seconds: 1209600

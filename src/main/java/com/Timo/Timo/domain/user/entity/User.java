@@ -1,5 +1,6 @@
 package com.Timo.Timo.domain.user.entity;
 
+import com.Timo.Timo.domain.user.enums.Language;
 import com.Timo.Timo.domain.user.enums.Provider;
 import com.Timo.Timo.global.common.BaseTimeEntity;
 import jakarta.persistence.Column;
@@ -29,26 +30,28 @@ public class User extends BaseTimeEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Column(name = "id")
   private Long id;
 
   @Enumerated(EnumType.STRING)
-  @Column(nullable = false, length = 20)
+  @Column(name = "provider", nullable = false, length = 20)
   private Provider provider;
 
   @Column(name = "provider_id", nullable = false)
   private String providerId;
 
-  @Column(nullable = false, length = 50)
+  @Column(name = "name", nullable = false, length = 50)
   private String name;
 
-  @Column(nullable = false, unique = true)
+  @Column(name = "email", nullable = false, unique = true)
   private String email;
 
   @Column(name = "profile_image_url", length = 500)
   private String profileImageUrl;
 
-  @Column(nullable = false, length = 5)
-  private String language;
+  @Enumerated(EnumType.STRING)
+  @Column(name = "language", nullable = false, length = 2)
+  private Language language;
 
   @Column(name = "wake_up_time", nullable = false)
   private LocalTime wakeUpTime;
@@ -68,6 +71,15 @@ public class User extends BaseTimeEntity {
   @Column(name = "calendar_email")
   private String calendarEmail;
 
+  public void update(String name, String profileImageUrl) {
+    this.name = name;
+    this.profileImageUrl = profileImageUrl;
+  }
+
+  public void completeOnboarding() {
+    this.onboardingCompleted = true;
+  }
+
   @Builder
   private User(
       Provider provider,
@@ -82,7 +94,7 @@ public class User extends BaseTimeEntity {
     this.email = email;
     this.profileImageUrl = profileImageUrl;
 
-    this.language = "ko";
+    this.language = Language.KO;
     this.wakeUpTime = LocalTime.of(7, 0);
     this.bedTime = LocalTime.of(23, 0);
     this.predictionAccuracy = 0L;
@@ -90,14 +102,5 @@ public class User extends BaseTimeEntity {
 
     this.calendarConnected = false;
     this.calendarEmail = null;
-  }
-
-  public void update(String name, String profileImageUrl) {
-    this.name = name;
-    this.profileImageUrl = profileImageUrl;
-  }
-
-  public void completeOnboarding() {
-    this.onboardingCompleted = true;
   }
 }

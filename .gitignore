@@ -36,6 +36,9 @@ out/
 ### VS Code ###
 .vscode/
 
-
-### application.yml ###
-/src/main/resources/application.yml
+# Environment
+.env
+.env.local
+.env.*.local
+.env.*
+.env.docker
