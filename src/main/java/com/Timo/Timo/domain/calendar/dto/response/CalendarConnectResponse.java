@@ -8,6 +8,4 @@ public record CalendarConnectResponse(
     boolean calendarConnected,
     String calendarEmail,
     LocalDateTime connectedAt
-) {
-
-}
+) {}

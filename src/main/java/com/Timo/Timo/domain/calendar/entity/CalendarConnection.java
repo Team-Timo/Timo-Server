@@ -2,7 +2,6 @@ package com.Timo.Timo.domain.calendar.entity;
 
 import com.Timo.Timo.domain.user.entity.User;
 import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;

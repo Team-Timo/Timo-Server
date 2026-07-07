@@ -4,6 +4,4 @@ public record GoogleTokenResponse (
   String accessToken,
   String refreshToken,
   Integer expiresIn
-){
-
-}
+){}
