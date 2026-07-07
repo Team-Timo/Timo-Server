@@ -1,15 +1,35 @@
 package com.Timo.Timo.domain.todo.entity;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
+import com.Timo.Timo.domain.todo.enums.RepeatType;
+import com.Timo.Timo.domain.todo.enums.TodoIcon;
+import com.Timo.Timo.domain.todo.enums.TodoPriority;
+import com.Timo.Timo.domain.todo.enums.Weekday;
+import com.Timo.Timo.domain.user.entity.User;
+import com.Timo.Timo.global.common.BaseTimeEntity;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -17,43 +37,139 @@ import lombok.NoArgsConstructor;
 @Table(name = "todos")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Todo {
+public class Todo extends BaseTimeEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Column(name = "todo_id")
+	@Column(name = "id")
 	private Long id;
 
-	@Column(name = "user_id", nullable = false)
-	private Long userId;
+	@ManyToOne(fetch = FetchType.LAZY, optional = false)
+	@JoinColumn(name = "user_id", nullable = false)
+	private User user;
+
+	@Enumerated(EnumType.STRING)
+	@Column(name = "icon", length = 20)
+	private TodoIcon icon;
+
+	@Column(name = "title", nullable = false, length = 30)
+	private String title;
+
+	@Getter(AccessLevel.NONE)
+	@OneToMany(mappedBy = "todo", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<Subtask> subtasks = new ArrayList<>();
+
+	@Column(name = "start_date", nullable = false)
+	private LocalDate startDate;
+
+	@Column(name = "end_date", nullable = false)
+	private LocalDate endDate;
+
+	@Enumerated(EnumType.STRING)
+	@Column(name = "repeat_type", nullable = false, length = 20)
+	private RepeatType repeatType;
+
+	@Getter(AccessLevel.NONE)
+	@ElementCollection
+	@CollectionTable(name = "todo_repeat_weekdays", joinColumns = @JoinColumn(name = "todo_id"))
+	@Enumerated(EnumType.STRING)
+	@Column(name = "weekday", nullable = false, length = 3)
+	private List<Weekday> repeatWeekdays = new ArrayList<>();
+
+	@Column(name = "repeat_day_of_month")
+	private Integer repeatDayOfMonth;
+
+	@Column(name = "duration_seconds", nullable = false)
+	private Integer durationSeconds;
+
+	@Enumerated(EnumType.STRING)
+	@Column(name = "priority", length = 20)
+	private TodoPriority priority;
 
 	@Column(name = "tag_id")
 	private Long tagId;
 
-	@Column(name = "sorted_order", nullable = false)
-	private Integer sortedOrder;
-
-	@Column(name = "memo", length = 300)
+	@Lob
+	@Column(name = "memo")
 	private String memo;
 
-	@Column(name = "scheduled_date")
-	private LocalDate scheduledDate;
+	@Builder(access = AccessLevel.PRIVATE)
+	private Todo(
+			User user,
+			TodoIcon icon,
+			String title,
+			LocalDate startDate,
+			LocalDate endDate,
+			RepeatType repeatType,
+			List<Weekday> repeatWeekdays,
+			Integer repeatDayOfMonth,
+			Integer durationSeconds,
+			TodoPriority priority,
+			Long tagId,
+			String memo
+	) {
+		this.user = user;
+		this.icon = icon;
+		this.title = title;
+		this.startDate = startDate;
+		this.endDate = endDate;
+		this.repeatType = repeatType;
+		this.repeatWeekdays = repeatWeekdays != null ? new ArrayList<>(repeatWeekdays) : new ArrayList<>();
+		this.repeatDayOfMonth = repeatDayOfMonth;
+		this.durationSeconds = durationSeconds;
+		this.priority = priority;
+		this.tagId = tagId;
+		this.memo = memo;
+	}
 
-	@Column(name = "priority", length = 10)
-	private String priority;
+	public static Todo create(
+			User user,
+			TodoIcon icon,
+			String title,
+			List<String> subtaskContents,
+			LocalDate startDate,
+			LocalDate endDate,
+			RepeatType repeatType,
+			List<Weekday> repeatWeekdays,
+			Integer repeatDayOfMonth,
+			int durationSeconds,
+			TodoPriority priority,
+			Long tagId,
+			String memo
+	) {
+		Todo todo = Todo.builder()
+				.user(user)
+				.icon(icon)
+				.title(title)
+				.startDate(startDate)
+				.endDate(endDate)
+				.repeatType(repeatType)
+				.repeatWeekdays(repeatWeekdays)
+				.repeatDayOfMonth(repeatDayOfMonth)
+				.durationSeconds(durationSeconds)
+				.priority(priority)
+				.tagId(tagId)
+				.memo(memo)
+				.build();
 
-	@Column(name = "duration_time")
-	private Integer durationTime;
+		if (subtaskContents != null) {
+			for (int i = 0; i < subtaskContents.size(); i++) {
+				todo.addSubtask(Subtask.of(subtaskContents.get(i), i + 1));
+			}
+		}
+		return todo;
+	}
 
-	@Column(name = "icon", length = 30)
-	private String icon;
+	public List<Subtask> getSubtasks() {
+		return Collections.unmodifiableList(subtasks);
+	}
 
-	@Column(name = "is_completed", nullable = false)
-	private boolean completed;
+	public List<Weekday> getRepeatWeekdays() {
+		return Collections.unmodifiableList(repeatWeekdays);
+	}
 
-	@Column(name = "created_at", nullable = false, updatable = false)
-	private LocalDateTime createdAt;
-
-	@Column(name = "updated_at")
-	private LocalDateTime updatedAt;
+	private void addSubtask(Subtask subtask) {
+		this.subtasks.add(subtask);
+		subtask.assignTodo(this);
+	}
 }

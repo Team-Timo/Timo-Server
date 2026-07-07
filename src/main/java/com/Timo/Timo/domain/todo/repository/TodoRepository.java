@@ -12,18 +12,18 @@ import com.Timo.Timo.domain.todo.entity.Todo;
 public interface TodoRepository extends JpaRepository<Todo, Long> {
 
 	@Query("""
-		SELECT
-			t.scheduledDate AS date,
-			COUNT(t) AS totalCount,
-			SUM(CASE WHEN t.completed = true THEN 1 ELSE 0 END) AS completedCount
-		FROM Todo t
-		WHERE t.userId = :userId
-			AND t.scheduledDate BETWEEN :startDate AND :endDate
-		GROUP BY t.scheduledDate
+		select t from Todo t
+		where t.user.id = :userId
+		  and t.startDate <= :to
+		  and t.endDate >= :from
 		""")
-	List<TodoDailyCompletionStats> findDailyCompletionStats(
-		@Param("userId") Long userId,
-		@Param("startDate") LocalDate startDate,
-		@Param("endDate") LocalDate endDate
+	List<Todo> findRulesInRange(
+			@Param("userId") Long userId,
+			@Param("from") LocalDate from,
+			@Param("to") LocalDate to
+	);
+
+	long countByUser_IdAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
+			Long userId, LocalDate to, LocalDate from
 	);
 }
