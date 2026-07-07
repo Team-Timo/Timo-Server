@@ -17,10 +17,9 @@ public class AiTodoQueryRepository {
 
 	private final EntityManager entityManager;
 
-	public List<TodoDurationHistory> findActualDurationHistoriesBySimilarTitleAndTag(
+	public List<TodoDurationHistory> findActualDurationHistoriesBySimilarTitle(
 		Long userId,
 		String title,
-		Long tagId,
 		LocalDate today,
 		int limit
 	) {
@@ -36,7 +35,6 @@ public class AiTodoQueryRepository {
 					and tr.user_id = :userId
 					and tr.actual_seconds is not null
 					and date(coalesce(tr.ended_at, tr.started_at)) <= :today
-					and t.tag_id = :tagId
 					and (
 						lower(t.title) like lower(concat('%', :title, '%'))
 						or lower(:title) like lower(concat('%', t.title, '%'))
@@ -45,7 +43,6 @@ public class AiTodoQueryRepository {
 				""")
 			.setParameter("userId", userId)
 			.setParameter("title", title)
-			.setParameter("tagId", tagId)
 			.setParameter("today", today)
 			.setMaxResults(limit);
 
@@ -75,32 +72,6 @@ public class AiTodoQueryRepository {
 				""")
 			.setParameter("userId", userId)
 			.setParameter("tagId", tagId)
-			.setParameter("today", today)
-			.setMaxResults(limit);
-
-		return toHistories(query.getResultList());
-	}
-
-	public List<TodoDurationHistory> findRecentActualDurationHistories(
-		Long userId,
-		LocalDate today,
-		int limit
-	) {
-		Query query = entityManager.createNativeQuery("""
-				select
-					t.title,
-					t.tag_id,
-					tr.actual_seconds,
-					date(coalesce(tr.ended_at, tr.started_at)) as recorded_date
-				from todos t
-				join timer_records tr on tr.todo_id = t.id
-				where t.user_id = :userId
-					and tr.user_id = :userId
-					and tr.actual_seconds is not null
-					and date(coalesce(tr.ended_at, tr.started_at)) <= :today
-				order by coalesce(tr.ended_at, tr.started_at) desc, tr.id desc
-				""")
-			.setParameter("userId", userId)
 			.setParameter("today", today)
 			.setMaxResults(limit);
 
