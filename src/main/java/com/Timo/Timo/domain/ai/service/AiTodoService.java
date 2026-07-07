@@ -2,17 +2,13 @@ package com.Timo.Timo.domain.ai.service;
 
 import java.time.LocalDate;
 import java.time.ZoneOffset;
-import java.util.List;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.Timo.Timo.domain.ai.dto.request.RecommendDurationRequest;
 import com.Timo.Timo.domain.ai.dto.response.GeminiDurationRecommendation;
 import com.Timo.Timo.domain.ai.dto.response.RecommendDurationResponse;
 import com.Timo.Timo.domain.ai.prompt.TodoDurationPromptBuilder;
-import com.Timo.Timo.domain.ai.repository.AiTodoQueryRepository;
-import com.Timo.Timo.domain.ai.repository.TodoDurationHistory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
@@ -21,14 +17,13 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class AiTodoService {
 
 	private static final int HISTORY_LIMIT = 5;
 	private static final int ESTIMATED_RESPONSE_TOKEN_COST = 200;
 	private static final int TOKEN_ESTIMATE_CHAR_DIVISOR = 4;
 
-	private final AiTodoQueryRepository aiTodoQueryRepository;
+	private final AiTodoHistoryService historyService;
 	private final TodoDurationPromptBuilder promptBuilder;
 	private final GeminiService geminiService;
 	private final ObjectMapper objectMapper;
@@ -37,33 +32,25 @@ public class AiTodoService {
 	public RecommendDurationResponse recommendDuration(Long userId, RecommendDurationRequest request) {
 		LocalDate today = LocalDate.now(ZoneOffset.UTC);
 
-		List<TodoDurationHistory> similarTitleHistories =
-			aiTodoQueryRepository.findActualDurationHistoriesBySimilarTitle(
-				userId,
-				request.title(),
-				today,
-				HISTORY_LIMIT
-			);
-		List<TodoDurationHistory> recentTagHistories = request.tagId() == null
-			? List.of()
-			: aiTodoQueryRepository.findActualDurationHistoriesByTagId(
-				userId,
-				request.tagId(),
-				today,
-				HISTORY_LIMIT
-			);
+		AiTodoHistories histories = historyService.findHistories(
+			userId,
+			request.title(),
+			request.tagId(),
+			today,
+			HISTORY_LIMIT
+		);
 
 		String prompt = promptBuilder.build(
 			request,
-			similarTitleHistories,
-			recentTagHistories
+			histories.similarTitleHistories(),
+			histories.recentTagHistories()
 		);
 		rateLimiter.validate(userId, estimateTokenCost(prompt));
 
 		log.info(
 			"AI duration recommendation histories loaded. similarTitle={}, recentTag={}",
-			similarTitleHistories.size(),
-			recentTagHistories.size()
+			histories.similarTitleHistories().size(),
+			histories.recentTagHistories().size()
 		);
 
 		String geminiJson = geminiService.generateJson(prompt);
