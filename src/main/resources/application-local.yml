@@ -45,6 +45,6 @@ ai:
   rate-limit:
     user-rpm: ${AI_USER_RPM}
     global-rpm: ${AI_GLOBAL_RPM}
-    user-지rpd: ${AI_USER_RPD}
+    user-rpd: ${AI_USER_RPD}
     global-rpd: ${AI_GLOBAL_RPD}
     global-tpm: ${AI_GLOBAL_TPM}
