@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: timo-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - timo-network
+    command: redis-server --appendonly yes
+
+  app:
+    image: timo-server:latest
+    container_name: timo-app
+    restart: unless-stopped
+    depends_on:
+      - redis
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env.docker
+    networks:
+      - timo-network
+
+networks:
+  timo-network:
+    driver: bridge
+
+volumes:
+  redis-data:

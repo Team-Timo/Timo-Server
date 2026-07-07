@@ -1,0 +1,31 @@
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Build
+build/
+target/
+out/
+
+# Env & Secrets
+.env
+.env.*
+*.pem
+*.key
+
+# Git
+.git/
+.gitignore
+.github/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docs
+README.md
+*.md
+
+# Local config (컨테이너에선 환경변수로 주입)
+# application-local.yml 은 남겨두어도 됨 (배포에선 prod 프로파일 사용)

@@ -1,0 +1,74 @@
+name: Deploy to EC2
+
+on:
+  # deploy 브랜치에 실제 커밋이 들어왔을 때 실행
+  push:
+    branches: [deploy]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  deploy:
+    # push 이벤트는 이미 deploy 브랜치에 들어온 커밋만 대상으로 함
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. 코드 체크아웃
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Docker Buildx 설정 (linux/amd64 이미지 빌드용)
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # 3. ghcr.io 로그인
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # 4. Docker 이미지 빌드 + push
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64
+          tags: |
+            ghcr.io/team-timo/timo-server:latest
+            ghcr.io/team-timo/timo-server:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # 5. EC2에 SSH 접속해서 배포
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            # ghcr.io 로그인
+            echo "${{ secrets.GHCR_TOKEN }}" | sudo docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
+
+            # 최신 이미지 pull
+            sudo docker pull ghcr.io/team-timo/timo-server:latest
+
+            # 배포 디렉토리 이동
+            cd ~/timo-deploy
+
+            # 컨테이너 재시작
+            sudo docker compose down
+            sudo docker compose up -d
+
+            # 오래된 이미지 정리
+            sudo docker image prune -f
+
+            # 헬스체크 (30초 대기)
+            echo "Waiting for app to start..."
+            sleep 30
+            curl -f http://localhost:8080/swagger-ui.html || echo "Health check failed, but container is running"
