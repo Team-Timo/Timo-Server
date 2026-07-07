@@ -33,11 +33,9 @@ public class CalendarConnection {
   @Column(name = "calendar_email", nullable = false)
   private String calendarEmail;
 
-  @Convert(converter = EncryptedStringConverter.class)
   @Column(name = "access_token", nullable = false, length = 2048)
   private String accessToken;
 
-  @Convert(converter = EncryptedStringConverter.class)
   @Column(name = "refresh_token", length = 2048)
   private String refreshToken;
 
