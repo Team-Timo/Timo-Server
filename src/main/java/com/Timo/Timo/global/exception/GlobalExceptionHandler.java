@@ -2,6 +2,7 @@ package com.Timo.Timo.global.exception;
 
 import java.time.LocalDateTime;
 
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -13,6 +14,8 @@ import com.Timo.Timo.global.exception.code.BaseErrorCode;
 import com.Timo.Timo.global.exception.code.ErrorCode;
 import com.Timo.Timo.global.exception.dto.ErrorDto;
 
+import jakarta.persistence.LockTimeoutException;
+import jakarta.persistence.PessimisticLockException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
@@ -50,6 +53,18 @@ public class GlobalExceptionHandler {
 		HttpServletRequest request
 	) {
 		return createErrorResponse(ErrorCode.METHOD_NOT_ALLOWED, request);
+	}
+
+	@ExceptionHandler({
+		PessimisticLockException.class,
+		LockTimeoutException.class,
+		PessimisticLockingFailureException.class
+	})
+	public ResponseEntity<ErrorDto> handlePessimisticLockException(
+		RuntimeException exception,
+		HttpServletRequest request
+	) {
+		return createErrorResponse(ErrorCode.CONCURRENCY_CONFLICT, request);
 	}
 
 	@ExceptionHandler(Exception.class)
