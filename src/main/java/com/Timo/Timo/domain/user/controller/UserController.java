@@ -5,18 +5,21 @@ import com.Timo.Timo.domain.user.docs.UserProfileDocs;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.Timo.Timo.domain.user.dto.request.UpdateLanguageRequest;
+import com.Timo.Timo.domain.user.dto.response.UpdateLanguageResponse;
 import com.Timo.Timo.domain.user.dto.response.UserProfileResponse;
 import com.Timo.Timo.domain.user.exception.UserSuccessCode;
 import com.Timo.Timo.domain.user.service.UserService;
-import com.Timo.Timo.global.exception.CustomException;
-import com.Timo.Timo.global.exception.code.ErrorCode;
 import com.Timo.Timo.global.auth.principal.CustomUserDetails;
 import com.Timo.Timo.global.response.BaseResponse;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -37,6 +40,20 @@ public class UserController implements UserProfileDocs, UserLanguageDocs {
 
 		return ResponseEntity.ok(
 			BaseResponse.onSuccess(UserSuccessCode.PROFILE_RETRIEVED, response)
+		);
+	}
+
+	@Override
+	@PatchMapping
+	public ResponseEntity<BaseResponse<UpdateLanguageResponse>> updateLanguage(
+		@AuthenticationPrincipal CustomUserDetails userDetails,
+		@Valid @RequestBody UpdateLanguageRequest request
+	) {
+		Long userId = userDetails.getUserId();
+		UpdateLanguageResponse response = userService.updateLanguage(userId, request);
+
+		return ResponseEntity.ok(
+			BaseResponse.onSuccess(UserSuccessCode.LANGUAGE_UPDATED, response)
 		);
 	}
 }
