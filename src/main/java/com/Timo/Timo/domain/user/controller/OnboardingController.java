@@ -3,7 +3,6 @@ package com.Timo.Timo.domain.user.controller;
 import com.Timo.Timo.domain.user.docs.OnboardingControllerDocs;
 import com.Timo.Timo.domain.user.dto.request.OnboardingRequest;
 import com.Timo.Timo.domain.user.dto.response.OnboardingResponse;
-import com.Timo.Timo.domain.user.exception.UserSuccessCode;
 import com.Timo.Timo.domain.user.factory.OnboardingResponseFactory;
 import com.Timo.Timo.domain.user.service.OnboardingService;
 import com.Timo.Timo.global.auth.principal.CustomUserDetails;
