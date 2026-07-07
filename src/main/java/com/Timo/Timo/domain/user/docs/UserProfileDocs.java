@@ -13,7 +13,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 public interface UserProfileDocs {
 
@@ -24,8 +23,7 @@ public interface UserProfileDocs {
 
 			Swagger UI 오른쪽 위의 Authorize 버튼을 눌러 유효한 Access Token을 입력해야 합니다.
 			Access Token의 사용자 ID와 일치하는 사용자의 정보가 반환됩니다.
-			""",
-		security = @SecurityRequirement(name = "bearerAuth")
+			"""
 	)
 	@ApiResponses({
 		@ApiResponse(

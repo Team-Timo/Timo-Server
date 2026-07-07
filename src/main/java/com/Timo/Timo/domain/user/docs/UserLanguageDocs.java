@@ -11,11 +11,9 @@ import com.Timo.Timo.global.response.BaseResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 public interface UserLanguageDocs {
 
@@ -26,8 +24,7 @@ public interface UserLanguageDocs {
 
 			변경 가능한 값은 `KO`, `EN`입니다.
 			이름, 이메일, 프로필 이미지는 구글 계정 기반 정보이므로 해당 API에서 변경할 수 없습니다.
-			""",
-		security = @SecurityRequirement(name = "bearerAuth")
+			"""
 	)
 	@ApiResponses({
 		@ApiResponse(
