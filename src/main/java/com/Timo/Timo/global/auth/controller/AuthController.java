@@ -12,6 +12,7 @@ import com.Timo.Timo.global.auth.utils.TokenExtractor;
 import com.Timo.Timo.global.response.BaseResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -38,7 +39,7 @@ public class AuthController implements AuthControllerDocs {
   @Override
   @PostMapping("/token")
   public ResponseEntity<BaseResponse<AuthTokenResponse>> token(
-      @RequestBody AuthTokenRequest request
+      @Valid @RequestBody AuthTokenRequest request
   ) {
     AuthTokenResponse authTokenResponse = authService.exchangeCodeForToken(request.code());
     return authResponseFactory.tokenResponse(authTokenResponse);
