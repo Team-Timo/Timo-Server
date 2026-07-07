@@ -1,6 +1,7 @@
 package com.Timo.Timo.domain.timer.entity;
 
 import com.Timo.Timo.domain.timer.enums.TimerStatus;
+import com.Timo.Timo.domain.todo.entity.Todo;
 import com.Timo.Timo.domain.user.entity.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
