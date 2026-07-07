@@ -1,4 +1,4 @@
-package com.Timo.Timo.domain.onboarding.dto.request;
+package com.Timo.Timo.domain.user.dto.request;
 
 import com.Timo.Timo.domain.user.enums.Language;
 import jakarta.validation.constraints.Max;
