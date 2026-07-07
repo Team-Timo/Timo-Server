@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 
 public record OnboardingRequest(
+
     @NotNull(message = "language는 필수입니다.")
     Language language,
 
