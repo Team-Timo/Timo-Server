@@ -24,11 +24,11 @@ public interface AuthControllerDocs {
   @Operation(
       summary = "AccessToken 발급",
       description = """
-        1회성 인증 코드(code)를 AccessToken으로 교환 
-        - isNewUser: 이번 요청으로 신규 회원가입이 이루어졌는지 여부 (true면 아직 온보딩을 진행한 적이 없는 사용자)
-        - user.onboardingCompleted: 온보딩 완료 여부 (false면 온보딩 화면으로, true면 홈 화면으로 이동)
-        - 기존 가입자가 온보딩을 중단한 경우에도 isNewUser는 false, onboardingCompleted는 false로 반환될 수 가능
-        - RefreshToken과 sessionId는 Set-Cookie 헤더로 전달되며, 응답 바디에는 포함되지 않음
+      1회성 인증 코드(code)를 AccessToken으로 교환합니다.
+      - isNewUser: 이번 요청으로 신규 회원가입이 이루어졌는지 여부 (true면 아직 온보딩을 진행한 적이 없는 사용자)
+      - user.onboardingCompleted: 온보딩 완료 여부 (false면 온보딩 화면으로, true면 홈 화면으로 이동)
+      - 기존 가입자가 온보딩을 중단한 경우에도 isNewUser는 false, onboardingCompleted는 false로 반환될 수 가능
+      - RefreshToken과 sessionId는 Set-Cookie 헤더로 전달되며, 응답 바디에는 포함되지 않음
 			"""
   )
   @SecurityRequirements
@@ -93,8 +93,8 @@ public interface AuthControllerDocs {
   @Operation(
       summary = "AccessToken 재발급",
       description = """
-			쿠키로 전달된 RefreshToken과 sessionId를 검증하여 AccessToken 재발급
-			재발급 성공 시 RefreshToken과 sessionId 쿠키 갱신
+			쿠키로 전달된 RefreshToken과 sessionId를 검증하여 AccessToken 재발급합니다.
+			재발급 성공 시 RefreshToken과 sessionId 쿠키를 갱신합니다.
 			"""
 
   )
