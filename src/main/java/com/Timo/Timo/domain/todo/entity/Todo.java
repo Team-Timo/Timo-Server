@@ -57,7 +57,6 @@ public class Todo extends BaseTimeEntity {
 	@OneToMany(mappedBy = "todo", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Subtask> subtasks = new ArrayList<>();
 
-	// ─── 반복 규칙 ─────────────────────────────────────
 	@Column(name = "start_date", nullable = false)
 	private LocalDate startDate;
 
@@ -77,7 +76,6 @@ public class Todo extends BaseTimeEntity {
 	@Column(name = "repeat_day_of_month")
 	private Integer repeatDayOfMonth;
 
-	// ─── 규칙에 딸린 공통 속성 ────────────────────────
 	@Column(name = "duration_seconds", nullable = false)
 	private Integer durationSeconds;
 
