@@ -3,6 +3,7 @@ package com.Timo.Timo.domain.timer.controller;
 import com.Timo.Timo.domain.timer.docs.TimerControllerDocs;
 import com.Timo.Timo.domain.timer.dto.response.TimerStartResponse;
 import com.Timo.Timo.domain.timer.exception.TimerSuccessCode;
+import com.Timo.Timo.domain.timer.factory.TimerResponseFactory;
 import com.Timo.Timo.domain.timer.service.TimerService;
 import com.Timo.Timo.global.auth.principal.CustomUserDetails;
 import com.Timo.Timo.global.response.BaseResponse;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class TimerController implements TimerControllerDocs {
 
   private final TimerService timerService;
+  private final TimerResponseFactory timerResponseFactory;
 
   @Override
   @PostMapping("/todos/{todoId}/timers/start")
@@ -34,7 +36,6 @@ public class TimerController implements TimerControllerDocs {
     Long userId = userDetails.getUser().getId();
     TimerStartResponse response = timerService.startTimer(userId, todoId);
 
-    return ResponseEntity.status(HttpStatus.CREATED)
-        .body(BaseResponse.onSuccess(TimerSuccessCode.TIMER_STARTED, response));
+    return timerResponseFactory.startResponse(response);
   }
 }
