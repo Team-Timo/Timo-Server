@@ -22,14 +22,14 @@ public interface AiTodoDocs {
 		description = """
 			투두명과 태그를 기준으로 예상 소요 시간을 추천합니다.
 
-			서버는 사용자 과거 투두 기록을 아래 우선순위로 조회해 Gemini에 전달합니다.
-			1. 비슷한 투두명 기록
-			2. 같은 태그 기록
-			3. 최근 기록
-			4. 데이터가 부족하면 현재 투두 기준
+			서버는 사용자의 타이머 기반 실제 소요시간 기록을 조회해 Gemini에 전달합니다.
+			1. 현재 투두명과 비슷한 과거 투두의 실제 소요시간 기록
+			2. 사용자가 지정한 태그의 최근 실제 소요시간 기록
+			3. 기록이 없으면 현재 투두명 기준
 
-			Gemini API 키가 없거나 호출/응답 검증에 실패하면 서버 fallback 로직으로 추천 시간을 반환합니다.
-			추천 시간은 5분 단위이며, 서비스 정책 범위 안으로 보정됩니다.
+			Gemini는 위 기록을 종합해 예상 소요 시간을 생성합니다.
+			호출량과 토큰 사용량을 줄이기 위해 각 기록은 최근 순 최대 5개씩만 전달합니다.
+			RPM, RPD, TPM 제한을 초과하면 Gemini 호출 전 429 응답을 반환합니다.
 			"""
 	)
 	@ApiResponses({
@@ -49,6 +49,14 @@ public interface AiTodoDocs {
 		@ApiResponse(
 			responseCode = "401",
 			description = "Access Token이 없거나 만료되었거나 유효하지 않은 경우",
+			content = @Content(
+				mediaType = "application/json",
+				schema = @Schema(implementation = ErrorDto.class)
+			)
+		),
+		@ApiResponse(
+			responseCode = "429",
+			description = "AI 추천 요청 횟수 제한을 초과한 경우",
 			content = @Content(
 				mediaType = "application/json",
 				schema = @Schema(implementation = ErrorDto.class)

@@ -12,35 +12,27 @@ public class TodoDurationPromptBuilder {
 
 	public String build(
 		RecommendDurationRequest request,
-		List<TodoDurationHistory> sameTagSimilarTitleHistories,
-		List<TodoDurationHistory> sameTagHistories,
-		List<TodoDurationHistory> recentHistories,
-		int minMinutes,
-		int maxMinutes
+		List<TodoDurationHistory> similarTitleHistories,
+		List<TodoDurationHistory> recentTagHistories
 	) {
 		return """
-			너는 Timo 투두 앱의 예상 소요 시간 추천 AI야.
-			현재 투두명/태그와 사용자의 타이머 기반 실제 소요시간 기록을 보고 예상 소요 시간을 추천해.
+			너는 Timo 투두 앱에서 사용자의 실제 작업 시간을 분석해 예상 소요 시간을 추천하는 시간 계획 코치야.
+			사용자가 입력한 투두명을 먼저 이해하고, 과거 타이머 기록의 실제 소요시간 패턴을 참고해 현실적인 예상 소요 시간을 제안해.
 
 			판단 방식:
-			- 같은 태그 안에서 투두명이 비슷한 기록을 가장 중요하게 참고해.
-			- 같은 태그의 전체 기록을 함께 참고해서 평균/경향을 보정해.
-			- 위 기록이 부족하면 사용자의 최근 타이머 기록 경향을 참고해.
-			- 모든 기록이 비어 있으면 현재 투두명과 태그만 기준으로 판단해.
+			- 먼저 현재 투두명과 비슷한 과거 투두의 실제 소요시간을 확인해.
+			- 그다음 사용자가 지정한 태그에서 최근 실제 소요시간 경향을 참고해.
+			- 비슷한 투두명 기록과 태그 기록이 모두 있으면 둘을 함께 보고, 비슷한 투두명 기록을 조금 더 중요하게 봐.
+			- 기록이 아예 없으면 현재 투두명만 기준으로 일반적인 예상 소요 시간을 판단해.
 
 			규칙:
 			- 응답은 반드시 JSON 객체 하나만 반환해.
-			- recommendedMinutes는 5분 단위 정수여야 해.
-			- recommendedMinutes는 %d분 이상 %d분 이하만 가능해.
-			- feedback은 한국어 1문장으로 부드럽게 작성해.
+			- recommendedMinutes는 분 단위 정수로 반환해.
 			- 실제 기록에 없는 패턴은 만들지 마.
-			- patternBasis는 가장 크게 참고한 근거를 기준으로 SIMILAR_TITLE, SAME_TAG, RECENT_HISTORY, CURRENT_ONLY 중 하나만 사용해.
 
 			응답 JSON 형식:
 			{
-			  "recommendedMinutes": 45,
-			  "patternBasis": "SAME_TAG",
-			  "feedback": "같은 태그의 실제 소요시간 기록을 기준으로 45분 정도를 추천해요."
+			  "recommendedMinutes": 45
 			}
 
 			현재 투두:
@@ -49,22 +41,16 @@ public class TodoDurationPromptBuilder {
 			  "tagId": %s
 			}
 
-			같은 태그 내 비슷한 투두명 기록:
+			비슷한 투두명 실제 소요시간 기록:
 			%s
 
-			같은 태그 기록:
-			%s
-
-			최근 기록:
+			사용자가 지정한 태그의 최근 실제 소요시간 기록:
 			%s
 			""".formatted(
-			minMinutes,
-			maxMinutes,
 			escape(request.title()),
 			request.tagId() == null ? "null" : request.tagId().toString(),
-			formatHistories(sameTagSimilarTitleHistories),
-			formatHistories(sameTagHistories),
-			formatHistories(recentHistories)
+			formatHistories(similarTitleHistories),
+			formatHistories(recentTagHistories)
 		);
 	}
 
