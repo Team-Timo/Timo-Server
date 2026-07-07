@@ -1,5 +1,7 @@
 package com.Timo.Timo.domain.timer.entity;
 
+import com.Timo.Timo.domain.timer.exception.TimerErrorCode;
+import com.Timo.Timo.global.exception.CustomException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -43,6 +45,10 @@ public class TimerSession {
   }
 
   public void pause(LocalDateTime pausedAt){
+    if (!isActive()) {
+      throw new CustomException(TimerErrorCode.TIMER_INVALID_STATUS_TRANSITION);
+    }
+
     this.pausedAt = pausedAt;
   }
 
