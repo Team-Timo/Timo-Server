@@ -33,9 +33,6 @@ public class AuthController implements AuthControllerDocs {
   private final AuthService authService;
   private final AuthResponseFactory authResponseFactory;
 
-  @Value("${app.auth.cookie-secure}")
-  private boolean cookieSecure;
-
   @Override
   @PostMapping("/token")
   public ResponseEntity<BaseResponse<AuthTokenResponse>> token(
