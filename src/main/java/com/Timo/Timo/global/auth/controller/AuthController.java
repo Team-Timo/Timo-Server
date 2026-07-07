@@ -7,6 +7,7 @@ import com.Timo.Timo.global.response.BaseResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,7 @@ public class AuthController {
   private final AuthService authService;
 
   @Operation(summary = "AccessToken 발급", description = "1회성 code로 AccessToken을 발급합니다.")
+  @SecurityRequirements
   @ApiResponses({
       @ApiResponse(responseCode = "200", description = "로그인 성공"),
       @ApiResponse(responseCode = "400", description = "code 누락"),
