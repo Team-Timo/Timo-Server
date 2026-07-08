@@ -16,7 +16,6 @@ public record StatisticsDailyResponse(
 	@ArraySchema(schema = @Schema(description = "해당 날짜에 계획된 투두 목록"))
 	List<DailyTodoResponse> todos
 ) {
-
 	public record DailyTodoResponse(
 		@Schema(description = "투두 ID", example = "101")
 		Long todoId,
@@ -32,12 +31,10 @@ public record StatisticsDailyResponse(
 
 		@Schema(description = "투두에 설정된 태그", nullable = true)
 		TagResponse tag
-	) {
-	}
+	) {}
 
 	public record TagResponse(
-		@Schema(description = "태그 ID", example = "1")
-		Long tagId
-	) {
-	}
+		@Schema(description = "태그명", example = "과제")
+		String name
+	) {}
 }

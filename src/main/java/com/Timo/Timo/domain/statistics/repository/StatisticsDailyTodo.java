@@ -5,6 +5,5 @@ public record StatisticsDailyTodo(
 	String title,
 	Long actualSeconds,
 	Integer estimatedSeconds,
-	Long tagId
-) {
-}
+	String tagName
+) {}

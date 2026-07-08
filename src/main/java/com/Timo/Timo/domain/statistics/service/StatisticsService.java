@@ -142,10 +142,10 @@ public class StatisticsService {
 	}
 
 	private TagResponse toTagResponse(StatisticsDailyTodo todo) {
-		if (todo.tagId() == null) {
+		if (todo.tagName() == null) {
 			return null;
 		}
-		return new TagResponse(todo.tagId());
+		return new TagResponse(todo.tagName());
 	}
 
 	private long toMinutes(long seconds) {

@@ -48,9 +48,10 @@ public class StatisticsQueryRepository {
 					t.title as title,
 					coalesce(sum(tr.actual_seconds), 0) as actual_seconds,
 					t.duration_seconds as estimated_seconds,
-					t.tag_id as tag_id
+					tag.name as tag_name
 				from todo_instances ti
 				join todos t on t.id = ti.todo_id
+				left join tags tag on tag.id = t.tag_id
 				left join timer_records tr
 					on tr.todo_id = t.id
 					and tr.user_id = :userId
@@ -63,7 +64,7 @@ public class StatisticsQueryRepository {
 					t.id,
 					t.title,
 					t.duration_seconds,
-					t.tag_id,
+					tag.name,
 					ti.sort_order
 				order by ti.sort_order asc, t.id asc
 				""")
@@ -83,7 +84,7 @@ public class StatisticsQueryRepository {
 				(String)row[1],
 				toLong(row[2]),
 				toInteger(row[3]),
-				toNullableLong(row[4])
+				(String)row[4]
 			))
 			.toList();
 	}
@@ -91,13 +92,6 @@ public class StatisticsQueryRepository {
 	private Long toLong(Object value) {
 		if (value == null) {
 			return 0L;
-		}
-		return ((Number)value).longValue();
-	}
-
-	private Long toNullableLong(Object value) {
-		if (value == null) {
-			return null;
 		}
 		return ((Number)value).longValue();
 	}
