@@ -37,14 +37,27 @@ public class TodoDateCalculator {
     );
 
     public List<LocalDate> calculate(TodoCreateRequest request) {
-        LocalDate start = request.date();
+        return calculate(
+                request.date(),
+                request.repeatType(),
+                request.repeatWeekdays(),
+                request.repeatDayOfMonth()
+        );
+    }
+
+    public List<LocalDate> calculate(
+            LocalDate start,
+            RepeatType repeatType,
+            List<Weekday> repeatWeekdays,
+            Integer repeatDayOfMonth
+    ) {
         LocalDate end = start.plus(REPEAT_PERIOD);
 
-        Set<LocalDate> dates = switch (request.repeatType()) {
+        Set<LocalDate> dates = switch (repeatType) {
             case NONE -> Set.of(start);
             case DAILY -> daily(start, end);
-            case WEEKLY -> weekly(start, end, request.repeatWeekdays());
-            case MONTHLY -> monthly(start, end, request.repeatDayOfMonth());
+            case WEEKLY -> weekly(start, end, repeatWeekdays);
+            case MONTHLY -> monthly(start, end, repeatDayOfMonth);
         };
 
         if (dates.isEmpty()) {
