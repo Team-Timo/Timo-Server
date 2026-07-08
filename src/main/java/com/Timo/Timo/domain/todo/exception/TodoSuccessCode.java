@@ -11,7 +11,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum TodoSuccessCode implements BaseSuccessCode {
 
-	CREATED(HttpStatus.CREATED, "TODO가 생성되었습니다.");
+	CREATED(HttpStatus.CREATED, "TODO가 생성되었습니다."),
+	UPDATED(HttpStatus.OK, "TODO가 수정되었습니다.");
 
 	private final HttpStatus httpStatus;
 	private final String message;

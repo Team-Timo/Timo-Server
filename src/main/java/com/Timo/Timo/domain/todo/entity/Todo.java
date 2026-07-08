@@ -4,13 +4,17 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.Timo.Timo.domain.todo.enums.RepeatType;
 import com.Timo.Timo.domain.todo.enums.TodoIcon;
 import com.Timo.Timo.domain.todo.enums.TodoPriority;
 import com.Timo.Timo.domain.todo.enums.Weekday;
+import com.Timo.Timo.domain.todo.exception.TodoErrorCode;
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.global.common.BaseTimeEntity;
+import com.Timo.Timo.global.exception.CustomException;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
@@ -159,6 +163,82 @@ public class Todo extends BaseTimeEntity {
 		}
 		return todo;
 	}
+
+	public void updateFields(
+			TodoIcon icon,
+			String title,
+			Integer durationSeconds,
+			TodoPriority priority,
+			Long tagId,
+			String memo
+	) {
+		if (icon != null) {
+			this.icon = icon;
+		}
+		if (title != null) {
+			this.title = title;
+		}
+		if (durationSeconds != null) {
+			this.durationSeconds = durationSeconds;
+		}
+		if (priority != null) {
+			this.priority = priority;
+		}
+		if (tagId != null) {
+			this.tagId = tagId;
+		}
+		if (memo != null) {
+			this.memo = memo;
+		}
+	}
+
+	public void changeSchedule(
+			LocalDate startDate,
+			LocalDate endDate,
+			RepeatType repeatType,
+			List<Weekday> repeatWeekdays,
+			Integer repeatDayOfMonth
+	) {
+		this.startDate = startDate;
+		this.endDate = endDate;
+		this.repeatType = repeatType;
+		this.repeatWeekdays = repeatWeekdays != null ? new ArrayList<>(repeatWeekdays) : new ArrayList<>();
+		this.repeatDayOfMonth = repeatDayOfMonth;
+	}
+
+	public void replaceSubtasks(List<SubtaskEdit> edits) {
+		Map<Long, Subtask> existingById = subtasks.stream()
+				.filter(subtask -> subtask.getId() != null)
+				.collect(Collectors.toMap(Subtask::getId, subtask -> subtask));
+
+		List<Subtask> retained = new ArrayList<>();
+		for (int i = 0; i < edits.size(); i++) {
+			SubtaskEdit edit = edits.get(i);
+			int sortOrder = i + 1;
+
+			if (edit.subtaskId() != null) {
+				Subtask existing = existingById.get(edit.subtaskId());
+				if (existing == null) {
+					throw new CustomException(TodoErrorCode.INVALID_REQUEST);
+				}
+				existing.update(edit.content(), edit.completed(), sortOrder);
+				retained.add(existing);
+			} else {
+				Subtask created = Subtask.of(edit.content(), sortOrder, edit.completed());
+				created.assignTodo(this);
+				retained.add(created);
+			}
+		}
+
+		subtasks.removeIf(subtask -> !retained.contains(subtask));
+		for (Subtask subtask : retained) {
+			if (!subtasks.contains(subtask)) {
+				subtasks.add(subtask);
+			}
+		}
+	}
+
+	public record SubtaskEdit(Long subtaskId, String content, boolean completed) { }
 
 	public List<Subtask> getSubtasks() {
 		if (subtasks == null) {

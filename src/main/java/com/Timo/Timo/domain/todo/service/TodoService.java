@@ -9,9 +9,13 @@ import org.springframework.transaction.annotation.Transactional;
 import com.Timo.Timo.domain.tag.exception.TagErrorCode;
 import com.Timo.Timo.domain.tag.repository.TagRepository;
 import com.Timo.Timo.domain.todo.dto.request.TodoCreateRequest;
+import com.Timo.Timo.domain.todo.dto.request.TodoSubtaskUpdateRequest;
+import com.Timo.Timo.domain.todo.dto.request.TodoUpdateRequest;
 import com.Timo.Timo.domain.todo.dto.response.TodoCreateResponse;
 import com.Timo.Timo.domain.todo.entity.Todo;
 import com.Timo.Timo.domain.todo.enums.RepeatType;
+import com.Timo.Timo.domain.todo.enums.Weekday;
+import com.Timo.Timo.domain.todo.exception.TodoErrorCode;
 import com.Timo.Timo.domain.todo.repository.TodoRepository;
 import com.Timo.Timo.domain.todo.vo.Duration;
 import com.Timo.Timo.domain.user.entity.User;
@@ -64,6 +68,76 @@ public class TodoService {
 
 		Todo savedTodo = todoRepository.save(todo);
 		return TodoCreateResponse.from(savedTodo);
+	}
+
+	@Transactional
+	public void updateTodo(Long userId, Long todoId, TodoUpdateRequest request) {
+		if (request.hasNoUpdatableField()) {
+			throw new CustomException(TodoErrorCode.NO_UPDATE_FIELDS);
+		}
+
+		Todo todo = todoRepository.findByIdAndUser_Id(todoId, userId)
+				.orElseThrow(() -> new CustomException(TodoErrorCode.TODO_NOT_FOUND));
+
+		validateTagExists(request.tagId());
+
+		todo.updateFields(
+				request.icon(),
+				request.title(),
+				request.durationSeconds(),
+				request.priority(),
+				request.tagId(),
+				request.memo()
+		);
+
+		applyScheduleChange(todo, request);
+
+		if (request.subtasks() != null) {
+			todo.replaceSubtasks(toSubtaskEdits(request.subtasks()));
+		}
+	}
+
+	private void applyScheduleChange(Todo todo, TodoUpdateRequest request) {
+		boolean scheduleChanged = request.date() != null
+				|| request.repeatType() != null
+				|| request.repeatWeekdays() != null
+				|| request.repeatDayOfMonth() != null;
+		if (!scheduleChanged) {
+			return;
+		}
+
+		LocalDate startDate = request.date() != null ? request.date() : todo.getStartDate();
+		RepeatType repeatType = request.repeatType() != null ? request.repeatType() : todo.getRepeatType();
+		List<Weekday> repeatWeekdays = request.repeatWeekdays() != null
+				? request.repeatWeekdays() : todo.getRepeatWeekdays();
+		Integer repeatDayOfMonth = request.repeatDayOfMonth() != null
+				? request.repeatDayOfMonth() : todo.getRepeatDayOfMonth();
+
+		validateRepeatRule(repeatType, repeatWeekdays, repeatDayOfMonth);
+
+		LocalDate endDate = resolveEndDate(startDate, repeatType);
+		todo.changeSchedule(startDate, endDate, repeatType, repeatWeekdays, repeatDayOfMonth);
+	}
+
+	private void validateRepeatRule(RepeatType repeatType, List<Weekday> repeatWeekdays, Integer repeatDayOfMonth) {
+		boolean valid = switch (repeatType) {
+			case WEEKLY -> repeatWeekdays != null && !repeatWeekdays.isEmpty();
+			case MONTHLY -> repeatDayOfMonth != null;
+			case NONE, DAILY -> true;
+		};
+		if (!valid) {
+			throw new CustomException(TodoErrorCode.INVALID_REQUEST);
+		}
+	}
+
+	private List<Todo.SubtaskEdit> toSubtaskEdits(List<TodoSubtaskUpdateRequest> subtasks) {
+		return subtasks.stream()
+				.map(subtask -> new Todo.SubtaskEdit(
+						subtask.subtaskId(),
+						subtask.content(),
+						subtask.completed()
+				))
+				.toList();
 	}
 
 	private void validateTagExists(Long tagId) {

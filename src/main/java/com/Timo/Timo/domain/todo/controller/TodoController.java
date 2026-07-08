@@ -1,7 +1,11 @@
 package com.Timo.Timo.domain.todo.controller;
 
+import java.util.Map;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -9,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.Timo.Timo.domain.todo.docs.TodoControllerDocs;
 import com.Timo.Timo.domain.todo.dto.request.TodoCreateRequest;
+import com.Timo.Timo.domain.todo.dto.request.TodoUpdateRequest;
 import com.Timo.Timo.domain.todo.dto.response.TodoCreateResponse;
 import com.Timo.Timo.domain.todo.exception.TodoSuccessCode;
 import com.Timo.Timo.domain.todo.service.TodoService;
@@ -38,5 +43,19 @@ public class TodoController implements TodoControllerDocs {
 		return ResponseEntity
 			.status(TodoSuccessCode.CREATED.getHttpStatus())
 			.body(BaseResponse.onSuccess(TodoSuccessCode.CREATED, response));
+	}
+
+	@Override
+	@PatchMapping("/{todoId}")
+	public ResponseEntity<BaseResponse<Object>> updateTodo(
+		@AuthenticationPrincipal CustomUserDetails userDetails,
+		@PathVariable Long todoId,
+		@Valid @RequestBody TodoUpdateRequest request
+	) {
+		todoService.updateTodo(userDetails.getUserId(), todoId, request);
+
+		return ResponseEntity
+			.status(TodoSuccessCode.UPDATED.getHttpStatus())
+			.body(BaseResponse.onSuccess(TodoSuccessCode.UPDATED, Map.of()));
 	}
 }
