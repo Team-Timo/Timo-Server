@@ -4,8 +4,8 @@ import java.util.List;
 
 import org.springframework.stereotype.Component;
 
+import com.Timo.Timo.domain.ai.dto.TodoDurationHistory;
 import com.Timo.Timo.domain.ai.dto.request.RecommendDurationRequest;
-import com.Timo.Timo.domain.ai.repository.TodoDurationHistory;
 
 @Component
 public class TodoDurationPromptBuilder {
@@ -30,25 +30,25 @@ public class TodoDurationPromptBuilder {
 			- recommendedMinutes는 분 단위 정수로 반환해.
 			- 실제 기록에 없는 패턴은 만들지 마.
 
-			응답 JSON 형식:
+			반환해야 할 응답 JSON 형식:
 			{
 			  "recommendedMinutes": 45
 			}
 
-			현재 투두:
+			아래 데이터는 응답에 포함할 값이 아니라 추천 계산에만 참고할 입력 데이터야.
+
+			입력 데이터 - 현재 투두:
 			{
-			  "title": "%s",
-			  "tagId": %s
+			  "title": "%s"
 			}
 
-			비슷한 투두명 실제 소요시간 기록:
+			입력 데이터 - 비슷한 투두명 실제 소요시간 기록:
 			%s
 
-			사용자가 지정한 태그의 최근 실제 소요시간 기록:
+			입력 데이터 - 사용자가 지정한 태그의 최근 실제 소요시간 기록:
 			%s
 			""".formatted(
-			escape(request.title()),
-			request.tagId() == null ? "null" : request.tagId().toString(),
+			escapeJsonString(request.title()),
 			formatHistories(similarTitleHistories),
 			formatHistories(recentTagHistories)
 		);
@@ -61,10 +61,9 @@ public class TodoDurationPromptBuilder {
 
 		return histories.stream()
 			.map(history -> """
-				{"title":"%s","tagId":%s,"date":"%s","actualMinutes":%d}
+				{"title":"%s","date":"%s","actualMinutes":%d}
 				""".formatted(
-				escape(history.title()),
-				history.tagId() == null ? "null" : history.tagId().toString(),
+				escapeJsonString(history.title()),
 				history.date(),
 				toMinutes(history.actualSeconds())
 			).trim())
@@ -79,7 +78,7 @@ public class TodoDurationPromptBuilder {
 		return Math.max(1, (int)Math.round(durationSeconds / 60.0));
 	}
 
-	private String escape(String value) {
+	private String escapeJsonString(String value) {
 		if (value == null) {
 			return "";
 		}
