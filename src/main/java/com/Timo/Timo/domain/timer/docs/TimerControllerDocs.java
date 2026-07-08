@@ -45,16 +45,16 @@ public interface TimerControllerDocs {
           )
       ),
       @ApiResponse(
-          responseCode = "404",
-          description = "존재하지 않는 투두인 경우",
+          responseCode = "403",
+          description = "본인 소유의 투두가 아닌 경우",
           content = @Content(
               mediaType = "application/json",
               schema = @Schema(implementation = ErrorDto.class)
           )
       ),
       @ApiResponse(
-          responseCode = "403",
-          description = "본인 소유의 투두가 아닌 경우",
+          responseCode = "404",
+          description = "존재하지 않는 투두인 경우",
           content = @Content(
               mediaType = "application/json",
               schema = @Schema(implementation = ErrorDto.class)
