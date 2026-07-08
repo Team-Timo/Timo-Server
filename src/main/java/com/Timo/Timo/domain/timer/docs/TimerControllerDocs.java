@@ -29,14 +29,6 @@ public interface TimerControllerDocs {
           useReturnTypeSchema = true
       ),
       @ApiResponse(
-          responseCode = "400",
-          description = "예상 소요 시간이 설정되지 않은 투두인 경우",
-          content = @Content(
-              mediaType = "application/json",
-              schema = @Schema(implementation = ErrorDto.class)
-          )
-      ),
-      @ApiResponse(
           responseCode = "401",
           description = "Access Token이 없거나 만료되었거나 유효하지 않은 경우",
           content = @Content(
