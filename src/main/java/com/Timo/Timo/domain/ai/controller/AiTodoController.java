@@ -22,7 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/v1/ai/todos")
+@RequestMapping("/api/v1/todos")
 @RequiredArgsConstructor
 @Tag(name = "AI Todo", description = "투두 AI API")
 public class AiTodoController implements AiTodoDocs {
