@@ -60,7 +60,7 @@ public class AuthController implements AuthControllerDocs {
       HttpServletRequest request
   ) {
     String accessToken = TokenExtractor.resolveToken(request);
-    authService.logout(accessToken, userDetails.getUser().getId(), sessionId);
+    authService.logout(accessToken, userDetails.getUserId(), sessionId);
 
     return authResponseFactory.logoutResponse();
   }
@@ -73,7 +73,7 @@ public class AuthController implements AuthControllerDocs {
       HttpServletRequest request
   ) {
     String accessToken = TokenExtractor.resolveToken(request);
-    authService.withdraw(accessToken, userDetails.getUser().getId(), sessionId);
+    authService.withdraw(accessToken, userDetails.getUserId(), sessionId);
 
     return authResponseFactory.withdrawResponse();
   }

@@ -31,7 +31,7 @@ public class TimerController implements TimerControllerDocs {
       @AuthenticationPrincipal CustomUserDetails userDetails
   ) {
 
-    Long userId = userDetails.getUser().getId();
+    Long userId = userDetails.getUserId();
     TimerStartResponse response = timerService.startTimer(userId, todoId);
 
     return timerResponseFactory.startResponse(response);
