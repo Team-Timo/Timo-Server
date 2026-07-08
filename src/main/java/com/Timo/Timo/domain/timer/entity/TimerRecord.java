@@ -1,8 +1,10 @@
 package com.Timo.Timo.domain.timer.entity;
 
 import com.Timo.Timo.domain.timer.enums.TimerStatus;
+import com.Timo.Timo.domain.timer.exception.TimerErrorCode;
 import com.Timo.Timo.domain.todo.entity.Todo;
 import com.Timo.Timo.domain.user.entity.User;
+import com.Timo.Timo.global.exception.CustomException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
@@ -79,11 +81,17 @@ public class TimerRecord {
     this.status = TimerStatus.RUNNING;
   }
 
-  public void pause(){
+  public void pause() {
+    if (!isRunning()) {
+      throw new CustomException(TimerErrorCode.TIMER_INVALID_STATUS_TRANSITION);
+    }
     this.status = TimerStatus.PAUSED;
   }
 
   public void resume() {
+    if (!isPaused()) {
+      throw new CustomException(TimerErrorCode.TIMER_INVALID_STATUS_TRANSITION);
+    }
     this.status = TimerStatus.RUNNING;
   }
 
