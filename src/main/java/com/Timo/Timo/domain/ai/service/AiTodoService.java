@@ -91,10 +91,10 @@ public class AiTodoService {
 
 	private String stripMarkdownFence(String value) {
 		String trimmed = value.trim();
-		if (trimmed.startsWith("```json")) {
+		if (trimmed.startsWith("```json") && trimmed.endsWith("```")) {
 			return trimmed.substring(7, trimmed.length() - 3).trim();
 		}
-		if (trimmed.startsWith("```")) {
+		if (trimmed.startsWith("```") && trimmed.endsWith("```")) {
 			return trimmed.substring(3, trimmed.length() - 3).trim();
 		}
 		return trimmed;
