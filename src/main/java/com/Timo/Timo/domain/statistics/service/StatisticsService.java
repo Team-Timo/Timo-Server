@@ -15,7 +15,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.Timo.Timo.domain.statistics.dto.response.StatisticsCalendarResponse;
 import com.Timo.Timo.domain.statistics.dto.response.StatisticsCalendarResponse.DayCompletionResponse;
+import com.Timo.Timo.domain.statistics.dto.response.StatisticsDailyResponse;
+import com.Timo.Timo.domain.statistics.dto.response.StatisticsDailyResponse.DailyTodoResponse;
+import com.Timo.Timo.domain.statistics.dto.response.StatisticsDailyResponse.TagResponse;
 import com.Timo.Timo.domain.statistics.dto.response.StatisticsSummaryResponse;
+import com.Timo.Timo.domain.statistics.repository.StatisticsDailyTodo;
+import com.Timo.Timo.domain.statistics.repository.StatisticsQueryRepository;
 import com.Timo.Timo.domain.statistics.support.StatisticsDateParser;
 import com.Timo.Timo.domain.timer.repository.TimerMonthlyRecordStats;
 import com.Timo.Timo.domain.timer.repository.TimerRecordRepository;
@@ -35,6 +40,7 @@ public class StatisticsService {
 
 	private final TodoRepository todoRepository;
 	private final TimerRecordRepository timerRecordRepository;
+	private final StatisticsQueryRepository statisticsQueryRepository;
 	private final StatisticsDateParser statisticsDateParser;
 
 	public StatisticsCalendarResponse getCalendar(Long userId, String yearMonthValue) {
@@ -95,6 +101,27 @@ public class StatisticsService {
 		);
 	}
 
+	public StatisticsDailyResponse getDaily(Long userId, String dateValue) {
+		LocalDate date = statisticsDateParser.parseDate(dateValue);
+		LocalDate nextDate = date.plusDays(1);
+		long totalRecordSeconds = statisticsQueryRepository.sumDailyTimerRecordSeconds(
+			userId,
+			date.atStartOfDay(),
+			nextDate.atStartOfDay()
+		);
+
+		List<DailyTodoResponse> todos = statisticsQueryRepository.findDailyTodos(
+				userId,
+				date,
+				date.atStartOfDay(),
+				nextDate.atStartOfDay()
+			).stream()
+			.map(this::toDailyTodoResponse)
+			.toList();
+
+		return new StatisticsDailyResponse(date, toMinutes(totalRecordSeconds), todos);
+	}
+
 	private int calculateCompletionRate(TodoDailyCompletionStats stats) {
 		if (stats == null || stats.getTotalCount() == null || stats.getTotalCount() == 0) {
 			return 0;
@@ -102,6 +129,27 @@ public class StatisticsService {
 
 		long completedCount = stats.getCompletedCount() == null ? 0 : stats.getCompletedCount();
 		return (int)Math.round(completedCount * 100.0 / stats.getTotalCount());
+	}
+
+	private DailyTodoResponse toDailyTodoResponse(StatisticsDailyTodo todo) {
+		return new DailyTodoResponse(
+			todo.todoId(),
+			todo.title(),
+			toMinutes(todo.actualSeconds()),
+			toMinutes(todo.estimatedSeconds()),
+			toTagResponse(todo)
+		);
+	}
+
+	private TagResponse toTagResponse(StatisticsDailyTodo todo) {
+		if (todo.tagId() == null) {
+			return null;
+		}
+		return new TagResponse(todo.tagId());
+	}
+
+	private long toMinutes(long seconds) {
+		return seconds / SECONDS_PER_MINUTE;
 	}
 
 	private int toInteger(Long value) {

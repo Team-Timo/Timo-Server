@@ -8,8 +8,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.Timo.Timo.domain.statistics.docs.StatisticsCalendarDocs;
+import com.Timo.Timo.domain.statistics.docs.StatisticsDailyDocs;
 import com.Timo.Timo.domain.statistics.docs.StatisticsSummaryDocs;
 import com.Timo.Timo.domain.statistics.dto.response.StatisticsCalendarResponse;
+import com.Timo.Timo.domain.statistics.dto.response.StatisticsDailyResponse;
 import com.Timo.Timo.domain.statistics.dto.response.StatisticsSummaryResponse;
 import com.Timo.Timo.domain.statistics.exception.StatisticsSuccessCode;
 import com.Timo.Timo.domain.statistics.service.StatisticsService;
@@ -23,7 +25,7 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/v1/statistics")
 @RequiredArgsConstructor
 @Tag(name = "Statistics", description = "통계 API")
-public class StatisticsController implements StatisticsCalendarDocs, StatisticsSummaryDocs {
+public class StatisticsController implements StatisticsCalendarDocs, StatisticsSummaryDocs, StatisticsDailyDocs {
 
 	private final StatisticsService statisticsService;
 
@@ -56,6 +58,22 @@ public class StatisticsController implements StatisticsCalendarDocs, StatisticsS
 
 		return ResponseEntity.ok(
 			BaseResponse.onSuccess(StatisticsSuccessCode.SUMMARY_RETRIEVED, response)
+		);
+	}
+
+	@Override
+	@GetMapping("/daily")
+	public ResponseEntity<BaseResponse<StatisticsDailyResponse>> getDaily(
+		@AuthenticationPrincipal CustomUserDetails userDetails,
+		@RequestParam(required = false) String date
+	) {
+		StatisticsDailyResponse response = statisticsService.getDaily(
+			userDetails.getUserId(),
+			date
+		);
+
+		return ResponseEntity.ok(
+			BaseResponse.onSuccess(StatisticsSuccessCode.DAILY_RETRIEVED, response)
 		);
 	}
 }
