@@ -243,6 +243,6 @@ public interface TodoControllerDocs {
 	})
 	ResponseEntity<BaseResponse<TodoDetailResponse>> getTodoDetail(
 		@Parameter(hidden = true) CustomUserDetails userDetails,
-		@Parameter(description = "조회할 TODO ID", example = "145") Long todoId
+		@Parameter(description = "조회할 TODO ID", example = "3") Long todoId
 	);
 }
