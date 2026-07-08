@@ -13,7 +13,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 public interface HomeControllerDocs {
 
@@ -23,8 +22,7 @@ public interface HomeControllerDocs {
 					HOME 화면의 필터 조건에 따라 일별 TODO 목록을 조회합니다.
 					DEFAULT는 기준 날짜 전후 7일, WEEK는 기준 날짜부터 7일을 반환합니다.
 					각 날짜의 TODO는 미완료 먼저, 같은 완료 그룹 안에서는 sortOrder 오름차순으로 정렬됩니다.
-					""",
-			security = @SecurityRequirement(name = "bearerAuth")
+					"""
 	)
 	@ApiResponses({
 			@ApiResponse(
