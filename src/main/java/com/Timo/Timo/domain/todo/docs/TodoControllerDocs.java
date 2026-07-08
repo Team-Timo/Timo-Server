@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import com.Timo.Timo.domain.todo.dto.request.TodoCreateRequest;
 import com.Timo.Timo.domain.todo.dto.request.TodoStatusUpdateRequest;
 import com.Timo.Timo.domain.todo.dto.response.TodoCreateResponse;
+import com.Timo.Timo.domain.todo.dto.response.TodoDetailResponse;
 import com.Timo.Timo.domain.todo.dto.response.TodoStatusChangeResponse;
 import com.Timo.Timo.global.auth.principal.CustomUserDetails;
 import com.Timo.Timo.global.exception.dto.ErrorDto;
@@ -196,5 +197,52 @@ public interface TodoControllerDocs {
 		@Parameter(hidden = true) CustomUserDetails userDetails,
 		@Parameter(description = "대상 TODO ID", example = "145") Long todoId,
 		TodoStatusUpdateRequest request
+	);
+
+	@Operation(
+		summary = "TODO 상세 조회",
+		description = """
+			todoId로 단일 TODO의 상세 정보를 조회합니다.
+
+			아이콘, 제목, 완료 여부, 날짜/요일, 예상 소요 시간, 우선순위, 태그,
+			반복 설정, 타이머 상태, 메모, 정렬 순서, 하위 태스크 목록을 반환합니다.
+
+			Swagger UI 오른쪽 위의 Authorize 버튼을 눌러 유효한 Access Token을 입력해야 합니다.
+			"""
+	)
+	@ApiResponses({
+		@ApiResponse(
+			responseCode = "200",
+			description = "TODO 상세 조회 성공",
+			useReturnTypeSchema = true
+		),
+		@ApiResponse(
+			responseCode = "401",
+			description = "Access Token이 없거나 만료되었거나 유효하지 않은 경우",
+			content = @Content(
+				mediaType = "application/json",
+				schema = @Schema(implementation = ErrorDto.class)
+			)
+		),
+		@ApiResponse(
+			responseCode = "404",
+			description = "존재하지 않는 투두인 경우",
+			content = @Content(
+				mediaType = "application/json",
+				schema = @Schema(implementation = ErrorDto.class)
+			)
+		),
+		@ApiResponse(
+			responseCode = "500",
+			description = "서버 내부 오류",
+			content = @Content(
+				mediaType = "application/json",
+				schema = @Schema(implementation = ErrorDto.class)
+			)
+		)
+	})
+	ResponseEntity<BaseResponse<TodoDetailResponse>> getTodoDetail(
+		@Parameter(hidden = true) CustomUserDetails userDetails,
+		@Parameter(description = "조회할 TODO ID", example = "145") Long todoId
 	);
 }

@@ -7,17 +7,20 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.Timo.Timo.domain.tag.entity.Tag;
 import com.Timo.Timo.domain.tag.exception.TagErrorCode;
 import com.Timo.Timo.domain.tag.repository.TagRepository;
 import com.Timo.Timo.domain.timer.service.TimerService;
 import com.Timo.Timo.domain.todo.dto.request.TodoCreateRequest;
 import com.Timo.Timo.domain.todo.dto.request.TodoStatusUpdateRequest;
 import com.Timo.Timo.domain.todo.dto.response.TodoCreateResponse;
+import com.Timo.Timo.domain.todo.dto.response.TodoDetailResponse;
 import com.Timo.Timo.domain.todo.dto.response.TodoStatusChangeResponse;
 import com.Timo.Timo.domain.todo.entity.Todo;
 import com.Timo.Timo.domain.todo.entity.TodoInstance;
 import com.Timo.Timo.domain.todo.enums.RepeatType;
 import com.Timo.Timo.domain.todo.exception.TodoErrorCode;
+import com.Timo.Timo.domain.todo.repository.TodoInstanceRepository;
 import com.Timo.Timo.domain.todo.repository.TodoRepository;
 import com.Timo.Timo.domain.todo.vo.Duration;
 import com.Timo.Timo.domain.user.entity.User;
@@ -33,6 +36,7 @@ import lombok.RequiredArgsConstructor;
 public class TodoService {
 
 	private final TodoRepository todoRepository;
+	private final TodoInstanceRepository todoInstanceRepository;
 	private final UserRepository userRepository;
 	private final TagRepository tagRepository;
 	private final TodoDateCalculator todoDateCalculator;
@@ -72,6 +76,21 @@ public class TodoService {
 
 		Todo savedTodo = todoRepository.save(todo);
 		return TodoCreateResponse.from(savedTodo);
+	}
+
+	public TodoDetailResponse getTodoDetail(Long userId, Long todoId) {
+		Todo todo = todoRepository.findByIdAndUser_Id(todoId, userId)
+				.orElseThrow(() -> new CustomException(TodoErrorCode.TODO_NOT_FOUND));
+
+		TodoInstance instance = todoInstanceRepository
+				.findByTodo_IdAndDate(todo.getId(), todo.getStartDate())
+				.orElse(null);
+
+		Tag tag = todo.getTagId() != null
+				? tagRepository.findById(todo.getTagId()).orElse(null)
+				: null;
+
+		return TodoDetailResponse.of(todo, instance, tag);
 	}
 
 	@Transactional
