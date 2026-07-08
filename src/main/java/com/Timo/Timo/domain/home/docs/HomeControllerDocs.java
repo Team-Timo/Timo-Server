@@ -63,7 +63,7 @@ public interface HomeControllerDocs {
 	);
 
 	@Operation(
-			summary = "오늘 뷰 TODO 목록 상세 조회",
+			summary = "오늘 뷰 TODO 목록 조회",
 			description = """
 					오늘 하루의 TODO 목록을 하위 태스크 상세 정보까지 포함해 단일 객체로 조회합니다.
 					TODO는 미완료 먼저, 같은 완료 그룹 안에서는 sortOrder 오름차순으로 정렬됩니다.
