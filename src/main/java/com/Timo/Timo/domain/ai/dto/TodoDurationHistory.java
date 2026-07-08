@@ -6,5 +6,4 @@ public record TodoDurationHistory(
 	String title,
 	Integer actualSeconds,
 	LocalDate date
-) {
-}
+) {}
