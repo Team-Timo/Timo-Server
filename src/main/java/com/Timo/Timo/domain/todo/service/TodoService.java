@@ -16,8 +16,10 @@ import com.Timo.Timo.domain.todo.entity.Todo;
 import com.Timo.Timo.domain.todo.enums.RepeatType;
 import com.Timo.Timo.domain.todo.enums.Weekday;
 import com.Timo.Timo.domain.todo.exception.TodoErrorCode;
+import com.Timo.Timo.domain.todo.repository.TodoInstanceRepository;
 import com.Timo.Timo.domain.todo.repository.TodoRepository;
 import com.Timo.Timo.domain.todo.vo.Duration;
+import com.Timo.Timo.domain.timer.service.TimerService;
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.exception.UserErrorCode;
 import com.Timo.Timo.domain.user.repository.UserRepository;
@@ -31,10 +33,12 @@ import lombok.RequiredArgsConstructor;
 public class TodoService {
 
 	private final TodoRepository todoRepository;
+	private final TodoInstanceRepository todoInstanceRepository;
 	private final UserRepository userRepository;
 	private final TagRepository tagRepository;
 	private final TodoDateCalculator todoDateCalculator;
 	private final TodoCapacityChecker todoCapacityChecker;
+	private final TimerService timerService;
 
 	@Transactional
 	public TodoCreateResponse createTodo(Long userId, TodoCreateRequest request) {
@@ -95,6 +99,20 @@ public class TodoService {
 		if (request.subtasks() != null) {
 			todo.replaceSubtasks(toSubtaskEdits(request.subtasks()));
 		}
+	}
+
+	@Transactional
+	public void deleteTodo(Long userId, Long todoId) {
+		Todo todo = todoRepository.findByIdAndUser_Id(todoId, userId)
+				.orElseThrow(() -> new CustomException(TodoErrorCode.TODO_NOT_FOUND));
+
+		if (timerService.hasActiveTimer(todoId)) {
+			throw new CustomException(TodoErrorCode.TIMER_RUNNING);
+		}
+
+		timerService.deleteTimersByTodo(todoId);
+		todoInstanceRepository.deleteByTodoId(todoId);
+		todoRepository.delete(todo);
 	}
 
 	private void applyScheduleChange(Todo todo, TodoUpdateRequest request) {

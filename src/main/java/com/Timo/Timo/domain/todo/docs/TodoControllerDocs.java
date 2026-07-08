@@ -194,4 +194,57 @@ public interface TodoControllerDocs {
 		@Parameter(description = "수정할 TODO ID", example = "205") Long todoId,
 		TodoUpdateRequest request
 	);
+
+	@Operation(
+		summary = "TODO 삭제",
+		description = """
+			TODO와 연결된 하위 태스크, 반복 규칙을 함께 삭제합니다.
+			해당 TODO에 실행 중이거나 일시정지된 타이머가 있으면 삭제할 수 없습니다.
+
+			Swagger UI 오른쪽 위의 Authorize 버튼을 눌러 유효한 Access Token을 입력해야 합니다.
+			"""
+	)
+	@ApiResponses({
+		@ApiResponse(
+			responseCode = "200",
+			description = "TODO 삭제 성공",
+			useReturnTypeSchema = true
+		),
+		@ApiResponse(
+			responseCode = "401",
+			description = "Access Token이 없거나 만료되었거나 유효하지 않은 경우",
+			content = @Content(
+				mediaType = "application/json",
+				schema = @Schema(implementation = ErrorDto.class)
+			)
+		),
+		@ApiResponse(
+			responseCode = "404",
+			description = "존재하지 않는 TODO인 경우",
+			content = @Content(
+				mediaType = "application/json",
+				schema = @Schema(implementation = ErrorDto.class)
+			)
+		),
+		@ApiResponse(
+			responseCode = "409",
+			description = "타이머가 실행 중이거나 일시정지된 상태에서 삭제를 시도한 경우",
+			content = @Content(
+				mediaType = "application/json",
+				schema = @Schema(implementation = ErrorDto.class)
+			)
+		),
+		@ApiResponse(
+			responseCode = "500",
+			description = "서버 내부 오류",
+			content = @Content(
+				mediaType = "application/json",
+				schema = @Schema(implementation = ErrorDto.class)
+			)
+		)
+	})
+	ResponseEntity<BaseResponse<Object>> deleteTodo(
+		@Parameter(hidden = true) CustomUserDetails userDetails,
+		@Parameter(description = "삭제할 TODO ID", example = "205") Long todoId
+	);
 }

@@ -4,6 +4,7 @@ import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -57,5 +58,18 @@ public class TodoController implements TodoControllerDocs {
 		return ResponseEntity
 			.status(TodoSuccessCode.UPDATED.getHttpStatus())
 			.body(BaseResponse.onSuccess(TodoSuccessCode.UPDATED, Map.of()));
+	}
+
+	@Override
+	@DeleteMapping("/{todoId}")
+	public ResponseEntity<BaseResponse<Object>> deleteTodo(
+		@AuthenticationPrincipal CustomUserDetails userDetails,
+		@PathVariable Long todoId
+	) {
+		todoService.deleteTodo(userDetails.getUserId(), todoId);
+
+		return ResponseEntity
+			.status(TodoSuccessCode.DELETED.getHttpStatus())
+			.body(BaseResponse.onSuccess(TodoSuccessCode.DELETED, Map.of()));
 	}
 }
