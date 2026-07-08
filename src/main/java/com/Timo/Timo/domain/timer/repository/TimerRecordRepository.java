@@ -36,18 +36,4 @@ public interface TimerRecordRepository extends JpaRepository<TimerRecord, Long> 
       @Param("fromInclusive") LocalDateTime fromInclusive,
       @Param("toExclusive") LocalDateTime toExclusive
   );
-
-  @Query("""
-      select coalesce(sum(tr.actualSeconds), 0)
-      from TimerRecord tr
-      where tr.user.id = :userId
-        and tr.actualSeconds is not null
-        and coalesce(tr.endedAt, tr.startedAt) >= :fromInclusive
-        and coalesce(tr.endedAt, tr.startedAt) < :toExclusive
-      """)
-  Long sumDailyRecordSeconds(
-      @Param("userId") Long userId,
-      @Param("fromInclusive") LocalDateTime fromInclusive,
-      @Param("toExclusive") LocalDateTime toExclusive
-  );
 }
