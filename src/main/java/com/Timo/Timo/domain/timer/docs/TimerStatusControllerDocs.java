@@ -22,7 +22,7 @@ public interface TimerStatusControllerDocs {
       summary = "타이머 일시정지/재개",
       description = """
 			실행 중인 타이머의 일시정지 / 재개를 처리합니다.<br>
-			PAUSE: 현재 세션의 paused_at 기록, status → PAUSED
+			PAUSE: 현재 세션의 paused_at 기록, status → PAUSED <br>
 			RESUME: 새 세션 생성, status → RUNNING
 			"""
   )
