@@ -1,8 +1,10 @@
 package com.Timo.Timo.domain.timer.service;
 
 import com.Timo.Timo.domain.timer.dto.response.TimerStartResponse;
+import com.Timo.Timo.domain.timer.dto.response.TimerStatusResponse;
 import com.Timo.Timo.domain.timer.entity.TimerRecord;
 import com.Timo.Timo.domain.timer.entity.TimerSession;
+import com.Timo.Timo.domain.timer.enums.TimerAction;
 import com.Timo.Timo.domain.timer.enums.TimerStatus;
 import com.Timo.Timo.domain.timer.exception.TimerErrorCode;
 import com.Timo.Timo.domain.timer.repository.TimerRecordRepository;
@@ -15,6 +17,7 @@ import com.Timo.Timo.domain.user.exception.UserErrorCode;
 import com.Timo.Timo.domain.user.repository.UserRepository;
 import com.Timo.Timo.global.exception.CustomException;
 import com.Timo.Timo.global.exception.code.ErrorCode;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -66,5 +69,46 @@ public class TimerService {
     timerSessionRepository.save(session);
 
     return TimerStartResponse.from(timerRecord);
+  }
+
+  @Transactional
+  public TimerStatusResponse changeStatus(Long userId, Long timerId, TimerAction action){
+    TimerRecord timerRecord = timerRecordRepository.findById(timerId)
+        .orElseThrow(() -> new CustomException(TimerErrorCode.TIMER_NOT_FOUND));
+
+    if (!timerRecord.getUser().getId().equals(userId)){
+      throw new CustomException(ErrorCode.FORBIDDEN);
+    }
+
+    LocalDateTime now = LocalDateTime.now();
+
+    if (action == TimerAction.PAUSE){
+      timerRecord.pause();
+      TimerSession activeSession = timerSessionRepository.findByTimerRecordIdAndPausedAtIsNull(timerId)
+          .orElseThrow(() -> new CustomException(TimerErrorCode.TIMER_INVALID_STATUS_TRANSITION));
+      activeSession.pause(now);
+    } else {
+      timerRecord.resume();
+      TimerSession newSession = TimerSession.builder()
+          .timerRecord(timerRecord)
+          .startedAt(now)
+          .build();
+      timerSessionRepository.save(newSession);
+    }
+
+    int elapsedSeconds = calculateElapsedSeconds(timerId, now);
+
+    return TimerStatusResponse.of(timerRecord, elapsedSeconds);
+  }
+
+  private int calculateElapsedSeconds(Long timerRecordId, LocalDateTime now){
+    List<TimerSession> sessions = timerSessionRepository.findByTimerRecordId(timerRecordId);
+    long totalSeconds = 0;
+    for (TimerSession session : sessions){
+      LocalDateTime end = session.getPausedAt() != null ? session.getPausedAt() : now;
+      totalSeconds += Duration.between(session.getStartedAt(), end).getSeconds();
+    }
+
+    return (int) totalSeconds;
   }
 }
