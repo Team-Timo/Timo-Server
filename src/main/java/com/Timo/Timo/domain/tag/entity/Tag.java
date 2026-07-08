@@ -21,6 +21,6 @@ public class Tag {
 	@Column(name = "id")
 	private Long id;
 
-	@Column(name = "name", length = 20)
+	@Column(name = "name", nullable = false, length = 20)
 	private String name;
 }
