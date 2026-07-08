@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import com.Timo.Timo.domain.statistics.repository.StatisticsDailyTodo;
 import com.Timo.Timo.domain.todo.entity.Todo;
 
 public interface TodoRepository extends JpaRepository<Todo, Long> {
@@ -65,5 +66,33 @@ public interface TodoRepository extends JpaRepository<Todo, Long> {
 			@Param("userId") Long userId,
 			@Param("fromInclusive") LocalDateTime fromInclusive,
 			@Param("toExclusive") LocalDateTime toExclusive
+	);
+
+	@Query("""
+		select new com.Timo.Timo.domain.statistics.repository.StatisticsDailyTodo(
+			t.id,
+			t.title,
+			coalesce(sum(tr.actualSeconds), 0),
+			t.durationSeconds,
+			tag.name
+		)
+		from TodoInstance ti
+		join ti.todo t
+		left join Tag tag on tag.id = t.tagId
+		left join TimerRecord tr on tr.todo = t
+			and tr.user.id = :userId
+			and tr.actualSeconds is not null
+			and coalesce(tr.endedAt, tr.startedAt) >= :fromInclusive
+			and coalesce(tr.endedAt, tr.startedAt) < :toExclusive
+		where t.user.id = :userId
+			and ti.date = :date
+		group by t.id, t.title, t.durationSeconds, tag.name, ti.sortOrder
+		order by ti.sortOrder asc, t.id asc
+		""")
+	List<StatisticsDailyTodo> findDailyTodos(
+		@Param("userId") Long userId,
+		@Param("date") LocalDate date,
+		@Param("fromInclusive") LocalDateTime fromInclusive,
+		@Param("toExclusive") LocalDateTime toExclusive
 	);
 }

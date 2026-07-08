@@ -20,7 +20,6 @@ import com.Timo.Timo.domain.statistics.dto.response.StatisticsDailyResponse.Dail
 import com.Timo.Timo.domain.statistics.dto.response.StatisticsDailyResponse.TagResponse;
 import com.Timo.Timo.domain.statistics.dto.response.StatisticsSummaryResponse;
 import com.Timo.Timo.domain.statistics.repository.StatisticsDailyTodo;
-import com.Timo.Timo.domain.statistics.repository.StatisticsQueryRepository;
 import com.Timo.Timo.domain.statistics.support.StatisticsDateParser;
 import com.Timo.Timo.domain.timer.repository.TimerMonthlyRecordStats;
 import com.Timo.Timo.domain.timer.repository.TimerRecordRepository;
@@ -40,7 +39,6 @@ public class StatisticsService {
 
 	private final TodoRepository todoRepository;
 	private final TimerRecordRepository timerRecordRepository;
-	private final StatisticsQueryRepository statisticsQueryRepository;
 	private final StatisticsDateParser statisticsDateParser;
 
 	public StatisticsCalendarResponse getCalendar(Long userId, String yearMonthValue) {
@@ -104,13 +102,13 @@ public class StatisticsService {
 	public StatisticsDailyResponse getDaily(Long userId, String dateValue) {
 		LocalDate date = statisticsDateParser.parseDate(dateValue);
 		LocalDate nextDate = date.plusDays(1);
-		long totalRecordSeconds = statisticsQueryRepository.sumDailyTimerRecordSeconds(
+		long totalRecordSeconds = timerRecordRepository.sumDailyRecordSeconds(
 			userId,
 			date.atStartOfDay(),
 			nextDate.atStartOfDay()
 		);
 
-		List<DailyTodoResponse> todos = statisticsQueryRepository.findDailyTodos(
+		List<DailyTodoResponse> todos = todoRepository.findDailyTodos(
 				userId,
 				date,
 				date.atStartOfDay(),
