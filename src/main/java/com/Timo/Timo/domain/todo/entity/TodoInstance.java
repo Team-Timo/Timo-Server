@@ -2,10 +2,13 @@ package com.Timo.Timo.domain.todo.entity;
 
 import java.time.LocalDate;
 
+import com.Timo.Timo.domain.todo.enums.TodoTimerStatus;
 import com.Timo.Timo.global.common.BaseTimeEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -48,13 +51,22 @@ public class TodoInstance extends BaseTimeEntity {
     @Column(name = "sort_order", nullable = false)
     private Integer sortOrder;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "timer_status", nullable = false, length = 20)
+    private TodoTimerStatus timerStatus = TodoTimerStatus.STOPPED;
+
     public static TodoInstance of(Todo todo, LocalDate date, int sortOrder) {
         TodoInstance instance = new TodoInstance();
         instance.todo = todo;
         instance.date = date;
         instance.completed = false;
         instance.sortOrder = sortOrder;
+        instance.timerStatus = TodoTimerStatus.STOPPED;
         return instance;
+    }
+
+    public TodoTimerStatus getTimerStatus() {
+        return timerStatus != null ? timerStatus : TodoTimerStatus.STOPPED;
     }
 
     public void markCompleted() {
@@ -67,5 +79,17 @@ public class TodoInstance extends BaseTimeEntity {
 
     public void updateSortOrder(int sortOrder) {
         this.sortOrder = sortOrder;
+    }
+
+    public void startTimer() {
+        this.timerStatus = TodoTimerStatus.RUNNING;
+    }
+
+    public void pauseTimer() {
+        this.timerStatus = TodoTimerStatus.PAUSED;
+    }
+
+    public void stopTimer() {
+        this.timerStatus = TodoTimerStatus.STOPPED;
     }
 }

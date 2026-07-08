@@ -36,10 +36,14 @@ public class Subtask extends BaseTimeEntity {
 	@Column(name = "sort_order", nullable = false)
 	private Integer sortOrder;
 
+	@Column(name = "completed", nullable = false)
+	private boolean completed;
+
 	public static Subtask of(String content, int sortOrder) {
 		Subtask subtask = new Subtask();
 		subtask.content = content;
 		subtask.sortOrder = sortOrder;
+		subtask.completed = false;
 		return subtask;
 	}
 

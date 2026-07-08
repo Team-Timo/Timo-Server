@@ -16,6 +16,7 @@ public interface TodoRepository extends JpaRepository<Todo, Long> {
 		where t.user.id = :userId
 		  and t.startDate <= :to
 		  and t.endDate >= :from
+		order by t.createdAt asc, t.id asc
 		""")
 	List<Todo> findRulesInRange(
 			@Param("userId") Long userId,

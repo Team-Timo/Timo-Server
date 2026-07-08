@@ -16,7 +16,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 public interface TodoControllerDocs {
 
@@ -30,8 +29,7 @@ public interface TodoControllerDocs {
 			반복 일정은 시작일 기준 최대 1년까지 생성됩니다.
 
 			Swagger UI 오른쪽 위의 Authorize 버튼을 눌러 유효한 Access Token을 입력해야 합니다.
-			""",
-		security = @SecurityRequirement(name = "bearerAuth")
+			"""
 	)
 	@RequestBody(
 		required = true,

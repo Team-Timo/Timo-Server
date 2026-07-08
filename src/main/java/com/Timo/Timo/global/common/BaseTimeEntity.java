@@ -17,11 +17,11 @@ public abstract class BaseTimeEntity {
 
   @CreatedDate
   @Column(name = "created_at", nullable = false, updatable = false)
-  @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+  @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
   private LocalDateTime createdAt;
 
   @LastModifiedDate
   @Column(name = "updated_at", nullable = false)
-  @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+  @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
   private LocalDateTime updatedAt;
 }

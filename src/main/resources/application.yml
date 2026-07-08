@@ -12,7 +12,12 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
         format_sql: true
+        jdbc:
+          time_zone: UTC
     show-sql: true
+
+  jackson:
+    time-zone: UTC
 
 server:
   port: 8080
