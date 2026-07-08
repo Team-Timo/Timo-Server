@@ -9,4 +9,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface TimerRecordRepository extends JpaRepository<TimerRecord, Long> {
 
   Optional<TimerRecord> findByUserIdAndStatusIn(Long userId, List<TimerStatus> statuses);
+
+  boolean existsByTodo_IdAndStatusIn(Long todoId, List<TimerStatus> statuses);
 }
