@@ -49,7 +49,7 @@ public class TodoController implements TodoControllerDocs {
 	public ResponseEntity<BaseResponse<TodoStatusChangeResponse>> changeTodoStatus(
 		@AuthenticationPrincipal CustomUserDetails userDetails,
 		@PathVariable Long todoId,
-		@RequestBody TodoStatusUpdateRequest request
+		@Valid @RequestBody TodoStatusUpdateRequest request
 	) {
 		TodoStatusChangeResponse response = todoService.changeCompletion(userDetails.getUserId(), todoId, request);
 
