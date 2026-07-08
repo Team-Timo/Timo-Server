@@ -53,6 +53,9 @@ public class User extends BaseTimeEntity {
   @Column(name = "language", nullable = false, length = 2)
   private Language language;
 
+  @Column(name = "zone_id", nullable = false, length = 64)
+  private String zoneId;
+
   @Column(name = "wake_up_time", nullable = false)
   private LocalTime wakeUpTime;
 
@@ -93,6 +96,10 @@ public class User extends BaseTimeEntity {
     this.language = language;
   }
 
+  public void updateZoneId(String zoneId) {
+    this.zoneId = zoneId;
+  }
+
   @Builder
   private User(
       Provider provider,
@@ -108,6 +115,7 @@ public class User extends BaseTimeEntity {
     this.profileImageUrl = profileImageUrl;
 
     this.language = Language.KO;
+    this.zoneId = Language.KO.getDefaultZoneId();
     this.wakeUpTime = LocalTime.of(7, 0);
     this.bedTime = LocalTime.of(23, 0);
     this.predictionAccuracy = 0L;

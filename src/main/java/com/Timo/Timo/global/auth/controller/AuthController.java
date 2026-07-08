@@ -10,7 +10,6 @@ import com.Timo.Timo.global.auth.principal.CustomUserDetails;
 import com.Timo.Timo.global.auth.service.AuthService;
 import com.Timo.Timo.global.auth.utils.TokenExtractor;
 import com.Timo.Timo.global.response.BaseResponse;
-import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;

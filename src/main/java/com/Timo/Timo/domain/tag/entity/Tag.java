@@ -20,4 +20,7 @@ public class Tag {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "id")
 	private Long id;
+
+	@Column(name = "name", nullable = false, length = 20)
+	private String name;
 }
