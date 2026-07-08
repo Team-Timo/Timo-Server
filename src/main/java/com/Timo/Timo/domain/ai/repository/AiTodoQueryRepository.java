@@ -7,6 +7,8 @@ import java.util.List;
 
 import org.springframework.stereotype.Repository;
 
+import com.Timo.Timo.domain.ai.dto.TodoDurationHistory;
+
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +28,6 @@ public class AiTodoQueryRepository {
 		Query query = entityManager.createNativeQuery("""
 				select
 					t.title,
-					t.tag_id,
 					tr.actual_seconds,
 					date(coalesce(tr.ended_at, tr.started_at)) as recorded_date
 				from todos t
@@ -39,7 +40,15 @@ public class AiTodoQueryRepository {
 						lower(t.title) like lower(concat('%', :title, '%'))
 						or lower(:title) like lower(concat('%', t.title, '%'))
 					)
-				order by coalesce(tr.ended_at, tr.started_at) desc, tr.id desc
+				order by
+					case
+						when lower(t.title) = lower(:title) then 0
+						when lower(t.title) like lower(concat('%', :title, '%')) then 1
+						when lower(:title) like lower(concat('%', t.title, '%')) then 2
+						else 3
+					end,
+					coalesce(tr.ended_at, tr.started_at) desc,
+					tr.id desc
 				""")
 			.setParameter("userId", userId)
 			.setParameter("title", title)
@@ -58,7 +67,6 @@ public class AiTodoQueryRepository {
 		Query query = entityManager.createNativeQuery("""
 				select
 					t.title,
-					t.tag_id,
 					tr.actual_seconds,
 					date(coalesce(tr.ended_at, tr.started_at)) as recorded_date
 				from todos t
@@ -83,9 +91,8 @@ public class AiTodoQueryRepository {
 		return ((List<Object[]>)rows).stream()
 			.map(row -> new TodoDurationHistory(
 				(String)row[0],
-				toLong(row[1]),
-				toInteger(row[2]),
-				toLocalDate(row[3])
+				toInteger(row[1]),
+				toLocalDate(row[2])
 			))
 			.toList();
 	}
