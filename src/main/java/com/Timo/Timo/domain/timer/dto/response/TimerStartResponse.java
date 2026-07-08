@@ -7,7 +7,7 @@ public record TimerStartResponse(
     Long timerId,
     Long todoId,
     String status,
-    Integer plannedMinutes,
+    Integer plannedSeconds,
     LocalDateTime startedAt
 ) {
   public static TimerStartResponse from(TimerRecord timerRecord) {
@@ -15,7 +15,7 @@ public record TimerStartResponse(
         timerRecord.getId(),
         timerRecord.getTodo().getId(),
         timerRecord.getStatus().name(),
-        timerRecord.getPlannedMinutes(),
+        timerRecord.getPlannedSeconds(),
         timerRecord.getStartedAt()
     );
   }

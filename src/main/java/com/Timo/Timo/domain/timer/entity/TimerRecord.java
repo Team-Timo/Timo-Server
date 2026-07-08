@@ -45,11 +45,11 @@ public class TimerRecord {
   @JoinColumn(name = "todo_id", nullable = false)
   private Todo todo;
 
-  @Column(name = "planned_minutes", nullable = false)
-  private Integer plannedMinutes;
+  @Column(name = "planned_seconds", nullable = false)
+  private Integer plannedSeconds;
 
-  @Column(name = "extended_minutes", nullable = false)
-  private Integer extendedMinutes;
+  @Column(name = "extended_seconds", nullable = false)
+  private Integer extendedSeconds;
 
   @Column(name = "started_at", nullable = false)
   private LocalDateTime startedAt;
@@ -72,12 +72,12 @@ public class TimerRecord {
   private LocalDateTime createdAt;
 
   @Builder
-  private TimerRecord(User user, Todo todo, Integer plannedMinutes, LocalDateTime startedAt) {
+  private TimerRecord(User user, Todo todo, Integer plannedSeconds, LocalDateTime startedAt) {
     this.user = user;
     this.todo = todo;
-    this.plannedMinutes = plannedMinutes;
+    this.plannedSeconds = plannedSeconds;
     this.startedAt = startedAt;
-    this.extendedMinutes = 0;
+    this.extendedSeconds = 0;
     this.status = TimerStatus.RUNNING;
   }
 

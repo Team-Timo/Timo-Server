@@ -58,7 +58,7 @@ public class TimerService {
     TimerRecord timerRecord = TimerRecord.builder()
         .user(user)
         .todo(todo)
-        .plannedMinutes(todo.getDurationSeconds())
+        .plannedSeconds(todo.getDurationSeconds())
         .startedAt(now)
         .build();
     timerRecordRepository.save(timerRecord);
