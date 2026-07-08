@@ -1,4 +1,4 @@
-기package com.Timo.Timo.domain.terms.docs;
+package com.Timo.Timo.domain.terms.docs;
 
 import org.springframework.http.ResponseEntity;
 
