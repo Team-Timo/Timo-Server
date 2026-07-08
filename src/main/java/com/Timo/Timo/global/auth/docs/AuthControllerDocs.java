@@ -13,7 +13,7 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
@@ -31,7 +31,8 @@ public interface AuthControllerDocs {
         - RefreshToken과 sessionId는 Set-Cookie 헤더로 전달되며, 응답 바디에는 포함되지 않음
 			"""
   )
- @io.swagger.v3.oas.annotations.parameters.RequestBody(
+  @SecurityRequirements
+  @io.swagger.v3.oas.annotations.parameters.RequestBody(
       content = @Content(
           mediaType = "application/json",
           schema = @Schema(implementation = AuthTokenRequest.class),
@@ -97,6 +98,7 @@ public interface AuthControllerDocs {
 			"""
 
   )
+  @SecurityRequirements
   @ApiResponses({
       @ApiResponse(
           responseCode = "200",
@@ -138,8 +140,7 @@ public interface AuthControllerDocs {
       description = """
 			현재 세션을 로그아웃하고 RefreshToken 및 sessionId 쿠키를 만료시킵니다.
 			Swagger UI 오른쪽 위의 Authorize 버튼을 눌러 유효한 Access Token을 입력해야 합니다.
-			""",
-      security = @SecurityRequirement(name = "bearerAuth")
+			"""
   )
   @ApiResponses({
       @ApiResponse(
@@ -176,8 +177,7 @@ public interface AuthControllerDocs {
 			회원 탈퇴를 진행하며, 사용자와 관련된 모든 데이터를 영구 삭제합니다.
 			Swagger UI 오른쪽 위의 Authorize 버튼을 눌러 유효한 Access Token을 입력해야 합니다.
 			이 작업은 되돌릴 수 없습니다.
-			""",
-      security = @SecurityRequirement(name = "bearerAuth")
+			"""
   )
   @ApiResponses({
       @ApiResponse(

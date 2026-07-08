@@ -12,7 +12,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -34,13 +33,13 @@ public class Subtask extends BaseTimeEntity {
 	@Column(name = "content", nullable = false, length = 20)
 	private String content;
 
-	@Column(name = "completed", nullable = false)
-	private boolean completed;
+	@Column(name = "sort_order", nullable = false)
+	private Integer sortOrder;
 
-	public static Subtask of(String content) {
+	public static Subtask of(String content, int sortOrder) {
 		Subtask subtask = new Subtask();
 		subtask.content = content;
-		subtask.completed = false;
+		subtask.sortOrder = sortOrder;
 		return subtask;
 	}
 

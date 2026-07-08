@@ -52,7 +52,6 @@ public class AuthResponseFactory {
     return ResponseEntity.ok()
         .header(HttpHeaders.SET_COOKIE, CookieUtil.expireCookie("refreshToken", cookieSecure).toString())
         .header(HttpHeaders.SET_COOKIE, CookieUtil.expireCookie("sessionId", cookieSecure).toString())
-        .header(HttpHeaders.CACHE_CONTROL, "no-store")
         .body(BaseResponse.onSuccess(successCode, null));
   }
 

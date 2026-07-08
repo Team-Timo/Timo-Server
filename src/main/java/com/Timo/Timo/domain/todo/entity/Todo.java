@@ -2,6 +2,7 @@ package com.Timo.Timo.domain.todo.entity;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import com.Timo.Timo.domain.todo.enums.RepeatType;
@@ -54,11 +55,29 @@ public class Todo extends BaseTimeEntity {
 	@Column(name = "title", nullable = false, length = 30)
 	private String title;
 
+	@Getter(AccessLevel.NONE)
 	@OneToMany(mappedBy = "todo", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Subtask> subtasks = new ArrayList<>();
 
-	@Column(name = "todo_date", nullable = false)
-	private LocalDate date;
+	@Column(name = "start_date", nullable = false)
+	private LocalDate startDate;
+
+	@Column(name = "end_date", nullable = false)
+	private LocalDate endDate;
+
+	@Enumerated(EnumType.STRING)
+	@Column(name = "repeat_type", nullable = false, length = 20)
+	private RepeatType repeatType;
+
+	@Getter(AccessLevel.NONE)
+	@ElementCollection
+	@CollectionTable(name = "todo_repeat_weekdays", joinColumns = @JoinColumn(name = "todo_id"))
+	@Enumerated(EnumType.STRING)
+	@Column(name = "weekday", nullable = false, length = 3)
+	private List<Weekday> repeatWeekdays = new ArrayList<>();
+
+	@Column(name = "repeat_day_of_month")
+	private Integer repeatDayOfMonth;
 
 	@Column(name = "duration_seconds", nullable = false)
 	private Integer durationSeconds;
@@ -70,53 +89,37 @@ public class Todo extends BaseTimeEntity {
 	@Column(name = "tag_id")
 	private Long tagId;
 
-	@Enumerated(EnumType.STRING)
-	@Column(name = "repeat_type", nullable = false, length = 20)
-	private RepeatType repeatType;
-
-	@ElementCollection
-	@CollectionTable(name = "todo_repeat_weekdays", joinColumns = @JoinColumn(name = "todo_id"))
-	@Enumerated(EnumType.STRING)
-	@Column(name = "weekday", nullable = false, length = 3)
-	private List<Weekday> repeatWeekdays = new ArrayList<>();
-
-	@Column(name = "repeat_day_of_month")
-	private Integer repeatDayOfMonth;
-
 	@Lob
 	@Column(name = "memo")
 	private String memo;
-
-	@Column(name = "sort_order", nullable = false)
-	private Integer sortOrder;
 
 	@Builder(access = AccessLevel.PRIVATE)
 	private Todo(
 			User user,
 			TodoIcon icon,
 			String title,
-			LocalDate date,
-			Integer durationSeconds,
-			TodoPriority priority,
-			Long tagId,
+			LocalDate startDate,
+			LocalDate endDate,
 			RepeatType repeatType,
 			List<Weekday> repeatWeekdays,
 			Integer repeatDayOfMonth,
-			String memo,
-			Integer sortOrder
+			Integer durationSeconds,
+			TodoPriority priority,
+			Long tagId,
+			String memo
 	) {
 		this.user = user;
 		this.icon = icon;
 		this.title = title;
-		this.date = date;
-		this.durationSeconds = durationSeconds;
-		this.priority = priority;
-		this.tagId = tagId;
+		this.startDate = startDate;
+		this.endDate = endDate;
 		this.repeatType = repeatType;
 		this.repeatWeekdays = repeatWeekdays != null ? new ArrayList<>(repeatWeekdays) : new ArrayList<>();
 		this.repeatDayOfMonth = repeatDayOfMonth;
+		this.durationSeconds = durationSeconds;
+		this.priority = priority;
+		this.tagId = tagId;
 		this.memo = memo;
-		this.sortOrder = sortOrder;
 	}
 
 	public static Todo create(
@@ -124,35 +127,45 @@ public class Todo extends BaseTimeEntity {
 			TodoIcon icon,
 			String title,
 			List<String> subtaskContents,
-			LocalDate date,
-			int durationSeconds,
-			TodoPriority priority,
-			Long tagId,
+			LocalDate startDate,
+			LocalDate endDate,
 			RepeatType repeatType,
 			List<Weekday> repeatWeekdays,
 			Integer repeatDayOfMonth,
-			String memo,
-			int sortOrder
+			int durationSeconds,
+			TodoPriority priority,
+			Long tagId,
+			String memo
 	) {
 		Todo todo = Todo.builder()
 				.user(user)
 				.icon(icon)
 				.title(title)
-				.date(date)
-				.durationSeconds(durationSeconds)
-				.priority(priority)
-				.tagId(tagId)
+				.startDate(startDate)
+				.endDate(endDate)
 				.repeatType(repeatType)
 				.repeatWeekdays(repeatWeekdays)
 				.repeatDayOfMonth(repeatDayOfMonth)
+				.durationSeconds(durationSeconds)
+				.priority(priority)
+				.tagId(tagId)
 				.memo(memo)
-				.sortOrder(sortOrder)
 				.build();
 
 		if (subtaskContents != null) {
-			subtaskContents.forEach(content -> todo.addSubtask(Subtask.of(content)));
+			for (int i = 0; i < subtaskContents.size(); i++) {
+				todo.addSubtask(Subtask.of(subtaskContents.get(i), i + 1));
+			}
 		}
 		return todo;
+	}
+
+	public List<Subtask> getSubtasks() {
+		return Collections.unmodifiableList(subtasks);
+	}
+
+	public List<Weekday> getRepeatWeekdays() {
+		return Collections.unmodifiableList(repeatWeekdays);
 	}
 
 	private void addSubtask(Subtask subtask) {
