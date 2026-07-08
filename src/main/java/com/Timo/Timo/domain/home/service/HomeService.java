@@ -136,7 +136,7 @@ public class HomeService {
 
 	private HomeFilter parseFilter(String filterValue) {
 		if (filterValue == null || filterValue.isBlank()) {
-			throw new CustomException(HomeErrorCode.INVALID_FILTER_OR_DATE);
+			return HomeFilter.DEFAULT;
 		}
 
 		try {
