@@ -47,6 +47,17 @@ jwt:
   access-token-expires-in-seconds: 1800
   refresh-token-expires-in-seconds: 1209600
 
+ai:
+  gemini:
+    api-key: ${GEMINI_API_KEY}
+    model: ${AI_MODEL_NAME}
+  rate-limit:
+    user-rpm: ${AI_USER_RPM}
+    global-rpm: ${AI_GLOBAL_RPM}
+    user-rpd: ${AI_USER_RPD}
+    global-rpd: ${AI_GLOBAL_RPD}
+    global-tpm: ${AI_GLOBAL_TPM}
+
 logging:
   level:
     root: INFO
