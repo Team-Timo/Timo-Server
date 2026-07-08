@@ -79,7 +79,16 @@ public class User extends BaseTimeEntity {
     this.profileImageUrl = profileImageUrl;
   }
 
-  public void completeOnboarding() {
+  public void completeOnboarding(
+      Language language,
+      Long predictionAccuracy,
+      LocalTime wakeUpTime,
+      LocalTime bedTime
+  ) {
+    this.language = language;
+    this.predictionAccuracy = predictionAccuracy;
+    this.wakeUpTime = wakeUpTime;
+    this.bedTime = bedTime;
     this.onboardingCompleted = true;
   }
 

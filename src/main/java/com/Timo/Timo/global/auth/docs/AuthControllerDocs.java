@@ -14,8 +14,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.Map;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -32,7 +32,8 @@ public interface AuthControllerDocs {
         - RefreshToken과 sessionId는 Set-Cookie 헤더로 전달되며, 응답 바디에는 포함되지 않음
 			"""
   )
- @io.swagger.v3.oas.annotations.parameters.RequestBody(
+  @SecurityRequirements
+  @io.swagger.v3.oas.annotations.parameters.RequestBody(
       content = @Content(
           mediaType = "application/json",
           schema = @Schema(implementation = AuthTokenRequest.class),
@@ -98,6 +99,7 @@ public interface AuthControllerDocs {
 			"""
 
   )
+  @SecurityRequirements
   @ApiResponses({
       @ApiResponse(
           responseCode = "200",
