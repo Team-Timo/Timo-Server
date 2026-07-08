@@ -67,4 +67,8 @@ public class TimerService {
 
     return TimerStartResponse.from(timerRecord);
   }
+
+  public boolean hasActiveTimer(Long todoId) {
+    return timerRecordRepository.existsByTodo_IdAndStatusIn(todoId, ACTIVE_STATUS);
+  }
 }
