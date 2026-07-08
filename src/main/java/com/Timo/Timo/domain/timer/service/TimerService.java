@@ -35,7 +35,7 @@ public class TimerService {
 
   @Transactional
   public TimerStartResponse startTimer(Long userId, Long todoId) {
-    User user = userRepository.findById(userId)
+    User user = userRepository.findByIdForUpdate(userId)
         .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
     Todo todo = todoRepository.findById(todoId)
         .orElseThrow(() -> new CustomException(TodoErrorCode.TODO_NOT_FOUND));
