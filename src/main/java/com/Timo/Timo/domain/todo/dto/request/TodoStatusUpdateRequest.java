@@ -9,5 +9,4 @@ public record TodoStatusUpdateRequest(
 		Boolean isCompleted,
 
 		LocalDate date
-) {
-}
+) { }
