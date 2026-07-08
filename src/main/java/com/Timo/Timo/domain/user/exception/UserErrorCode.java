@@ -9,7 +9,8 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public enum UserErrorCode implements BaseErrorCode {
 
-  USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_404", "존재하지 않는 사용자입니다.");
+  USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_404", "존재하지 않는 사용자입니다."),
+  INVALID_TIMEZONE(HttpStatus.BAD_REQUEST, "USER_400", "유효하지 않은 시간대 ID입니다.");
 
   private final HttpStatus httpStatus;
   private final String code;
