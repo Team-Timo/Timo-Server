@@ -161,6 +161,9 @@ public class Todo extends BaseTimeEntity {
 	}
 
 	public List<Subtask> getSubtasks() {
+		if (subtasks == null) {
+			return List.of();
+		}
 		return Collections.unmodifiableList(subtasks);
 	}
 
