@@ -13,7 +13,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 
-public interface TimerControllerDocs {
+public interface TimerStartControllerDocs {
 
   @Operation(
       summary = "타이머 시작",
