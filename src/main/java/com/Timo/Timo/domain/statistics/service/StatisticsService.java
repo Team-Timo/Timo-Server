@@ -15,6 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.Timo.Timo.domain.statistics.dto.response.StatisticsCalendarResponse;
 import com.Timo.Timo.domain.statistics.dto.response.StatisticsCalendarResponse.DayCompletionResponse;
+import com.Timo.Timo.domain.statistics.dto.response.StatisticsSummaryResponse;
+import com.Timo.Timo.domain.statistics.repository.StatisticsQueryRepository;
+import com.Timo.Timo.domain.statistics.repository.StatisticsSummary;
 import com.Timo.Timo.domain.todo.repository.TodoDailyCompletionStats;
 import com.Timo.Timo.domain.todo.repository.TodoRepository;
 
@@ -26,8 +29,10 @@ import lombok.RequiredArgsConstructor;
 public class StatisticsService {
 
 	private static final DateTimeFormatter YEAR_MONTH_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM");
+	private static final int SECONDS_PER_MINUTE = 60;
 
 	private final TodoRepository todoRepository;
+	private final StatisticsQueryRepository statisticsQueryRepository;
 
 	public StatisticsCalendarResponse getCalendar(Long userId, YearMonth yearMonth) {
 		LocalDate today = LocalDate.now(ZoneOffset.UTC);
@@ -52,6 +57,30 @@ public class StatisticsService {
 			yearMonth.format(YEAR_MONTH_FORMATTER),
 			today,
 			days
+		);
+	}
+
+	public StatisticsSummaryResponse getSummary(Long userId, YearMonth yearMonth) {
+		LocalDate startDate = yearMonth.atDay(1);
+		LocalDate nextMonthStartDate = yearMonth.plusMonths(1).atDay(1);
+
+		StatisticsSummary summary = statisticsQueryRepository.findSummary(
+			userId,
+			startDate.atStartOfDay(),
+			nextMonthStartDate.atStartOfDay()
+		);
+
+		long totalRecordSeconds = summary.totalRecordSeconds();
+		long averageRecordedMinutes = summary.timerRecordedDayCount() == 0
+			? 0L
+			: totalRecordSeconds / summary.timerRecordedDayCount() / SECONDS_PER_MINUTE;
+
+		return new StatisticsSummaryResponse(
+			totalRecordSeconds / SECONDS_PER_MINUTE,
+			summary.activeDayCount(),
+			averageRecordedMinutes,
+			summary.completedTodoCount(),
+			summary.totalTodoCount()
 		);
 	}
 

@@ -10,7 +10,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.Timo.Timo.domain.statistics.docs.StatisticsCalendarDocs;
+import com.Timo.Timo.domain.statistics.docs.StatisticsSummaryDocs;
 import com.Timo.Timo.domain.statistics.dto.response.StatisticsCalendarResponse;
+import com.Timo.Timo.domain.statistics.dto.response.StatisticsSummaryResponse;
 import com.Timo.Timo.domain.statistics.exception.StatisticsSuccessCode;
 import com.Timo.Timo.domain.statistics.service.StatisticsService;
 import com.Timo.Timo.domain.statistics.support.StatisticsDateParser;
@@ -24,7 +26,7 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/v1/statistics")
 @RequiredArgsConstructor
 @Tag(name = "Statistics", description = "통계 API")
-public class StatisticsController implements StatisticsCalendarDocs {
+public class StatisticsController implements StatisticsCalendarDocs, StatisticsSummaryDocs {
 
 	private final StatisticsService statisticsService;
 	private final StatisticsDateParser statisticsDateParser;
@@ -43,6 +45,23 @@ public class StatisticsController implements StatisticsCalendarDocs {
 
 		return ResponseEntity.ok(
 			BaseResponse.onSuccess(StatisticsSuccessCode.CALENDAR_RETRIEVED, response)
+		);
+	}
+
+	@Override
+	@GetMapping("/summary")
+	public ResponseEntity<BaseResponse<StatisticsSummaryResponse>> getSummary(
+		@AuthenticationPrincipal CustomUserDetails userDetails,
+		@RequestParam(required = false) String yearMonth
+	) {
+		YearMonth parsedYearMonth = statisticsDateParser.parseYearMonth(yearMonth);
+		StatisticsSummaryResponse response = statisticsService.getSummary(
+			userDetails.getUserId(),
+			parsedYearMonth
+		);
+
+		return ResponseEntity.ok(
+			BaseResponse.onSuccess(StatisticsSuccessCode.SUMMARY_RETRIEVED, response)
 		);
 	}
 }
