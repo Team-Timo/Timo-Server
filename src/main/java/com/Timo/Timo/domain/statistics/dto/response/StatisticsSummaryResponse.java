@@ -17,5 +17,4 @@ public record StatisticsSummaryResponse(
 
 	@Schema(description = "해당 월에 작성된 전체 투두 수", example = "100")
 	Integer totalTodoCount
-) {
-}
+) {}
