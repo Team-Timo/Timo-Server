@@ -6,8 +6,8 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.Timo.Timo.domain.ai.dto.TodoDurationHistory;
 import com.Timo.Timo.domain.ai.repository.AiTodoQueryRepository;
-import com.Timo.Timo.domain.ai.repository.TodoDurationHistory;
 
 import lombok.RequiredArgsConstructor;
 
