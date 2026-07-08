@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.Timo.Timo.domain.statistics.dto.response.StatisticsCalendarResponse;
 import com.Timo.Timo.domain.statistics.dto.response.StatisticsCalendarResponse.DayCompletionResponse;
 import com.Timo.Timo.domain.statistics.dto.response.StatisticsSummaryResponse;
+import com.Timo.Timo.domain.statistics.support.StatisticsDateParser;
 import com.Timo.Timo.domain.timer.repository.TimerMonthlyRecordStats;
 import com.Timo.Timo.domain.timer.repository.TimerRecordRepository;
 import com.Timo.Timo.domain.todo.repository.TodoDailyCompletionStats;
@@ -34,8 +35,10 @@ public class StatisticsService {
 
 	private final TodoRepository todoRepository;
 	private final TimerRecordRepository timerRecordRepository;
+	private final StatisticsDateParser statisticsDateParser;
 
-	public StatisticsCalendarResponse getCalendar(Long userId, YearMonth yearMonth) {
+	public StatisticsCalendarResponse getCalendar(Long userId, String yearMonthValue) {
+		YearMonth yearMonth = statisticsDateParser.parseYearMonth(yearMonthValue);
 		LocalDate today = LocalDate.now(ZoneOffset.UTC);
 		LocalDate startDate = yearMonth.atDay(1);
 		LocalDate endDate = yearMonth.atEndOfMonth();
@@ -61,7 +64,8 @@ public class StatisticsService {
 		);
 	}
 
-	public StatisticsSummaryResponse getSummary(Long userId, YearMonth yearMonth) {
+	public StatisticsSummaryResponse getSummary(Long userId, String yearMonthValue) {
+		YearMonth yearMonth = statisticsDateParser.parseYearMonth(yearMonthValue);
 		LocalDate startDate = yearMonth.atDay(1);
 		LocalDate nextMonthStartDate = yearMonth.plusMonths(1).atDay(1);
 

@@ -1,7 +1,5 @@
 package com.Timo.Timo.domain.statistics.controller;
 
-import java.time.YearMonth;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,7 +13,6 @@ import com.Timo.Timo.domain.statistics.dto.response.StatisticsCalendarResponse;
 import com.Timo.Timo.domain.statistics.dto.response.StatisticsSummaryResponse;
 import com.Timo.Timo.domain.statistics.exception.StatisticsSuccessCode;
 import com.Timo.Timo.domain.statistics.service.StatisticsService;
-import com.Timo.Timo.domain.statistics.support.StatisticsDateParser;
 import com.Timo.Timo.global.auth.principal.CustomUserDetails;
 import com.Timo.Timo.global.response.BaseResponse;
 
@@ -29,7 +26,6 @@ import lombok.RequiredArgsConstructor;
 public class StatisticsController implements StatisticsCalendarDocs, StatisticsSummaryDocs {
 
 	private final StatisticsService statisticsService;
-	private final StatisticsDateParser statisticsDateParser;
 
 	@Override
 	@GetMapping("/calendar")
@@ -37,10 +33,9 @@ public class StatisticsController implements StatisticsCalendarDocs, StatisticsS
 		@AuthenticationPrincipal CustomUserDetails userDetails,
 		@RequestParam(required = false) String yearMonth
 	) {
-		YearMonth parsedYearMonth = statisticsDateParser.parseYearMonth(yearMonth);
 		StatisticsCalendarResponse response = statisticsService.getCalendar(
 			userDetails.getUserId(),
-			parsedYearMonth
+			yearMonth
 		);
 
 		return ResponseEntity.ok(
@@ -54,10 +49,9 @@ public class StatisticsController implements StatisticsCalendarDocs, StatisticsS
 		@AuthenticationPrincipal CustomUserDetails userDetails,
 		@RequestParam(required = false) String yearMonth
 	) {
-		YearMonth parsedYearMonth = statisticsDateParser.parseYearMonth(yearMonth);
 		StatisticsSummaryResponse response = statisticsService.getSummary(
 			userDetails.getUserId(),
-			parsedYearMonth
+			yearMonth
 		);
 
 		return ResponseEntity.ok(
