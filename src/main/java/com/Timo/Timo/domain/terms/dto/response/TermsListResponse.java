@@ -9,16 +9,16 @@ public record TermsListResponse(
 	List<TermsResponse> terms
 ) {
 	public record TermsResponse(
-		@Schema(description = "약관 ID", example = "1")
+		@Schema(description = "약관 ID")
 		Long termsId,
 
-		@Schema(description = "약관 타입", example = "SERVICE")
+		@Schema(description = "약관 타입")
 		String type,
 
-		@Schema(description = "약관 제목", example = "서비스 이용약관")
+		@Schema(description = "약관 제목")
 		String title,
 
-		@Schema(description = "약관 전문", example = "TiMO는 사용자의 일정 관리와 할 일 수행을 돕기 위한 서비스입니다...")
+		@Schema(description = "약관 전문")
 		String content
 	) {}
 }
