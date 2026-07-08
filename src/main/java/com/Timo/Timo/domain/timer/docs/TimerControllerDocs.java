@@ -18,7 +18,7 @@ public interface TimerControllerDocs {
   @Operation(
       summary = "타이머 시작",
       description = """
-			  투두의 타이머를 시작합니다.
+			  투두의 타이머를 시작합니다.<br>
 		  	한 번에 한 개의 타이머만 실행 가능하며, 이미 실행/일시정지 중인 타이머가 있으면 409를 반환합니다.
       """
   )
@@ -47,6 +47,14 @@ public interface TimerControllerDocs {
       @ApiResponse(
           responseCode = "404",
           description = "존재하지 않는 투두인 경우",
+          content = @Content(
+              mediaType = "application/json",
+              schema = @Schema(implementation = ErrorDto.class)
+          )
+      ),
+      @ApiResponse(
+          responseCode = "403",
+          description = "본인 소유의 투두가 아닌 경우",
           content = @Content(
               mediaType = "application/json",
               schema = @Schema(implementation = ErrorDto.class)
