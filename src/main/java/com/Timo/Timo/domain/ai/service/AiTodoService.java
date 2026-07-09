@@ -1,14 +1,12 @@
 package com.Timo.Timo.domain.ai.service;
 
 import java.time.LocalDate;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
 
 import org.springframework.stereotype.Service;
 
-import com.Timo.Timo.domain.ai.dto.request.CreateTodoFeedbackRequest;
 import com.Timo.Timo.domain.ai.dto.TodoFeedbackSource;
 import com.Timo.Timo.domain.ai.dto.request.RecommendDurationRequest;
-import com.Timo.Timo.domain.ai.dto.response.CreateTodoFeedbackResponse;
 import com.Timo.Timo.domain.ai.dto.response.GeminiDurationRecommendation;
 import com.Timo.Timo.domain.ai.dto.response.GeminiTodoFeedback;
 import com.Timo.Timo.domain.ai.dto.response.RecommendDurationResponse;
@@ -16,6 +14,9 @@ import com.Timo.Timo.domain.ai.prompt.TodoDurationPromptBuilder;
 import com.Timo.Timo.domain.ai.prompt.TodoFeedbackPromptBuilder;
 import com.Timo.Timo.domain.ai.repository.AiTodoQueryRepository;
 import com.Timo.Timo.domain.todo.exception.TodoErrorCode;
+import com.Timo.Timo.domain.user.entity.User;
+import com.Timo.Timo.domain.user.exception.UserErrorCode;
+import com.Timo.Timo.domain.user.repository.UserRepository;
 import com.Timo.Timo.global.exception.CustomException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -33,6 +34,7 @@ public class AiTodoService {
 
 	private final AiTodoHistoryService historyService;
 	private final AiTodoQueryRepository queryRepository;
+	private final UserRepository userRepository;
 	private final TodoDurationPromptBuilder promptBuilder;
 	private final TodoFeedbackPromptBuilder feedbackPromptBuilder;
 	private final GeminiService geminiService;
@@ -40,7 +42,7 @@ public class AiTodoService {
 	private final AiRequestRateLimiter rateLimiter;
 
 	public RecommendDurationResponse recommendDuration(Long userId, RecommendDurationRequest request) {
-		LocalDate today = LocalDate.now(ZoneOffset.UTC);
+		LocalDate today = getCurrentDate(userId);
 
 		AiTodoHistories histories = historyService.findHistories(
 			userId,
@@ -68,9 +70,9 @@ public class AiTodoService {
 		return validate(recommendation);
 	}
 
-	public CreateTodoFeedbackResponse createFeedback(Long userId, CreateTodoFeedbackRequest request) {
-		LocalDate today = LocalDate.now(ZoneOffset.UTC);
-		TodoFeedbackSource source = queryRepository.findFeedbackSource(userId, request.todoId());
+	public String createFeedback(Long userId, Long todoId) {
+		LocalDate today = getCurrentDate(userId);
+		TodoFeedbackSource source = queryRepository.findFeedbackSource(userId, todoId);
 		if (source == null) {
 			throw new CustomException(TodoErrorCode.TODO_NOT_FOUND);
 		}
@@ -98,7 +100,13 @@ public class AiTodoService {
 
 		String geminiJson = geminiService.generateJson(prompt);
 		GeminiTodoFeedback feedback = parseFeedback(geminiJson);
-		return validate(feedback);
+		return validateFeedback(feedback);
+	}
+
+	private LocalDate getCurrentDate(Long userId) {
+		User user = userRepository.findById(userId)
+			.orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+		return LocalDate.now(ZoneId.of(user.getZoneId()));
 	}
 
 	private GeminiDurationRecommendation parseRecommendation(String geminiJson) {
@@ -135,7 +143,7 @@ public class AiTodoService {
 		return new RecommendDurationResponse(recommendedMinutes);
 	}
 
-	private CreateTodoFeedbackResponse validate(GeminiTodoFeedback feedback) {
+	private String validateFeedback(GeminiTodoFeedback feedback) {
 		if (feedback == null
 			|| feedback.feedback() == null
 			|| feedback.feedback().isBlank()
@@ -143,7 +151,7 @@ public class AiTodoService {
 			throw new IllegalArgumentException("Gemini feedback has missing fields.");
 		}
 
-		return new CreateTodoFeedbackResponse(feedback.feedback().trim());
+		return feedback.feedback().trim();
 	}
 
 	private int normalizeMinutes(int minutes) {
