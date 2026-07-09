@@ -11,7 +11,10 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum TagErrorCode implements BaseErrorCode {
 
-	TAG_NOT_FOUND(HttpStatus.NOT_FOUND, "TAG_404", "존재하지 않는 태그입니다.");
+	INVALID_REQUEST(HttpStatus.BAD_REQUEST, "TAG_400", "태그 이름은 필수입니다."),
+	TAG_NOT_FOUND(HttpStatus.NOT_FOUND, "TAG_404", "존재하지 않는 태그입니다."),
+	DUPLICATE_TAG_NAME(HttpStatus.CONFLICT, "TAG_409", "이미 존재하는 태그명입니다."),
+	;
 
 	private final HttpStatus httpStatus;
 	private final String code;
