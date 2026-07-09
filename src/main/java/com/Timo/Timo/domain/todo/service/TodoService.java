@@ -133,8 +133,12 @@ public class TodoService {
 
 		validateRepeatRule(repeatType, repeatWeekdays, repeatDayOfMonth);
 
+		Long userId = todo.getUser().getId();
+		userRepository.findByIdForUpdate(userId)
+				.orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
 		List<LocalDate> todoDates = todoDateCalculator.calculate(startDate, repeatType, repeatWeekdays, repeatDayOfMonth);
-		todoCapacityChecker.assertCapacity(todo.getUser().getId(), todo.getId(), todoDates);
+		todoCapacityChecker.assertCapacity(userId, todo.getId(), todoDates);
 
 		LocalDate endDate = resolveEndDate(startDate, repeatType);
 		todo.changeSchedule(startDate, endDate, repeatType, repeatWeekdays, repeatDayOfMonth);
