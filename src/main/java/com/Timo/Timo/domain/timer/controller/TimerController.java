@@ -1,5 +1,8 @@
 package com.Timo.Timo.domain.timer.controller;
 
+import com.Timo.Timo.domain.timer.docs.TimerCompleteControllerDocs;
+import com.Timo.Timo.domain.timer.docs.TimerStopControllerDocs;
+import com.Timo.Timo.domain.timer.dto.response.TimerFinishResponse;
 import com.Timo.Timo.domain.timer.docs.TimerActiveControllerDocs;
 import com.Timo.Timo.domain.timer.docs.TimerStartControllerDocs;
 import com.Timo.Timo.domain.timer.docs.TimerStatusControllerDocs;
@@ -30,7 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
 public class TimerController implements TimerStartControllerDocs, TimerStatusControllerDocs,
-    TimerActiveControllerDocs {
+    TimerActiveControllerDocs, TimerCompleteControllerDocs, TimerStopControllerDocs {
 
   private final TimerService timerService;
 
@@ -81,5 +84,31 @@ public class TimerController implements TimerStartControllerDocs, TimerStatusCon
 
     return ResponseEntity.ok()
         .body(BaseResponse.onSuccess(successCode, response));
+  }
+
+  @Override
+  @PatchMapping("/timers/{timerId}/complete")
+  public ResponseEntity<BaseResponse<TimerFinishResponse>> completeTimer(
+      @PathVariable Long timerId,
+      @AuthenticationPrincipal CustomUserDetails userDetails
+  ) {
+    Long userId = userDetails.getUserId();
+    TimerFinishResponse response = timerService.completeTimer(userId, timerId);
+
+    return ResponseEntity.ok()
+        .body(BaseResponse.onSuccess(TimerSuccessCode.TIMER_COMPLETED, response));
+  }
+
+  @Override
+  @PatchMapping("/timers/{timerId}/stop")
+  public ResponseEntity<BaseResponse<TimerFinishResponse>> stopTimer(
+      @PathVariable Long timerId,
+      @AuthenticationPrincipal CustomUserDetails userDetails
+  ) {
+    Long userId = userDetails.getUserId();
+    TimerFinishResponse response = timerService.stopTimer(userId, timerId);
+
+    return ResponseEntity.ok()
+        .body(BaseResponse.onSuccess(TimerSuccessCode.TIMER_STOPPED, response));
   }
 }
