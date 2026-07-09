@@ -21,9 +21,9 @@ public interface TimerExtendControllerDocs {
   @Operation(
       summary = "타이머 연장",
       description = """
-          사용자가 입력한 연장 시간을 현재 타이머에 반영합니다.<br>
-          연장 시간(분)을 초로 변환하여 extended_seconds에 누적
-          RUNNING, PAUSED 상태 모두에서 호출 가능하며, 타이머 상태(status)는 변경되지 않습니다.
+        사용자가 입력한 연장 시간을 현재 타이머에 반영합니다.
+        연장 시간(분)을 초로 변환하여 extended_seconds에 누적
+        RUNNING, PAUSED 상태 모두에서 호출 가능하며, 타이머 상태(status)는 변경되지 않습니다.
 			"""
   )
   @ApiResponses({
