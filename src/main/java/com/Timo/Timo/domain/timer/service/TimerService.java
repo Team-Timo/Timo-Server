@@ -89,7 +89,7 @@ public class TimerService {
   }
 
   private TimerFinishResponse finishTimer(Long userId, Long timerId, TimerStatus targetStatus) {
-    TimerRecord timerRecord = timerRecordRepository.findById(timerId)
+    TimerRecord timerRecord = timerRecordRepository.findByIdForUpdate(timerId)
         .orElseThrow(() -> new CustomException(TimerErrorCode.TIMER_NOT_FOUND));
 
     if (!timerRecord.getUser().getId().equals(userId)) {
