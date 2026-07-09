@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.Timo.Timo.domain.tag.dto.request.TagCreateRequest;
 import com.Timo.Timo.domain.tag.dto.response.TagCreateResponse;
+import com.Timo.Timo.domain.tag.dto.response.TagListResponse;
 import com.Timo.Timo.domain.tag.entity.Tag;
 import com.Timo.Timo.domain.tag.exception.TagErrorCode;
 import com.Timo.Timo.domain.tag.repository.TagRepository;
@@ -38,6 +39,11 @@ public class TagService {
 		} catch (DataIntegrityViolationException exception) {
 			throw new CustomException(TagErrorCode.DUPLICATE_TAG_NAME);
 		}
+	}
+
+	@Transactional(readOnly = true)
+	public TagListResponse getTags(Long userId) {
+		return TagListResponse.from(tagRepository.findAccessibleTags(userId));
 	}
 
 	public void deleteTag(Long userId, Long tagId) {

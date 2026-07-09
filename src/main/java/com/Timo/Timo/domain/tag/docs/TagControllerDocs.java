@@ -4,6 +4,7 @@ import org.springframework.http.ResponseEntity;
 
 import com.Timo.Timo.domain.tag.dto.request.TagCreateRequest;
 import com.Timo.Timo.domain.tag.dto.response.TagCreateResponse;
+import com.Timo.Timo.domain.tag.dto.response.TagListResponse;
 import com.Timo.Timo.global.auth.principal.CustomUserDetails;
 import com.Timo.Timo.global.exception.dto.ErrorDto;
 import com.Timo.Timo.global.response.BaseResponse;
@@ -66,6 +67,40 @@ public interface TagControllerDocs {
 	ResponseEntity<BaseResponse<TagCreateResponse>> createTag(
 			@Parameter(hidden = true) CustomUserDetails userDetails,
 			TagCreateRequest request
+	);
+
+	@Operation(
+			summary = "태그 목록 조회",
+			description = """
+					모든 사용자가 공유하는 기본 태그와 본인이 생성한 태그를 함께 조회합니다.
+					기본 태그가 먼저 오고, 같은 그룹 안에서는 태그 ID 오름차순으로 정렬됩니다.
+					"""
+	)
+	@ApiResponses({
+			@ApiResponse(
+					responseCode = "200",
+					description = "태그 목록 조회 성공",
+					useReturnTypeSchema = true
+			),
+			@ApiResponse(
+					responseCode = "401",
+					description = "Access Token이 없거나 만료되었거나 유효하지 않은 경우",
+					content = @Content(
+							mediaType = "application/json",
+							schema = @Schema(implementation = ErrorDto.class)
+					)
+			),
+			@ApiResponse(
+					responseCode = "500",
+					description = "서버 내부 오류",
+					content = @Content(
+							mediaType = "application/json",
+							schema = @Schema(implementation = ErrorDto.class)
+					)
+			)
+	})
+	ResponseEntity<BaseResponse<TagListResponse>> getTags(
+			@Parameter(hidden = true) CustomUserDetails userDetails
 	);
 
 	@Operation(

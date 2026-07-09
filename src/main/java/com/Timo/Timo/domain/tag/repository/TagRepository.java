@@ -1,5 +1,7 @@
 package com.Timo.Timo.domain.tag.repository;
 
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,4 +19,11 @@ public interface TagRepository extends JpaRepository<Tag, Long> {
 			@Param("userId") Long userId,
 			@Param("name") String name
 	);
+
+	@Query("""
+		select t from Tag t
+		where t.isDefault = true or t.user.id = :userId
+		order by t.isDefault desc, t.id asc
+		""")
+	List<Tag> findAccessibleTags(@Param("userId") Long userId);
 }
