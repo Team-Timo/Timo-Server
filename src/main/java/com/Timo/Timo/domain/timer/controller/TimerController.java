@@ -55,9 +55,10 @@ public class TimerController implements TimerStartControllerDocs, TimerStatusCon
     Long userId = userDetails.getUserId();
     TimerStatusResponse response = timerService.changeStatus(userId, timerId, request.action());
 
-    TimerSuccessCode successCode = request.action() == TimerAction.PAUSE
-        ? TimerSuccessCode.TIMER_PAUSED
-        : TimerSuccessCode.TIMER_RESUMED;
+    TimerSuccessCode successCode = switch (request.action()) {
+      case PAUSE -> TimerSuccessCode.TIMER_PAUSED;
+      case RESUME -> TimerSuccessCode.TIMER_RESUMED;
+    };
 
     return ResponseEntity.ok()
         .body(BaseResponse.onSuccess(successCode, response));

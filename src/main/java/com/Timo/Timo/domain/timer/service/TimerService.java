@@ -97,7 +97,7 @@ public class TimerService {
           .orElseThrow(() -> new CustomException(TimerErrorCode.TIMER_INVALID_STATUS_TRANSITION));
       activeSession.pause(now);
       instance.pauseTimer();
-    } else {
+    } else if (action == TimerAction.RESUME) {
       timerRecord.resume();
       TimerSession newSession = TimerSession.builder()
           .timerRecord(timerRecord)
@@ -105,6 +105,8 @@ public class TimerService {
           .build();
       timerSessionRepository.save(newSession);
       instance.startTimer();
+    }  else {
+      throw new CustomException(TimerErrorCode.TIMER_INVALID_STATUS_TRANSITION);
     }
 
     int elapsedSeconds = calculateElapsedSeconds(timerId, now);
