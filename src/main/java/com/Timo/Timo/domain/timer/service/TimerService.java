@@ -1,5 +1,6 @@
 package com.Timo.Timo.domain.timer.service;
 
+import com.Timo.Timo.domain.timer.dto.response.TimerActiveResponse;
 import com.Timo.Timo.domain.timer.dto.response.TimerFinishResponse;
 import com.Timo.Timo.domain.timer.dto.response.TimerStartResponse;
 import com.Timo.Timo.domain.timer.dto.response.TimerStatusResponse;
@@ -115,6 +116,15 @@ public class TimerService {
     return TimerStatusResponse.of(timerRecord, elapsedSeconds);
   }
 
+  public TimerActiveResponse getActiveTimer(Long userId){
+    return timerRecordRepository.findByUserIdAndStatusIn(userId, ACTIVE_STATUS)
+        .map(timerRecord -> {
+          int elapsedSeconds = calculateElapsedSeconds(timerRecord.getId(), LocalDateTime.now());
+          return TimerActiveResponse.of(timerRecord, elapsedSeconds);
+        })
+        .orElse(null);
+  }
+
   private int calculateElapsedSeconds(Long timerRecordId, LocalDateTime now){
     List<TimerSession> sessions = timerSessionRepository.findByTimerRecordId(timerRecordId);
     long totalSeconds = 0;
@@ -166,20 +176,5 @@ public class TimerService {
     instance.markCompleted();
 
     return TimerFinishResponse.of(timerRecord);
-  }
-
-  private int calculateElapsedSeconds(Long timerRecordId, LocalDateTime now) {
-    List<TimerSession> sessions = timerSessionRepository.findByTimerRecordId(timerRecordId);
-    long totalSeconds = 0;
-    for (TimerSession session : sessions) {
-      LocalDateTime end = session.getPausedAt() != null ? session.getPausedAt() : now;
-      totalSeconds += Duration.between(session.getStartedAt(), end).getSeconds();
-    }
-    return (int) totalSeconds;
-  }
-
-  private TodoInstance getOrCreateInstance(Todo todo, LocalDate date) {
-    return todoInstanceRepository.findByTodo_IdAndDate(todo.getId(), date)
-        .orElseGet(() -> todoInstanceRepository.save(TodoInstance.of(todo, date, 0)));
   }
 }
