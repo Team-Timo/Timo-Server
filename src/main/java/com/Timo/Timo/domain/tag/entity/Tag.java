@@ -35,7 +35,7 @@ public class Tag {
 	@JoinColumn(name = "user_id")
 	private User user;
 
-	@Column(name = "name", nullable = false, length = 20)
+	@Column(name = "name", nullable = false, length = 10)
 	private String name;
 
 	@Column(name = "is_default", nullable = false)
