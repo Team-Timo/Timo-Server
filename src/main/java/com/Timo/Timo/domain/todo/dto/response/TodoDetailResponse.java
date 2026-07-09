@@ -83,7 +83,7 @@ public record TodoDetailResponse(
 			boolean completed
 	) {
 		public static SubtaskResponse from(Subtask subtask) {
-			Objects.requireNonNull(subtask, "subtask must not be null");
+			Objects.requireNonNull(subtask, "하위 태스크는 null일 수 없습니다.");
 			return new SubtaskResponse(
 					subtask.getId(),
 					subtask.getContent(),
