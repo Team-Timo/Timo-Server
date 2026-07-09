@@ -60,4 +60,8 @@ public class Subtask extends BaseTimeEntity {
 	void assignTodo(Todo todo) {
 		this.todo = todo;
 	}
+
+	public void updateCompleted(boolean completed) {
+		this.completed = completed;
+	}
 }
