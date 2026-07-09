@@ -13,8 +13,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.Timo.Timo.domain.todo.docs.TodoControllerDocs;
 import com.Timo.Timo.domain.todo.dto.request.TodoCreateRequest;
+import com.Timo.Timo.domain.todo.dto.request.TodoReorderRequest;
 import com.Timo.Timo.domain.todo.dto.request.TodoStatusUpdateRequest;
 import com.Timo.Timo.domain.todo.dto.response.TodoCreateResponse;
+import com.Timo.Timo.domain.todo.dto.response.TodoReorderResponse;
 import com.Timo.Timo.domain.todo.dto.response.TodoStatusChangeResponse;
 import com.Timo.Timo.domain.todo.dto.response.TodoDetailResponse;
 import com.Timo.Timo.domain.todo.exception.TodoSuccessCode;
@@ -73,5 +75,19 @@ public class TodoController implements TodoControllerDocs {
 		return ResponseEntity
 			.status(TodoSuccessCode.STATUS_CHANGED.getHttpStatus())
 			.body(BaseResponse.onSuccess(TodoSuccessCode.STATUS_CHANGED, response));
+	}
+
+	@Override
+	@PatchMapping("/{todoId}/order")
+	public ResponseEntity<BaseResponse<TodoReorderResponse>> reorderTodo(
+		@AuthenticationPrincipal CustomUserDetails userDetails,
+		@PathVariable Long todoId,
+		@Valid @RequestBody TodoReorderRequest request
+	) {
+		TodoReorderResponse response = todoService.reorderTodo(userDetails.getUserId(), todoId, request);
+
+		return ResponseEntity
+			.status(TodoSuccessCode.REORDERED.getHttpStatus())
+			.body(BaseResponse.onSuccess(TodoSuccessCode.REORDERED, response));
 	}
 }
