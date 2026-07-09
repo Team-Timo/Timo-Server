@@ -1,23 +1,27 @@
 package com.Timo.Timo.domain.todo.service;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.time.ZoneId;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.Timo.Timo.domain.tag.entity.Tag;
 import com.Timo.Timo.domain.tag.exception.TagErrorCode;
 import com.Timo.Timo.domain.tag.repository.TagRepository;
 import com.Timo.Timo.domain.timer.service.TimerService;
 import com.Timo.Timo.domain.todo.dto.request.TodoCreateRequest;
 import com.Timo.Timo.domain.todo.dto.request.TodoStatusUpdateRequest;
 import com.Timo.Timo.domain.todo.dto.response.TodoCreateResponse;
+import com.Timo.Timo.domain.todo.dto.response.TodoDetailResponse;
 import com.Timo.Timo.domain.todo.dto.response.TodoStatusChangeResponse;
 import com.Timo.Timo.domain.todo.entity.Todo;
 import com.Timo.Timo.domain.todo.entity.TodoInstance;
 import com.Timo.Timo.domain.todo.enums.RepeatType;
 import com.Timo.Timo.domain.todo.exception.TodoErrorCode;
+import com.Timo.Timo.domain.todo.repository.TodoInstanceRepository;
 import com.Timo.Timo.domain.todo.repository.TodoRepository;
 import com.Timo.Timo.domain.todo.vo.Duration;
 import com.Timo.Timo.domain.user.entity.User;
@@ -33,6 +37,7 @@ import lombok.RequiredArgsConstructor;
 public class TodoService {
 
 	private final TodoRepository todoRepository;
+	private final TodoInstanceRepository todoInstanceRepository;
 	private final UserRepository userRepository;
 	private final TagRepository tagRepository;
 	private final TodoDateCalculator todoDateCalculator;
@@ -74,6 +79,26 @@ public class TodoService {
 		return TodoCreateResponse.from(savedTodo);
 	}
 
+	public TodoDetailResponse getTodoDetail(Long userId, Long todoId, String dateValue) {
+		Todo todo = todoRepository.findByIdAndUser_Id(todoId, userId)
+				.orElseThrow(() -> new CustomException(TodoErrorCode.TODO_NOT_FOUND));
+
+		LocalDate date = parseDate(dateValue);
+		if (!todoDateCalculator.occursOn(todo, date)) {
+			throw new CustomException(TodoErrorCode.TODO_NOT_FOUND_ON_DATE);
+		}
+
+		TodoInstance instance = todoInstanceRepository
+				.findByTodo_IdAndDate(todo.getId(), date)
+				.orElse(null);
+
+		Tag tag = todo.getTagId() != null
+				? tagRepository.findById(todo.getTagId()).orElse(null)
+				: null;
+
+		return TodoDetailResponse.of(todo, instance, date, tag);
+	}
+
 	@Transactional
 	public TodoStatusChangeResponse changeCompletion(Long userId, Long todoId, TodoStatusUpdateRequest request) {
 		if (request.isCompleted() == null) {
@@ -103,6 +128,18 @@ public class TodoService {
 		User user = userRepository.findById(userId)
 				.orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 		return LocalDate.now(ZoneId.of(user.getZoneId()));
+	}
+
+	private LocalDate parseDate(String dateValue) {
+		if (dateValue == null || dateValue.isBlank()) {
+			throw new CustomException(TodoErrorCode.INVALID_REQUEST);
+		}
+
+		try {
+			return LocalDate.parse(dateValue);
+		} catch (DateTimeParseException exception) {
+			throw new CustomException(TodoErrorCode.INVALID_REQUEST);
+		}
 	}
 
 	private void validateTagExists(Long tagId) {

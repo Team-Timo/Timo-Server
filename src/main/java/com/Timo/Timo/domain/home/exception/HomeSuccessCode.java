@@ -11,7 +11,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum HomeSuccessCode implements BaseSuccessCode {
 
-	GET_HOME(HttpStatus.OK, "홈 뷰 조회 성공");
+	GET_HOME(HttpStatus.OK, "홈 뷰 조회 성공"),
+	GET_TODAY(HttpStatus.OK, "오늘 뷰 조회 성공");
 
 	private final HttpStatus httpStatus;
 	private final String message;

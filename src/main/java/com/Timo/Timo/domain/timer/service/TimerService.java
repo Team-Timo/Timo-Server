@@ -2,8 +2,10 @@ package com.Timo.Timo.domain.timer.service;
 
 import com.Timo.Timo.domain.timer.dto.response.TimerFinishResponse;
 import com.Timo.Timo.domain.timer.dto.response.TimerStartResponse;
+import com.Timo.Timo.domain.timer.dto.response.TimerStatusResponse;
 import com.Timo.Timo.domain.timer.entity.TimerRecord;
 import com.Timo.Timo.domain.timer.entity.TimerSession;
+import com.Timo.Timo.domain.timer.enums.TimerAction;
 import com.Timo.Timo.domain.timer.enums.TimerStatus;
 import com.Timo.Timo.domain.timer.exception.TimerErrorCode;
 import com.Timo.Timo.domain.timer.repository.TimerRecordRepository;
@@ -71,7 +73,62 @@ public class TimerService {
         .build();
     timerSessionRepository.save(session);
 
+    TodoInstance instance = getOrCreateInstance(todo, now.toLocalDate());
+    instance.startTimer();
+
     return TimerStartResponse.from(timerRecord);
+  }
+
+  @Transactional
+  public TimerStatusResponse changeStatus(Long userId, Long timerId, TimerAction action){
+    TimerRecord timerRecord = timerRecordRepository.findByIdForUpdate(timerId)
+        .orElseThrow(() -> new CustomException(TimerErrorCode.TIMER_NOT_FOUND));
+
+    if (!timerRecord.getUser().getId().equals(userId)){
+      throw new CustomException(ErrorCode.FORBIDDEN);
+    }
+
+    LocalDateTime now = LocalDateTime.now();
+
+    TodoInstance instance = getOrCreateInstance(timerRecord.getTodo(), timerRecord.getStartedAt().toLocalDate());
+
+    if (action == TimerAction.PAUSE) {
+      timerRecord.pause();
+      TimerSession activeSession = timerSessionRepository.findByTimerRecordIdAndPausedAtIsNull(timerId)
+          .orElseThrow(() -> new CustomException(TimerErrorCode.TIMER_INVALID_STATUS_TRANSITION));
+      activeSession.pause(now);
+      instance.pauseTimer();
+    } else if (action == TimerAction.RESUME) {
+      timerRecord.resume();
+      TimerSession newSession = TimerSession.builder()
+          .timerRecord(timerRecord)
+          .startedAt(now)
+          .build();
+      timerSessionRepository.save(newSession);
+      instance.startTimer();
+    }  else {
+      throw new CustomException(TimerErrorCode.TIMER_INVALID_STATUS_TRANSITION);
+    }
+
+    int elapsedSeconds = calculateElapsedSeconds(timerId, now);
+
+    return TimerStatusResponse.of(timerRecord, elapsedSeconds);
+  }
+
+  private int calculateElapsedSeconds(Long timerRecordId, LocalDateTime now){
+    List<TimerSession> sessions = timerSessionRepository.findByTimerRecordId(timerRecordId);
+    long totalSeconds = 0;
+    for (TimerSession session : sessions){
+      LocalDateTime end = session.getPausedAt() != null ? session.getPausedAt() : now;
+      totalSeconds += Duration.between(session.getStartedAt(), end).getSeconds();
+    }
+
+    return (int) totalSeconds;
+  }
+
+  private TodoInstance getOrCreateInstance(Todo todo, LocalDate date) {
+    return todoInstanceRepository.findByTodo_IdAndDate(todo.getId(), date)
+        .orElseGet(() -> todoInstanceRepository.save(TodoInstance.of(todo, date, 0)));
   }
 
   public boolean hasActiveTimer(Long todoId) {
