@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.Timo.Timo.domain.home.docs.HomeControllerDocs;
 import com.Timo.Timo.domain.home.dto.response.HomeResponse;
+import com.Timo.Timo.domain.home.dto.response.TodayResponse;
 import com.Timo.Timo.domain.home.exception.HomeSuccessCode;
 import com.Timo.Timo.domain.home.service.HomeService;
 import com.Timo.Timo.global.auth.principal.CustomUserDetails;
@@ -37,5 +38,17 @@ public class HomeController implements HomeControllerDocs {
 		return ResponseEntity
 				.status(HomeSuccessCode.GET_HOME.getHttpStatus())
 				.body(BaseResponse.onSuccess(HomeSuccessCode.GET_HOME, response));
+	}
+
+	@Override
+	@GetMapping("/today")
+	public ResponseEntity<BaseResponse<TodayResponse>> getToday(
+			@AuthenticationPrincipal CustomUserDetails userDetails
+	) {
+		TodayResponse response = homeService.getToday(userDetails.getUserId());
+
+		return ResponseEntity
+				.status(HomeSuccessCode.GET_TODAY.getHttpStatus())
+				.body(BaseResponse.onSuccess(HomeSuccessCode.GET_TODAY, response));
 	}
 }

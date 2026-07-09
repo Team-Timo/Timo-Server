@@ -95,6 +95,16 @@ public class TimerRecord {
     this.status = TimerStatus.RUNNING;
   }
 
+  public void finish(TimerStatus targetStatus, LocalDateTime endedAt, int actualSeconds, String aiFeedback) {
+    if (isFinished()) {
+      throw new CustomException(TimerErrorCode.TIMER_ALREADY_FINISHED);
+    }
+    this.status = targetStatus;
+    this.endedAt = endedAt;
+    this.actualSeconds = actualSeconds;
+    this.aiFeedback = aiFeedback;
+  }
+
   public void extend(int extendedSeconds){
     if (isFinished()){
       throw new CustomException(TimerErrorCode.TIMER_ALREADY_FINISHED);

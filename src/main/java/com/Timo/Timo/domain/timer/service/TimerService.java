@@ -1,5 +1,7 @@
 package com.Timo.Timo.domain.timer.service;
 
+import com.Timo.Timo.domain.timer.dto.response.TimerActiveResponse;
+import com.Timo.Timo.domain.timer.dto.response.TimerFinishResponse;
 import com.Timo.Timo.domain.timer.dto.response.TimerExtendResponse;
 import com.Timo.Timo.domain.timer.dto.response.TimerStartResponse;
 import com.Timo.Timo.domain.timer.dto.response.TimerStatusResponse;
@@ -137,6 +139,15 @@ public class TimerService {
     return TimerExtendResponse.of(timerRecord, remainingSeconds);
   }
 
+  public TimerActiveResponse getActiveTimer(Long userId){
+    return timerRecordRepository.findByUserIdAndStatusIn(userId, ACTIVE_STATUS)
+        .map(timerRecord -> {
+          int elapsedSeconds = calculateElapsedSeconds(timerRecord.getId(), LocalDateTime.now());
+          return TimerActiveResponse.of(timerRecord, elapsedSeconds);
+        })
+        .orElse(null);
+  }
+
   private int calculateElapsedSeconds(Long timerRecordId, LocalDateTime now){
     List<TimerSession> sessions = timerSessionRepository.findByTimerRecordId(timerRecordId);
     long totalSeconds = 0;
@@ -155,5 +166,38 @@ public class TimerService {
 
   public boolean hasActiveTimer(Long todoId) {
     return timerRecordRepository.existsByTodo_IdAndStatusIn(todoId, ACTIVE_STATUS);
+  }
+
+  @Transactional
+  public TimerFinishResponse completeTimer(Long userId, Long timerId) {
+    return finishTimer(userId, timerId, TimerStatus.COMPLETED);
+  }
+
+  @Transactional
+  public TimerFinishResponse stopTimer(Long userId, Long timerId) {
+    return finishTimer(userId, timerId, TimerStatus.STOPPED);
+  }
+
+  private TimerFinishResponse finishTimer(Long userId, Long timerId, TimerStatus targetStatus) {
+    TimerRecord timerRecord = timerRecordRepository.findByIdForUpdate(timerId)
+        .orElseThrow(() -> new CustomException(TimerErrorCode.TIMER_NOT_FOUND));
+
+    if (!timerRecord.getUser().getId().equals(userId)) {
+      throw new CustomException(ErrorCode.FORBIDDEN);
+    }
+
+    LocalDateTime now = LocalDateTime.now();
+    int actualSeconds = calculateElapsedSeconds(timerId, now);
+
+    timerSessionRepository.findByTimerRecordIdAndPausedAtIsNull(timerId)
+        .ifPresent(activeSession -> activeSession.pause(now));
+
+    timerRecord.finish(targetStatus, now, actualSeconds, null);
+
+    TodoInstance instance = getOrCreateInstance(timerRecord.getTodo(), timerRecord.getStartedAt().toLocalDate());
+    instance.stopTimer();
+    instance.markCompleted();
+
+    return TimerFinishResponse.of(timerRecord);
   }
 }

@@ -1,4 +1,4 @@
-package com.Timo.Timo.domain.home.exception;
+package com.Timo.Timo.domain.terms.exception;
 
 import org.springframework.http.HttpStatus;
 
@@ -9,10 +9,8 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public enum HomeSuccessCode implements BaseSuccessCode {
-
-	GET_HOME(HttpStatus.OK, "홈 뷰 조회 성공"),
-	GET_TODAY(HttpStatus.OK, "오늘 뷰 조회 성공");
+public enum TermsSuccessCode implements BaseSuccessCode {
+	TERMS_RETRIEVED(HttpStatus.OK, "약관을 조회했습니다.");
 
 	private final HttpStatus httpStatus;
 	private final String message;
