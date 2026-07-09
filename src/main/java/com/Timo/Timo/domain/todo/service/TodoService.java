@@ -10,10 +10,13 @@ import org.springframework.transaction.annotation.Transactional;
 import com.Timo.Timo.domain.tag.exception.TagErrorCode;
 import com.Timo.Timo.domain.tag.repository.TagRepository;
 import com.Timo.Timo.domain.timer.service.TimerService;
+import com.Timo.Timo.domain.todo.dto.request.SubtaskStatusUpdateRequest;
 import com.Timo.Timo.domain.todo.dto.request.TodoCreateRequest;
 import com.Timo.Timo.domain.todo.dto.request.TodoStatusUpdateRequest;
+import com.Timo.Timo.domain.todo.dto.response.SubtaskStatusChangeResponse;
 import com.Timo.Timo.domain.todo.dto.response.TodoCreateResponse;
 import com.Timo.Timo.domain.todo.dto.response.TodoStatusChangeResponse;
+import com.Timo.Timo.domain.todo.entity.Subtask;
 import com.Timo.Timo.domain.todo.entity.Todo;
 import com.Timo.Timo.domain.todo.entity.TodoInstance;
 import com.Timo.Timo.domain.todo.enums.RepeatType;
@@ -94,6 +97,25 @@ public class TodoService {
 
 		TodoInstance instance = todoInstanceReorderer.applyCompletion(userId, todo, date, request.isCompleted());
 		return TodoStatusChangeResponse.from(todoId, instance);
+	}
+
+	@Transactional
+	public SubtaskStatusChangeResponse changeSubtaskCompletion(
+			Long userId, Long todoId, Long subtaskId, SubtaskStatusUpdateRequest request) {
+		if (request.isCompleted() == null) {
+			throw new CustomException(TodoErrorCode.IS_COMPLETED_REQUIRED);
+		}
+
+		Todo todo = todoRepository.findByIdAndUser_Id(todoId, userId)
+				.orElseThrow(() -> new CustomException(TodoErrorCode.TODO_NOT_FOUND));
+
+		Subtask subtask = todo.getSubtasks().stream()
+				.filter(it -> it.getId().equals(subtaskId))
+				.findFirst()
+				.orElseThrow(() -> new CustomException(TodoErrorCode.SUBTASK_NOT_FOUND));
+
+		subtask.updateCompleted(request.isCompleted());
+		return SubtaskStatusChangeResponse.from(subtask);
 	}
 
 	private LocalDate resolveDate(Long userId, LocalDate requestedDate) {
