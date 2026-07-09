@@ -10,6 +10,8 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
+import com.Timo.Timo.domain.ai.exception.AiErrorCode;
+import com.Timo.Timo.global.exception.CustomException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -35,10 +37,10 @@ public class GeminiService {
 
 	public String generateJson(String prompt) {
 		if (apiKey == null || apiKey.isBlank()) {
-			throw new IllegalStateException("Gemini API key is not configured.");
+			throw new CustomException(AiErrorCode.AI_CONFIG_NOT_FOUND);
 		}
 		if (model == null || model.isBlank()) {
-			throw new IllegalStateException("Gemini model is not configured.");
+			throw new CustomException(AiErrorCode.AI_CONFIG_NOT_FOUND);
 		}
 
 		Map<String, Object> request = Map.of(
@@ -84,12 +86,14 @@ public class GeminiService {
 				.path("text");
 
 			if (textNode.isMissingNode() || textNode.asText().isBlank()) {
-				throw new IllegalStateException("Gemini response text is empty.");
+				throw new CustomException(AiErrorCode.AI_INVALID_RESPONSE);
 			}
 
 			return textNode.asText();
+		} catch (CustomException exception) {
+			throw exception;
 		} catch (Exception exception) {
-			throw new IllegalStateException("Failed to parse Gemini response.", exception);
+			throw new CustomException(AiErrorCode.AI_RESPONSE_PARSE_FAILED);
 		}
 	}
 }

@@ -12,6 +12,7 @@ import com.Timo.Timo.domain.ai.dto.request.RecommendDurationRequest;
 import com.Timo.Timo.domain.ai.dto.response.GeminiDurationRecommendation;
 import com.Timo.Timo.domain.ai.dto.response.GeminiTodoFeedback;
 import com.Timo.Timo.domain.ai.dto.response.RecommendDurationResponse;
+import com.Timo.Timo.domain.ai.exception.AiErrorCode;
 import com.Timo.Timo.domain.ai.prompt.TodoDurationPromptBuilder;
 import com.Timo.Timo.domain.ai.prompt.TodoFeedbackPromptBuilder;
 import com.Timo.Timo.domain.ai.repository.AiTodoQueryRepository;
@@ -130,7 +131,8 @@ public class AiTodoService {
 				GeminiDurationRecommendation.class
 			);
 		} catch (Exception exception) {
-			throw new IllegalStateException("Failed to parse Gemini duration recommendation.", exception);
+			log.warn("Failed to parse Gemini duration recommendation.", exception);
+			throw new CustomException(AiErrorCode.AI_RESPONSE_PARSE_FAILED);
 		}
 	}
 
@@ -141,7 +143,8 @@ public class AiTodoService {
 				GeminiTodoFeedback.class
 			);
 		} catch (Exception exception) {
-			throw new IllegalStateException("Failed to parse Gemini todo feedback.", exception);
+			log.warn("Failed to parse Gemini todo feedback.", exception);
+			throw new CustomException(AiErrorCode.AI_RESPONSE_PARSE_FAILED);
 		}
 	}
 
@@ -149,7 +152,7 @@ public class AiTodoService {
 		if (recommendation == null
 			|| recommendation.recommendedMinutes() == null
 		) {
-			throw new IllegalArgumentException("Gemini recommendation has missing fields.");
+			throw new CustomException(AiErrorCode.AI_INVALID_RESPONSE);
 		}
 
 		int recommendedMinutes = normalizeMinutes(recommendation.recommendedMinutes());
@@ -162,7 +165,7 @@ public class AiTodoService {
 			|| feedback.feedback() == null
 			|| feedback.feedback().isBlank()
 		) {
-			throw new IllegalArgumentException("Gemini feedback has missing fields.");
+			throw new CustomException(AiErrorCode.AI_INVALID_RESPONSE);
 		}
 
 		return feedback.feedback().trim();
