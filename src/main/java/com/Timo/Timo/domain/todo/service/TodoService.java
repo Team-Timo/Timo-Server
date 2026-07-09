@@ -14,12 +14,15 @@ import com.Timo.Timo.domain.tag.repository.TagRepository;
 import com.Timo.Timo.domain.timer.service.TimerService;
 import com.Timo.Timo.domain.todo.dto.request.TodoCreateRequest;
 import com.Timo.Timo.domain.todo.dto.request.TodoStatusUpdateRequest;
+import com.Timo.Timo.domain.todo.dto.request.TodoSubtaskUpdateRequest;
+import com.Timo.Timo.domain.todo.dto.request.TodoUpdateRequest;
 import com.Timo.Timo.domain.todo.dto.response.TodoCreateResponse;
 import com.Timo.Timo.domain.todo.dto.response.TodoDetailResponse;
 import com.Timo.Timo.domain.todo.dto.response.TodoStatusChangeResponse;
 import com.Timo.Timo.domain.todo.entity.Todo;
 import com.Timo.Timo.domain.todo.entity.TodoInstance;
 import com.Timo.Timo.domain.todo.enums.RepeatType;
+import com.Timo.Timo.domain.todo.enums.Weekday;
 import com.Timo.Timo.domain.todo.exception.TodoErrorCode;
 import com.Timo.Timo.domain.todo.repository.TodoInstanceRepository;
 import com.Timo.Timo.domain.todo.repository.TodoRepository;
@@ -121,6 +124,96 @@ public class TodoService {
 		return TodoStatusChangeResponse.from(todoId, instance);
 	}
 
+	@Transactional
+	public void updateTodo(Long userId, Long todoId, TodoUpdateRequest request) {
+		if (request.hasNoUpdatableField()) {
+			throw new CustomException(TodoErrorCode.NO_UPDATE_FIELDS);
+		}
+
+		Todo todo = todoRepository.findByIdAndUser_Id(todoId, userId)
+				.orElseThrow(() -> new CustomException(TodoErrorCode.TODO_NOT_FOUND));
+
+		// 타이머 실행 중에는 일정/소요시간 변경을 막는다. (그 외 필드 수정은 허용)
+		boolean changesTimerSensitiveFields = request.durationSeconds() != null || isScheduleChanged(request);
+		if (changesTimerSensitiveFields && timerService.hasActiveTimer(todoId)) {
+			throw new CustomException(TodoErrorCode.TIMER_RUNNING);
+		}
+
+		validateTagExists(request.tagId());
+
+		todo.updateFields(
+				request.icon(),
+				request.title(),
+				request.durationSeconds(),
+				request.priority(),
+				request.tagId(),
+				request.memo()
+		);
+
+		applyScheduleChange(todo, request);
+
+		if (request.subtasks() != null) {
+			todo.replaceSubtasks(toSubtaskEdits(request.subtasks()));
+		}
+	}
+
+	@Transactional
+	public void deleteTodo(Long userId, Long todoId) {
+		Todo todo = todoRepository.findByIdAndUser_Id(todoId, userId)
+				.orElseThrow(() -> new CustomException(TodoErrorCode.TODO_NOT_FOUND));
+
+		if (timerService.hasActiveTimer(todoId)) {
+			throw new CustomException(TodoErrorCode.TIMER_RUNNING);
+		}
+
+		timerService.deleteTimersByTodo(todoId);
+		todoInstanceRepository.deleteByTodoId(todoId);
+		todoRepository.delete(todo);
+	}
+
+	private boolean isScheduleChanged(TodoUpdateRequest request) {
+		return request.date() != null
+				|| request.repeatType() != null
+				|| request.repeatWeekdays() != null
+				|| request.repeatDayOfMonth() != null;
+	}
+
+	private void applyScheduleChange(Todo todo, TodoUpdateRequest request) {
+		if (!isScheduleChanged(request)) {
+			return;
+		}
+
+		LocalDate startDate = request.date() != null ? request.date() : todo.getStartDate();
+		RepeatType repeatType = request.repeatType() != null ? request.repeatType() : todo.getRepeatType();
+		List<Weekday> repeatWeekdays = request.repeatWeekdays() != null
+				? request.repeatWeekdays() : todo.getRepeatWeekdays();
+		Integer repeatDayOfMonth = request.repeatDayOfMonth() != null
+				? request.repeatDayOfMonth() : todo.getRepeatDayOfMonth();
+
+		validateRepeatRule(repeatType, repeatWeekdays, repeatDayOfMonth);
+
+		Long userId = todo.getUser().getId();
+		userRepository.findByIdForUpdate(userId)
+				.orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+		List<LocalDate> todoDates = todoDateCalculator.calculate(startDate, repeatType, repeatWeekdays, repeatDayOfMonth);
+		todoCapacityChecker.assertCapacity(userId, todo.getId(), todoDates);
+
+		LocalDate endDate = resolveEndDate(startDate, repeatType);
+		todo.changeSchedule(startDate, endDate, repeatType, repeatWeekdays, repeatDayOfMonth);
+	}
+
+	private void validateRepeatRule(RepeatType repeatType, List<Weekday> repeatWeekdays, Integer repeatDayOfMonth) {
+		boolean valid = switch (repeatType) {
+			case WEEKLY -> repeatWeekdays != null && !repeatWeekdays.isEmpty();
+			case MONTHLY -> repeatDayOfMonth != null;
+			case NONE, DAILY -> true;
+		};
+		if (!valid) {
+			throw new CustomException(TodoErrorCode.INVALID_REQUEST);
+		}
+	}
+
 	private LocalDate resolveDate(Long userId, LocalDate requestedDate) {
 		if (requestedDate != null) {
 			return requestedDate;
@@ -140,6 +233,16 @@ public class TodoService {
 		} catch (DateTimeParseException exception) {
 			throw new CustomException(TodoErrorCode.INVALID_REQUEST);
 		}
+	}
+
+	private List<Todo.SubtaskEdit> toSubtaskEdits(List<TodoSubtaskUpdateRequest> subtasks) {
+		return subtasks.stream()
+				.map(subtask -> new Todo.SubtaskEdit(
+						subtask.subtaskId(),
+						subtask.content(),
+						subtask.completed()
+				))
+				.toList();
 	}
 
 	private void validateTagExists(Long tagId) {

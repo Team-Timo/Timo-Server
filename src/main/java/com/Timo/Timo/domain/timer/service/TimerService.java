@@ -169,6 +169,12 @@ public class TimerService {
   }
 
   @Transactional
+  public void deleteTimersByTodo(Long todoId) {
+    timerSessionRepository.deleteByTodoId(todoId);
+    timerRecordRepository.deleteByTodoId(todoId);
+  }
+
+  @Transactional
   public TimerFinishResponse completeTimer(Long userId, Long timerId) {
     return finishTimer(userId, timerId, TimerStatus.COMPLETED);
   }
