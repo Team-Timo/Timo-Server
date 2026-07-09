@@ -1,5 +1,6 @@
 package com.Timo.Timo.domain.timer.factory;
 
+import com.Timo.Timo.domain.timer.dto.response.TimerFinishResponse;
 import com.Timo.Timo.domain.timer.dto.response.TimerStartResponse;
 import com.Timo.Timo.domain.timer.exception.TimerSuccessCode;
 import com.Timo.Timo.global.response.BaseResponse;
@@ -13,5 +14,13 @@ public class TimerResponseFactory {
   public ResponseEntity<BaseResponse<TimerStartResponse>> startResponse(TimerStartResponse response){
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(BaseResponse.onSuccess(TimerSuccessCode.TIMER_STARTED, response));
+  }
+
+  public ResponseEntity<BaseResponse<TimerFinishResponse>> finishResponse(
+      TimerFinishResponse response,
+      TimerSuccessCode successCode
+  ) {
+    return ResponseEntity.ok()
+        .body(BaseResponse.onSuccess(successCode, response));
   }
 }
