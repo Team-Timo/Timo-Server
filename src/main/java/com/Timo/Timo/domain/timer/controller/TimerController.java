@@ -30,7 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
 public class TimerController implements TimerStartControllerDocs, TimerStatusControllerDocs,
-    TimerExtendControllerDocs  {
+    TimerExtendControllerDocs {
 
   private final TimerService timerService;
 
@@ -75,7 +75,8 @@ public class TimerController implements TimerStartControllerDocs, TimerStatusCon
       @AuthenticationPrincipal CustomUserDetails userDetails
   ) {
     Long userId = userDetails.getUserId();
-    TimerExtendResponse response = timerService.extendTimer(userId, timerId, request.extendMinutes());
+    TimerExtendResponse response = timerService.extendTimer(userId, timerId,
+        request.extendMinutes());
 
     return ResponseEntity.ok()
         .body(BaseResponse.onSuccess(TimerSuccessCode.TIMER_EXTENDED, response));
