@@ -10,6 +10,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import com.Timo.Timo.domain.tag.controller.TagController;
 import com.Timo.Timo.global.exception.dto.ErrorDto;
@@ -41,8 +42,23 @@ public class TagExceptionHandler {
 		return createInvalidRequestResponse(TagErrorCode.INVALID_REQUEST.getMessage(), request);
 	}
 
+	@ExceptionHandler(MethodArgumentTypeMismatchException.class)
+	public ResponseEntity<ErrorDto> handleMethodArgumentTypeMismatchException(
+		MethodArgumentTypeMismatchException exception,
+		HttpServletRequest request
+	) {
+		return createErrorResponse(TagErrorCode.INVALID_TAG_ID, TagErrorCode.INVALID_TAG_ID.getMessage(), request);
+	}
+
 	private ResponseEntity<ErrorDto> createInvalidRequestResponse(String message, HttpServletRequest request) {
-		TagErrorCode errorCode = TagErrorCode.INVALID_REQUEST;
+		return createErrorResponse(TagErrorCode.INVALID_REQUEST, message, request);
+	}
+
+	private ResponseEntity<ErrorDto> createErrorResponse(
+		TagErrorCode errorCode,
+		String message,
+		HttpServletRequest request
+	) {
 		ErrorDto response = new ErrorDto(
 			LocalDateTime.now(),
 			errorCode.getHttpStatus().value(),

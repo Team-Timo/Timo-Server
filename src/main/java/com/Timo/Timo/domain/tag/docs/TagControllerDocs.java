@@ -67,4 +67,63 @@ public interface TagControllerDocs {
 			@Parameter(hidden = true) CustomUserDetails userDetails,
 			TagCreateRequest request
 	);
+
+	@Operation(
+			summary = "태그 삭제",
+			description = """
+					본인이 등록한 태그를 삭제합니다.
+					모든 사용자가 공유하는 기본 태그는 삭제할 수 없으며, 다른 사용자의 태그는 조회되지 않습니다.
+					"""
+	)
+	@ApiResponses({
+			@ApiResponse(
+					responseCode = "200",
+					description = "태그 삭제 성공",
+					useReturnTypeSchema = true
+			),
+			@ApiResponse(
+					responseCode = "400",
+					description = "태그 ID가 숫자가 아니거나 0 이하인 경우",
+					content = @Content(
+							mediaType = "application/json",
+							schema = @Schema(implementation = ErrorDto.class)
+					)
+			),
+			@ApiResponse(
+					responseCode = "401",
+					description = "Access Token이 없거나 만료되었거나 유효하지 않은 경우",
+					content = @Content(
+							mediaType = "application/json",
+							schema = @Schema(implementation = ErrorDto.class)
+					)
+			),
+			@ApiResponse(
+					responseCode = "403",
+					description = "기본 태그처럼 삭제할 수 없는 태그인 경우",
+					content = @Content(
+							mediaType = "application/json",
+							schema = @Schema(implementation = ErrorDto.class)
+					)
+			),
+			@ApiResponse(
+					responseCode = "404",
+					description = "태그가 존재하지 않거나 본인의 태그가 아닌 경우",
+					content = @Content(
+							mediaType = "application/json",
+							schema = @Schema(implementation = ErrorDto.class)
+					)
+			),
+			@ApiResponse(
+					responseCode = "500",
+					description = "서버 내부 오류",
+					content = @Content(
+							mediaType = "application/json",
+							schema = @Schema(implementation = ErrorDto.class)
+					)
+			)
+	})
+	ResponseEntity<BaseResponse<Void>> deleteTag(
+			@Parameter(hidden = true) CustomUserDetails userDetails,
+			@Parameter(description = "삭제할 태그 ID", example = "5") Long tagId
+	);
 }

@@ -39,4 +39,27 @@ public class TagService {
 			throw new CustomException(TagErrorCode.DUPLICATE_TAG_NAME);
 		}
 	}
+
+	public void deleteTag(Long userId, Long tagId) {
+		if (tagId == null || tagId <= 0) {
+			throw new CustomException(TagErrorCode.INVALID_TAG_ID);
+		}
+
+		Tag tag = tagRepository.findById(tagId)
+				.orElseThrow(() -> new CustomException(TagErrorCode.TAG_NOT_FOUND));
+
+		if (tag.isDefault()) {
+			throw new CustomException(TagErrorCode.TAG_DELETE_FORBIDDEN);
+		}
+
+		if (!isOwnedBy(tag, userId)) {
+			throw new CustomException(TagErrorCode.TAG_NOT_FOUND);
+		}
+
+		tagRepository.delete(tag);
+	}
+
+	private boolean isOwnedBy(Tag tag, Long userId) {
+		return tag.getUser() != null && tag.getUser().getId().equals(userId);
+	}
 }

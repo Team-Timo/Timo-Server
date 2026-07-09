@@ -2,6 +2,8 @@ package com.Timo.Timo.domain.tag.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -38,5 +40,18 @@ public class TagController implements TagControllerDocs {
 		return ResponseEntity
 				.status(TagSuccessCode.CREATED.getHttpStatus())
 				.body(BaseResponse.onSuccess(TagSuccessCode.CREATED, response));
+	}
+
+	@Override
+	@DeleteMapping("/{tagId}")
+	public ResponseEntity<BaseResponse<Void>> deleteTag(
+			@AuthenticationPrincipal CustomUserDetails userDetails,
+			@PathVariable Long tagId
+	) {
+		tagService.deleteTag(userDetails.getUserId(), tagId);
+
+		return ResponseEntity
+				.status(TagSuccessCode.DELETED.getHttpStatus())
+				.body(BaseResponse.onSuccess(TagSuccessCode.DELETED, null));
 	}
 }
