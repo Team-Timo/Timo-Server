@@ -12,7 +12,8 @@ import lombok.RequiredArgsConstructor;
 public enum StatisticsSuccessCode implements BaseSuccessCode {
 
 	CALENDAR_RETRIEVED(HttpStatus.OK, "통계 캘린더를 조회했습니다."),
-	SUMMARY_RETRIEVED(HttpStatus.OK, "월별 통계 요약을 조회했습니다.");
+	SUMMARY_RETRIEVED(HttpStatus.OK, "월별 통계 요약을 조회했습니다."),
+	DAILY_RETRIEVED(HttpStatus.OK, "일별 기록 조회에 성공했습니다.");
 
 	private final HttpStatus httpStatus;
 	private final String message;

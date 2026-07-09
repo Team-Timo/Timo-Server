@@ -1,5 +1,6 @@
 package com.Timo.Timo.domain.statistics.support;
 
+import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -13,7 +14,9 @@ import com.Timo.Timo.global.exception.CustomException;
 public class StatisticsDateParser {
 
 	private static final DateTimeFormatter YEAR_MONTH_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM");
+	private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 	private static final String YEAR_MONTH_PATTERN = "^\\d{4}-\\d{2}$";
+	private static final String DATE_PATTERN = "^\\d{4}-\\d{2}-\\d{2}$";
 
 	public YearMonth parseYearMonth(String yearMonth) {
 		if (yearMonth == null || yearMonth.isBlank()) {
@@ -28,6 +31,22 @@ public class StatisticsDateParser {
 			return YearMonth.parse(yearMonth, YEAR_MONTH_FORMATTER);
 		} catch (DateTimeParseException exception) {
 			throw new CustomException(StatisticsErrorCode.INVALID_YEAR_MONTH);
+		}
+	}
+
+	public LocalDate parseDate(String date) {
+		if (date == null || date.isBlank()) {
+			throw new CustomException(StatisticsErrorCode.DATE_REQUIRED);
+		}
+
+		if (!date.matches(DATE_PATTERN)) {
+			throw new CustomException(StatisticsErrorCode.INVALID_DATE_FORMAT);
+		}
+
+		try {
+			return LocalDate.parse(date, DATE_FORMATTER);
+		} catch (DateTimeParseException exception) {
+			throw new CustomException(StatisticsErrorCode.INVALID_DATE);
 		}
 	}
 }
