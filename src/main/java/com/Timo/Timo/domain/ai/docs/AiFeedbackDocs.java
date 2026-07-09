@@ -18,7 +18,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 public interface AiFeedbackDocs {
 
 	@Operation(
-		tags = "AI Feedback",
+		tags = "AI",
 		summary = "AI 투두 수행 피드백 생성",
 		description = """
 			사용자가 수행한 투두의 예상 소요 시간과 실제 소요 시간을 비교해 짧은 피드백을 생성합니다.

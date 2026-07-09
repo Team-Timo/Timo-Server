@@ -18,6 +18,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 public interface AiTodoDocs {
 
 	@Operation(
+		tags = "AI",
 		summary = "AI 예상 소요 시간 추천",
 		description = """
 			투두명과 태그를 기준으로 예상 소요 시간을 추천합니다.
