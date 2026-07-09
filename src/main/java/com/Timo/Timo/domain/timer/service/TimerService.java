@@ -99,6 +99,9 @@ public class TimerService {
     LocalDateTime now = LocalDateTime.now();
     int actualSeconds = calculateElapsedSeconds(timerId, now);
 
+    timerSessionRepository.findByTimerRecordIdAndPausedAtIsNull(timerId)
+        .ifPresent(activeSession -> activeSession.pause(now));
+
     timerRecord.finish(targetStatus, now, actualSeconds, null);
 
     TodoInstance instance = getOrCreateInstance(timerRecord.getTodo(), timerRecord.getStartedAt().toLocalDate());
