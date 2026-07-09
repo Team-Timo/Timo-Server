@@ -3,7 +3,6 @@ package com.Timo.Timo.domain.timer.repository;
 import com.Timo.Timo.domain.timer.entity.TimerRecord;
 import com.Timo.Timo.domain.timer.enums.TimerStatus;
 import jakarta.persistence.LockModeType;
-import jakarta.persistence.LockModeType;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
