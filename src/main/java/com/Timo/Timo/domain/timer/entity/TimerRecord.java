@@ -95,6 +95,13 @@ public class TimerRecord {
     this.status = TimerStatus.RUNNING;
   }
 
+  public void extend(int extendedSeconds){
+    if (isFinished()){
+      throw new CustomException(TimerErrorCode.TIMER_ALREADY_FINISHED);
+    }
+    this.extendedSeconds += extendedSeconds;
+  }
+
   public boolean isRunning() {
     return this.status == TimerStatus.RUNNING;
   }
