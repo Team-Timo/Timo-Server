@@ -1,8 +1,10 @@
 package com.Timo.Timo.domain.ai.repository;
 
-import java.sql.Date;
 import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.List;
 
 import org.springframework.stereotype.Repository;
@@ -62,20 +64,21 @@ public class AiTodoQueryRepository {
 	public List<TodoDurationHistory> findActualDurationHistoriesBySimilarTitle(
 		Long userId,
 		String title,
-		LocalDate today,
+		LocalDateTime toExclusive,
+		ZoneId userZoneId,
 		int limit
 	) {
 		Query query = entityManager.createNativeQuery("""
 				select
 					t.title,
 					tr.actual_seconds,
-					date(coalesce(tr.ended_at, tr.started_at)) as recorded_date
+					coalesce(tr.ended_at, tr.started_at) as recorded_at
 				from todos t
 				join timer_records tr on tr.todo_id = t.id
 				where t.user_id = :userId
 					and tr.user_id = :userId
 					and tr.actual_seconds is not null
-					and date(coalesce(tr.ended_at, tr.started_at)) <= :today
+					and coalesce(tr.ended_at, tr.started_at) < :toExclusive
 					and (
 						lower(t.title) like lower(concat('%', :title, '%'))
 						or lower(:title) like lower(concat('%', t.title, '%'))
@@ -92,47 +95,48 @@ public class AiTodoQueryRepository {
 				""")
 			.setParameter("userId", userId)
 			.setParameter("title", title)
-			.setParameter("today", today)
+			.setParameter("toExclusive", toExclusive)
 			.setMaxResults(limit);
 
-		return toHistories(query.getResultList());
+		return toHistories(query.getResultList(), userZoneId);
 	}
 
 	public List<TodoDurationHistory> findActualDurationHistoriesByTagId(
 		Long userId,
 		Long tagId,
-		LocalDate today,
+		LocalDateTime toExclusive,
+		ZoneId userZoneId,
 		int limit
 	) {
 		Query query = entityManager.createNativeQuery("""
 				select
 					t.title,
 					tr.actual_seconds,
-					date(coalesce(tr.ended_at, tr.started_at)) as recorded_date
+					coalesce(tr.ended_at, tr.started_at) as recorded_at
 				from todos t
 				join timer_records tr on tr.todo_id = t.id
 				where t.user_id = :userId
 					and tr.user_id = :userId
 					and tr.actual_seconds is not null
-					and date(coalesce(tr.ended_at, tr.started_at)) <= :today
+					and coalesce(tr.ended_at, tr.started_at) < :toExclusive
 					and t.tag_id = :tagId
 				order by coalesce(tr.ended_at, tr.started_at) desc, tr.id desc
 				""")
 			.setParameter("userId", userId)
 			.setParameter("tagId", tagId)
-			.setParameter("today", today)
+			.setParameter("toExclusive", toExclusive)
 			.setMaxResults(limit);
 
-		return toHistories(query.getResultList());
+		return toHistories(query.getResultList(), userZoneId);
 	}
 
 	@SuppressWarnings("unchecked")
-	private List<TodoDurationHistory> toHistories(List<?> rows) {
+	private List<TodoDurationHistory> toHistories(List<?> rows, ZoneId userZoneId) {
 		return ((List<Object[]>)rows).stream()
 			.map(row -> new TodoDurationHistory(
 				(String)row[0],
 				toInteger(row[1]),
-				toLocalDate(row[2])
+				toUserLocalDate(row[2], userZoneId)
 			))
 			.toList();
 	}
@@ -151,16 +155,23 @@ public class AiTodoQueryRepository {
 		return ((Number)value).intValue();
 	}
 
-	private LocalDate toLocalDate(Object value) {
+	private LocalDate toUserLocalDate(Object value, ZoneId userZoneId) {
 		if (value instanceof LocalDate localDate) {
 			return localDate;
 		}
-		if (value instanceof Date date) {
-			return date.toLocalDate();
+		if (value instanceof LocalDateTime localDateTime) {
+			return toUserLocalDate(localDateTime, userZoneId);
 		}
 		if (value instanceof Timestamp timestamp) {
-			return timestamp.toLocalDateTime().toLocalDate();
+			return toUserLocalDate(timestamp.toLocalDateTime(), userZoneId);
 		}
-		return LocalDate.parse(value.toString());
+		return toUserLocalDate(LocalDateTime.parse(value.toString()), userZoneId);
+	}
+
+	private LocalDate toUserLocalDate(LocalDateTime utcDateTime, ZoneId userZoneId) {
+		return utcDateTime
+			.atZone(ZoneOffset.UTC)
+			.withZoneSameInstant(userZoneId)
+			.toLocalDate();
 	}
 }

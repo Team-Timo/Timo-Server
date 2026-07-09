@@ -1,7 +1,9 @@
 package com.Timo.Timo.domain.ai.service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 
 import org.springframework.stereotype.Service;
 
@@ -42,13 +44,15 @@ public class AiTodoService {
 	private final AiRequestRateLimiter rateLimiter;
 
 	public RecommendDurationResponse recommendDuration(Long userId, RecommendDurationRequest request) {
-		LocalDate today = getCurrentDate(userId);
+		ZoneId userZoneId = getUserZoneId(userId);
+		LocalDateTime toExclusive = getTodayToExclusiveUtc(userZoneId);
 
 		AiTodoHistories histories = historyService.findHistories(
 			userId,
 			request.title(),
 			request.tagId(),
-			today,
+			toExclusive,
+			userZoneId,
 			HISTORY_LIMIT
 		);
 
@@ -71,7 +75,8 @@ public class AiTodoService {
 	}
 
 	public String createFeedback(Long userId, Long todoId) {
-		LocalDate today = getCurrentDate(userId);
+		ZoneId userZoneId = getUserZoneId(userId);
+		LocalDateTime toExclusive = getTodayToExclusiveUtc(userZoneId);
 		TodoFeedbackSource source = queryRepository.findFeedbackSource(userId, todoId);
 		if (source == null) {
 			throw new CustomException(TodoErrorCode.TODO_NOT_FOUND);
@@ -81,7 +86,8 @@ public class AiTodoService {
 			userId,
 			source.title(),
 			source.tagId(),
-			today,
+			toExclusive,
+			userZoneId,
 			HISTORY_LIMIT
 		);
 
@@ -103,10 +109,18 @@ public class AiTodoService {
 		return validateFeedback(feedback);
 	}
 
-	private LocalDate getCurrentDate(Long userId) {
+	private ZoneId getUserZoneId(Long userId) {
 		User user = userRepository.findById(userId)
 			.orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
-		return LocalDate.now(ZoneId.of(user.getZoneId()));
+		return ZoneId.of(user.getZoneId());
+	}
+
+	private LocalDateTime getTodayToExclusiveUtc(ZoneId userZoneId) {
+		return LocalDate.now(userZoneId)
+			.plusDays(1)
+			.atStartOfDay(userZoneId)
+			.withZoneSameInstant(ZoneOffset.UTC)
+			.toLocalDateTime();
 	}
 
 	private GeminiDurationRecommendation parseRecommendation(String geminiJson) {

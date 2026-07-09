@@ -1,6 +1,7 @@
 package com.Timo.Timo.domain.ai.service;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -22,14 +23,16 @@ public class AiTodoHistoryService {
 		Long userId,
 		String title,
 		Long tagId,
-		LocalDate today,
+		LocalDateTime toExclusive,
+		ZoneId userZoneId,
 		int limit
 	) {
 		List<TodoDurationHistory> similarTitleHistories =
 			aiTodoQueryRepository.findActualDurationHistoriesBySimilarTitle(
 				userId,
 				title,
-				today,
+				toExclusive,
+				userZoneId,
 				limit
 			);
 		List<TodoDurationHistory> recentTagHistories = tagId == null
@@ -37,7 +40,8 @@ public class AiTodoHistoryService {
 			: aiTodoQueryRepository.findActualDurationHistoriesByTagId(
 				userId,
 				tagId,
-				today,
+				toExclusive,
+				userZoneId,
 				limit
 			);
 
