@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
-public class TimerStartController implements TimerStartControllerDocs, TimerStatusControllerDocs {
+public class TimerController implements TimerStartControllerDocs, TimerStatusControllerDocs {
 
   private final TimerService timerService;
   private final TimerResponseFactory timerResponseFactory;
