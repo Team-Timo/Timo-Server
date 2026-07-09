@@ -67,4 +67,18 @@ public interface TimerRecordRepository extends JpaRepository<TimerRecord, Long> 
       @Param("fromInclusive") LocalDateTime fromInclusive,
       @Param("toExclusive") LocalDateTime toExclusive
   );
+
+  @Query("""
+      select coalesce(tr.endedAt, tr.startedAt)
+      from TimerRecord tr
+      where tr.user.id = :userId
+        and tr.actualSeconds is not null
+        and coalesce(tr.endedAt, tr.startedAt) >= :fromInclusive
+        and coalesce(tr.endedAt, tr.startedAt) < :toExclusive
+      """)
+  List<LocalDateTime> findMonthlyRecordedAtTimes(
+      @Param("userId") Long userId,
+      @Param("fromInclusive") LocalDateTime fromInclusive,
+      @Param("toExclusive") LocalDateTime toExclusive
+  );
 }

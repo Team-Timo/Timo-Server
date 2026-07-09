@@ -66,4 +66,17 @@ public interface TodoRepository extends JpaRepository<Todo, Long> {
 			@Param("fromInclusive") LocalDateTime fromInclusive,
 			@Param("toExclusive") LocalDateTime toExclusive
 	);
+
+	@Query("""
+		select t.createdAt
+		from Todo t
+		where t.user.id = :userId
+		  and t.createdAt >= :fromInclusive
+		  and t.createdAt < :toExclusive
+		""")
+	List<LocalDateTime> findMonthlyTodoCreatedAtTimes(
+			@Param("userId") Long userId,
+			@Param("fromInclusive") LocalDateTime fromInclusive,
+			@Param("toExclusive") LocalDateTime toExclusive
+	);
 }
