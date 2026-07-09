@@ -83,6 +83,12 @@ public class TodoService {
 		Todo todo = todoRepository.findByIdAndUser_Id(todoId, userId)
 				.orElseThrow(() -> new CustomException(TodoErrorCode.TODO_NOT_FOUND));
 
+		// 타이머 실행 중에는 일정/소요시간 변경을 막는다. (그 외 필드 수정은 허용)
+		boolean changesTimerSensitiveFields = request.durationSeconds() != null || isScheduleChanged(request);
+		if (changesTimerSensitiveFields && timerService.hasActiveTimer(todoId)) {
+			throw new CustomException(TodoErrorCode.TIMER_RUNNING);
+		}
+
 		validateTagExists(request.tagId());
 
 		todo.updateFields(
@@ -115,12 +121,15 @@ public class TodoService {
 		todoRepository.delete(todo);
 	}
 
-	private void applyScheduleChange(Todo todo, TodoUpdateRequest request) {
-		boolean scheduleChanged = request.date() != null
+	private boolean isScheduleChanged(TodoUpdateRequest request) {
+		return request.date() != null
 				|| request.repeatType() != null
 				|| request.repeatWeekdays() != null
 				|| request.repeatDayOfMonth() != null;
-		if (!scheduleChanged) {
+	}
+
+	private void applyScheduleChange(Todo todo, TodoUpdateRequest request) {
+		if (!isScheduleChanged(request)) {
 			return;
 		}
 

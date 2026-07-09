@@ -181,6 +181,14 @@ public interface TodoControllerDocs {
 			)
 		),
 		@ApiResponse(
+			responseCode = "409",
+			description = "타이머 실행 중에 일정/소요시간 변경을 시도했거나, 변경된 일정의 특정 날짜 TODO가 최대 개수(20개)를 초과한 경우",
+			content = @Content(
+				mediaType = "application/json",
+				schema = @Schema(implementation = ErrorDto.class)
+			)
+		),
+		@ApiResponse(
 			responseCode = "500",
 			description = "서버 내부 오류",
 			content = @Content(
