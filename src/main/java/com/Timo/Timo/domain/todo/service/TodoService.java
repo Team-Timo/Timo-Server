@@ -1,6 +1,7 @@
 package com.Timo.Timo.domain.todo.service;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.time.ZoneId;
 import java.util.List;
 
@@ -78,19 +79,24 @@ public class TodoService {
 		return TodoCreateResponse.from(savedTodo);
 	}
 
-	public TodoDetailResponse getTodoDetail(Long userId, Long todoId) {
+	public TodoDetailResponse getTodoDetail(Long userId, Long todoId, String dateValue) {
 		Todo todo = todoRepository.findByIdAndUser_Id(todoId, userId)
 				.orElseThrow(() -> new CustomException(TodoErrorCode.TODO_NOT_FOUND));
 
+		LocalDate date = parseDate(dateValue);
+		if (!todoDateCalculator.occursOn(todo, date)) {
+			throw new CustomException(TodoErrorCode.TODO_NOT_FOUND_ON_DATE);
+		}
+
 		TodoInstance instance = todoInstanceRepository
-				.findByTodo_IdAndDate(todo.getId(), todo.getStartDate())
+				.findByTodo_IdAndDate(todo.getId(), date)
 				.orElse(null);
 
 		Tag tag = todo.getTagId() != null
 				? tagRepository.findById(todo.getTagId()).orElse(null)
 				: null;
 
-		return TodoDetailResponse.of(todo, instance, tag);
+		return TodoDetailResponse.of(todo, instance, date, tag);
 	}
 
 	@Transactional
@@ -122,6 +128,18 @@ public class TodoService {
 		User user = userRepository.findById(userId)
 				.orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 		return LocalDate.now(ZoneId.of(user.getZoneId()));
+	}
+
+	private LocalDate parseDate(String dateValue) {
+		if (dateValue == null || dateValue.isBlank()) {
+			throw new CustomException(TodoErrorCode.INVALID_REQUEST);
+		}
+
+		try {
+			return LocalDate.parse(dateValue);
+		} catch (DateTimeParseException exception) {
+			throw new CustomException(TodoErrorCode.INVALID_REQUEST);
+		}
 	}
 
 	private void validateTagExists(Long tagId) {

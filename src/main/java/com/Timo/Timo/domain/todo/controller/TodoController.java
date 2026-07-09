@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.Timo.Timo.domain.todo.docs.TodoControllerDocs;
@@ -50,9 +51,10 @@ public class TodoController implements TodoControllerDocs {
 	@GetMapping("/{todoId}")
 	public ResponseEntity<BaseResponse<TodoDetailResponse>> getTodoDetail(
 		@AuthenticationPrincipal CustomUserDetails userDetails,
-		@PathVariable Long todoId
+		@PathVariable Long todoId,
+		@RequestParam String date
 	) {
-		TodoDetailResponse response = todoService.getTodoDetail(userDetails.getUserId(), todoId);
+		TodoDetailResponse response = todoService.getTodoDetail(userDetails.getUserId(), todoId, date);
 
 		return ResponseEntity
 			.status(TodoSuccessCode.GET_DETAIL.getHttpStatus())

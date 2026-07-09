@@ -29,9 +29,7 @@ public record TodoDetailResponse(
 		List<SubtaskResponse> subtasks
 ) {
 
-	public static TodoDetailResponse of(Todo todo, TodoInstance instance, Tag tag) {
-		LocalDate date = todo.getStartDate();
-
+	public static TodoDetailResponse of(Todo todo, TodoInstance instance, LocalDate date, Tag tag) {
 		return new TodoDetailResponse(
 				todo.getId(),
 				todo.getIcon() != null ? todo.getIcon().name() : null,

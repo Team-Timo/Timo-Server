@@ -202,10 +202,13 @@ public interface TodoControllerDocs {
 	@Operation(
 		summary = "TODO 상세 조회",
 		description = """
-			todoId로 단일 TODO의 상세 정보를 조회합니다.
+			todoId와 조회 기준 날짜(date)로 단일 TODO의 상세 정보를 조회합니다.
 
 			아이콘, 제목, 완료 여부, 날짜/요일, 예상 소요 시간, 우선순위, 태그,
 			반복 설정, 타이머 상태, 메모, 정렬 순서, 하위 태스크 목록을 반환합니다.
+
+			완료 여부·타이머 상태·정렬 순서는 date에 해당하는 인스턴스 기준으로 반환되므로,
+			반복 TODO의 경우 조회하려는 날짜를 date로 전달해야 합니다.
 
 			Swagger UI 오른쪽 위의 Authorize 버튼을 눌러 유효한 Access Token을 입력해야 합니다.
 			"""
@@ -217,6 +220,14 @@ public interface TodoControllerDocs {
 			useReturnTypeSchema = true
 		),
 		@ApiResponse(
+			responseCode = "400",
+			description = "date가 누락되었거나 날짜 형식(yyyy-MM-dd)이 올바르지 않은 경우",
+			content = @Content(
+				mediaType = "application/json",
+				schema = @Schema(implementation = ErrorDto.class)
+			)
+		),
+		@ApiResponse(
 			responseCode = "401",
 			description = "Access Token이 없거나 만료되었거나 유효하지 않은 경우",
 			content = @Content(
@@ -226,7 +237,7 @@ public interface TodoControllerDocs {
 		),
 		@ApiResponse(
 			responseCode = "404",
-			description = "존재하지 않는 투두인 경우",
+			description = "존재하지 않는 투두이거나, 전달한 date에 해당 투두가 존재하지 않는 경우",
 			content = @Content(
 				mediaType = "application/json",
 				schema = @Schema(implementation = ErrorDto.class)
@@ -243,6 +254,7 @@ public interface TodoControllerDocs {
 	})
 	ResponseEntity<BaseResponse<TodoDetailResponse>> getTodoDetail(
 		@Parameter(hidden = true) CustomUserDetails userDetails,
-		@Parameter(description = "조회할 TODO ID", example = "3") Long todoId
+		@Parameter(description = "조회할 TODO ID", example = "3") Long todoId,
+		@Parameter(description = "조회 기준 날짜 (yyyy-MM-dd)", example = "2026-07-22") String date
 	);
 }
