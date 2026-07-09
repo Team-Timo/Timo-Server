@@ -16,8 +16,8 @@ public enum TodoErrorCode implements BaseErrorCode {
   	TODO_NOT_FOUND(HttpStatus.NOT_FOUND, "TODO_404", "존재하지 않는 투두입니다"),
   	TODO_NOT_FOUND_ON_DATE(HttpStatus.NOT_FOUND, "TODO_404", "해당 날짜에 존재하지 않는 투두입니다."),
   	MAX_COUNT_EXCEEDED(HttpStatus.CONFLICT, "TODO_409", "해당 날짜의 투두가 최대 개수(20개)를 초과했습니다."),
-  IS_COMPLETED_REQUIRED(HttpStatus.BAD_REQUEST, "COMMON_400", "isCompleted는 필수입니다."),
-  TIMER_RUNNING(HttpStatus.CONFLICT, "TODO_409", "타이머가 실행 중인 TODO는 변경할 수 없습니다. 타이머를 먼저 종료해주세요.");
+  	IS_COMPLETED_REQUIRED(HttpStatus.BAD_REQUEST, "COMMON_400", "isCompleted는 필수입니다."),
+  	TIMER_RUNNING(HttpStatus.CONFLICT, "TODO_409", "타이머가 실행 중인 TODO는 변경할 수 없습니다. 타이머를 먼저 종료해주세요.");
 
 	private final HttpStatus httpStatus;
 	private final String code;
