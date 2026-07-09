@@ -32,5 +32,4 @@ public class AuthErrorResponseWriter {
     response.setCharacterEncoding("UTF-8");
     response.getWriter().write(objectMapper.writeValueAsString(errorDto));
   }
-
 }

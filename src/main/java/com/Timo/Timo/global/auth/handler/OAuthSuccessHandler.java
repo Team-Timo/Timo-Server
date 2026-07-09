@@ -3,15 +3,14 @@ package com.Timo.Timo.global.auth.handler;
 import com.Timo.Timo.global.auth.principal.CustomUserDetails;
 import com.Timo.Timo.global.auth.service.AuthCodeService;
 import com.Timo.Timo.global.auth.service.RefreshTokenService;
+import com.Timo.Timo.global.auth.utils.CookieUtil;
 import com.Timo.Timo.global.jwt.provider.JwtTokenProvider;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -39,29 +38,18 @@ public class OAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
   ) throws IOException {
 
     CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-    Long userId = userDetails.getUser().getId();
+    Long userId = userDetails.getUserId();
     boolean onboardingCompleted = userDetails.getUser().isOnboardingCompleted();
 
     String refreshToken = jwtTokenProvider.generateRefreshToken(userId);
     String sessionId = refreshTokenService.saveRefreshToken(String.valueOf(userId), refreshToken);
 
-    ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", refreshToken)
-        .httpOnly(true)
-        .secure(cookieSecure)
-        .path("/api/v1/auth")
-        .maxAge(Duration.ofSeconds(jwtTokenProvider.getRefreshTokenExpiry()))
-        .sameSite("Strict")
-        .build();
-    response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
-
-    ResponseCookie sessionCookie = ResponseCookie.from("sessionId", sessionId)
-        .httpOnly(true)
-        .secure(cookieSecure)
-        .path("/api/v1/auth")
-        .maxAge(Duration.ofSeconds(jwtTokenProvider.getRefreshTokenExpiry()))
-        .sameSite("Strict")
-        .build();
-    response.addHeader(HttpHeaders.SET_COOKIE, sessionCookie.toString());
+    response.addHeader(HttpHeaders.SET_COOKIE,
+        CookieUtil.createCookie("refreshToken", refreshToken,
+            jwtTokenProvider.getRefreshTokenExpiry(), cookieSecure).toString());
+    response.addHeader(HttpHeaders.SET_COOKIE,
+        CookieUtil.createCookie("sessionId", sessionId,
+            jwtTokenProvider.getRefreshTokenExpiry(), cookieSecure).toString());
 
     String code = authCodeService.generateAndSave(
         String.valueOf(userId),
