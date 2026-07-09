@@ -10,7 +10,9 @@ import com.Timo.Timo.domain.timer.exception.TimerErrorCode;
 import com.Timo.Timo.domain.timer.repository.TimerRecordRepository;
 import com.Timo.Timo.domain.timer.repository.TimerSessionRepository;
 import com.Timo.Timo.domain.todo.entity.Todo;
+import com.Timo.Timo.domain.todo.entity.TodoInstance;
 import com.Timo.Timo.domain.todo.exception.TodoErrorCode;
+import com.Timo.Timo.domain.todo.repository.TodoInstanceRepository;
 import com.Timo.Timo.domain.todo.repository.TodoRepository;
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.exception.UserErrorCode;
@@ -18,6 +20,7 @@ import com.Timo.Timo.domain.user.repository.UserRepository;
 import com.Timo.Timo.global.exception.CustomException;
 import com.Timo.Timo.global.exception.code.ErrorCode;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +38,7 @@ public class TimerService {
   private final TimerSessionRepository timerSessionRepository;
   private final TodoRepository todoRepository;
   private final UserRepository userRepository;
+  private final TodoInstanceRepository todoInstanceRepository;
 
   @Transactional
   public TimerStartResponse startTimer(Long userId, Long todoId) {
@@ -68,6 +72,9 @@ public class TimerService {
         .build();
     timerSessionRepository.save(session);
 
+    TodoInstance instance = getOrCreateInstance(todo, now.toLocalDate());
+    instance.startTimer();
+
     return TimerStartResponse.from(timerRecord);
   }
 
@@ -82,11 +89,14 @@ public class TimerService {
 
     LocalDateTime now = LocalDateTime.now();
 
-    if (action == TimerAction.PAUSE){
+    TodoInstance instance = getOrCreateInstance(timerRecord.getTodo(), timerRecord.getStartedAt().toLocalDate());
+
+    if (action == TimerAction.PAUSE) {
       timerRecord.pause();
       TimerSession activeSession = timerSessionRepository.findByTimerRecordIdAndPausedAtIsNull(timerId)
           .orElseThrow(() -> new CustomException(TimerErrorCode.TIMER_INVALID_STATUS_TRANSITION));
       activeSession.pause(now);
+      instance.pauseTimer();
     } else {
       timerRecord.resume();
       TimerSession newSession = TimerSession.builder()
@@ -94,6 +104,7 @@ public class TimerService {
           .startedAt(now)
           .build();
       timerSessionRepository.save(newSession);
+      instance.startTimer();
     }
 
     int elapsedSeconds = calculateElapsedSeconds(timerId, now);
@@ -110,6 +121,11 @@ public class TimerService {
     }
 
     return (int) totalSeconds;
+  }
+
+  private TodoInstance getOrCreateInstance(Todo todo, LocalDate date) {
+    return todoInstanceRepository.findByTodo_IdAndDate(todo.getId(), date)
+        .orElseGet(() -> todoInstanceRepository.save(TodoInstance.of(todo, date, 0)));
   }
 
   public boolean hasActiveTimer(Long todoId) {
