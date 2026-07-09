@@ -135,7 +135,6 @@ public class TimerService {
     );
 
     return TimerExtendResponse.of(timerRecord, remainingSeconds);
-
   }
 
   private int calculateElapsedSeconds(Long timerRecordId, LocalDateTime now){

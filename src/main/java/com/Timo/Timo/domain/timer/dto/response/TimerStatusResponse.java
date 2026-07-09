@@ -8,7 +8,6 @@ public record TimerStatusResponse (
     Integer elapsedSeconds,
     Integer remainingSeconds
 ){
-
   public static TimerStatusResponse of(TimerRecord timerRecord, int elapsedSeconds){
 
     int remainingSeconds = Math.max(
