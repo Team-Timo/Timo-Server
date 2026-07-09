@@ -28,9 +28,11 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -207,12 +209,22 @@ public class TimerService {
     instance.markCompleted();
 
     timerRecordRepository.flush();
-    String feedback = aiTodoService.createFeedback(
-        userId,
-        timerRecord.getTodo().getId()
-    );
-    timerRecord.updateAiFeedback(feedback);
+    generateAiFeedback(userId, timerRecord);
 
     return TimerFinishResponse.of(timerRecord);
+  }
+
+  private void generateAiFeedback(Long userId, TimerRecord timerRecord) {
+    try {
+      String feedback = aiTodoService.createFeedback(userId, timerRecord.getTodo().getId());
+      timerRecord.updateAiFeedback(feedback);
+    } catch (RuntimeException exception) {
+      log.warn(
+          "AI feedback generation failed. timerId={}, userId={}",
+          timerRecord.getId(),
+          userId,
+          exception
+      );
+    }
   }
 }
