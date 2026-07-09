@@ -1,5 +1,6 @@
 package com.Timo.Timo.domain.timer.service;
 
+import com.Timo.Timo.domain.timer.dto.response.TimerActiveResponse;
 import com.Timo.Timo.domain.timer.dto.response.TimerStartResponse;
 import com.Timo.Timo.domain.timer.dto.response.TimerStatusResponse;
 import com.Timo.Timo.domain.timer.entity.TimerRecord;
@@ -112,6 +113,15 @@ public class TimerService {
     int elapsedSeconds = calculateElapsedSeconds(timerId, now);
 
     return TimerStatusResponse.of(timerRecord, elapsedSeconds);
+  }
+
+  public TimerActiveResponse getActiveTimer(Long userId){
+    return timerRecordRepository.findByUserIdAndStatusIn(userId, ACTIVE_STATUS)
+        .map(timerRecord -> {
+          int elapsedSeconds = calculateElapsedSeconds(timerRecord.getId(), LocalDateTime.now());
+          return TimerActiveResponse.of(timerRecord, elapsedSeconds);
+        })
+        .orElse(null);
   }
 
   private int calculateElapsedSeconds(Long timerRecordId, LocalDateTime now){
