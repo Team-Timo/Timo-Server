@@ -18,7 +18,6 @@ import com.Timo.Timo.domain.ai.service.AiTodoService;
 import com.Timo.Timo.global.auth.principal.CustomUserDetails;
 import com.Timo.Timo.global.response.BaseResponse;
 
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,13 +26,12 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
-@Tag(name = "AI Todo", description = "투두 AI API")
 public class AiTodoController implements AiTodoDocs, AiFeedbackDocs {
 
 	private final AiTodoService aiTodoService;
 
 	@Override
-	@PostMapping("/todos/recommend-duration")
+	@PostMapping("/ai/duration")
 	public ResponseEntity<BaseResponse<RecommendDurationResponse>> recommendDuration(
 		@AuthenticationPrincipal CustomUserDetails userDetails,
 		@Valid @RequestBody RecommendDurationRequest request
