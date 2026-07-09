@@ -2,7 +2,7 @@ package com.Timo.Timo.domain.statistics.docs;
 
 import org.springframework.http.ResponseEntity;
 
-import com.Timo.Timo.domain.statistics.dto.response.StatisticsSummaryResponse;
+import com.Timo.Timo.domain.statistics.dto.response.StatisticsDailyResponse;
 import com.Timo.Timo.global.auth.principal.CustomUserDetails;
 import com.Timo.Timo.global.exception.dto.ErrorDto;
 import com.Timo.Timo.global.response.BaseResponse;
@@ -14,28 +14,26 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
-public interface StatisticsSummaryDocs {
+public interface StatisticsDailyDocs {
 
 	@Operation(
-		summary = "월별 통계 요약 조회",
+		summary = "일별 기록 조회",
 		description = """
-			지정한 연월의 전체 기록 시간, 활동일, 일평균, 누적 태스크를 조회합니다.
+			특정 날짜의 총 기록시간과 해당 날짜에 계획된 투두 목록을 조회합니다.
 
-			- 전체 기록 시간: 해당 월에 기록된 타이머 시간의 총합
-			- 활동일: 해당 월에 1개 이상의 투두를 생성한 날짜 수
-			- 일평균: 타이머를 1회 이상 실행한 날짜들의 기록 시간 총합을 해당 날짜 수로 나눈 값
-			- 누적 태스크: 해당 월에 작성된 전체 투두 수와 그중 완료한 투두 수
+			투두별로 투두명, 실제 소요 시간, 예상 소요 시간, 태그 정보를 제공합니다.
+			실제 소요 시간은 해당 날짜의 타이머 기록 합계이며, 기록이 없으면 0분입니다.
 			"""
 	)
 	@ApiResponses({
 		@ApiResponse(
 			responseCode = "200",
-			description = "월별 통계 요약 조회 성공",
+			description = "일별 기록 조회 성공",
 			useReturnTypeSchema = true
 		),
 		@ApiResponse(
 			responseCode = "400",
-			description = "yearMonth 누락, 형식 오류, 유효하지 않은 연월",
+			description = "date 누락, 형식 오류, 유효하지 않은 날짜",
 			content = @Content(
 				mediaType = "application/json",
 				schema = @Schema(implementation = ErrorDto.class)
@@ -50,6 +48,14 @@ public interface StatisticsSummaryDocs {
 			)
 		),
 		@ApiResponse(
+			responseCode = "404",
+			description = "사용자 정보를 찾을 수 없는 경우",
+			content = @Content(
+				mediaType = "application/json",
+				schema = @Schema(implementation = ErrorDto.class)
+			)
+		),
+		@ApiResponse(
 			responseCode = "500",
 			description = "서버 내부 오류",
 			content = @Content(
@@ -58,13 +64,13 @@ public interface StatisticsSummaryDocs {
 			)
 		)
 	})
-	ResponseEntity<BaseResponse<StatisticsSummaryResponse>> getSummary(
+	ResponseEntity<BaseResponse<StatisticsDailyResponse>> getDaily(
 		@Parameter(hidden = true) CustomUserDetails userDetails,
 		@Parameter(
-			description = "조회할 연월. yyyy-MM 형식",
+			description = "조회 날짜. yyyy-MM-dd 형식",
 			required = true,
-			example = "2026-07"
+			example = "2026-06-28"
 		)
-		String yearMonth
+		String date
 	);
 }
