@@ -1,7 +1,9 @@
 package com.Timo.Timo.domain.statistics.service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.YearMonth;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -32,6 +34,10 @@ import com.Timo.Timo.domain.todo.repository.TodoDailyCompletionStats;
 import com.Timo.Timo.domain.todo.repository.TodoInstanceRepository;
 import com.Timo.Timo.domain.todo.repository.TodoMonthlySummaryStats;
 import com.Timo.Timo.domain.todo.repository.TodoRepository;
+import com.Timo.Timo.domain.user.entity.User;
+import com.Timo.Timo.domain.user.exception.UserErrorCode;
+import com.Timo.Timo.domain.user.repository.UserRepository;
+import com.Timo.Timo.global.exception.CustomException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -48,10 +54,12 @@ public class StatisticsService {
 	private final TimerRecordRepository timerRecordRepository;
 	private final TagRepository tagRepository;
 	private final StatisticsDateParser statisticsDateParser;
+	private final UserRepository userRepository;
 
 	public StatisticsCalendarResponse getCalendar(Long userId, String yearMonthValue) {
+		ZoneId userZone = getUserZone(userId);
 		YearMonth yearMonth = statisticsDateParser.parseYearMonth(yearMonthValue);
-		LocalDate today = LocalDate.now(ZoneOffset.UTC);
+		LocalDate today = LocalDate.now(userZone);
 		LocalDate startDate = yearMonth.atDay(1);
 		LocalDate endDate = yearMonth.atEndOfMonth();
 
@@ -77,30 +85,40 @@ public class StatisticsService {
 	}
 
 	public StatisticsSummaryResponse getSummary(Long userId, String yearMonthValue) {
+		ZoneId userZone = getUserZone(userId);
 		YearMonth yearMonth = statisticsDateParser.parseYearMonth(yearMonthValue);
 		LocalDate startDate = yearMonth.atDay(1);
 		LocalDate nextMonthStartDate = yearMonth.plusMonths(1).atDay(1);
+		LocalDateTime fromInclusive = toUtcStartOfDay(startDate, userZone);
+		LocalDateTime toExclusive = toUtcStartOfDay(nextMonthStartDate, userZone);
 
 		TimerMonthlyRecordStats timerStats = timerRecordRepository.findMonthlyRecordStats(
 			userId,
-			startDate.atStartOfDay(),
-			nextMonthStartDate.atStartOfDay()
+			fromInclusive,
+			toExclusive
 		);
 		TodoMonthlySummaryStats todoStats = todoRepository.findMonthlySummaryStats(
 			userId,
-			startDate.atStartOfDay(),
-			nextMonthStartDate.atStartOfDay()
+			fromInclusive,
+			toExclusive
 		);
 
 		long totalRecordSeconds = timerStats.getTotalRecordSeconds();
-		long timerRecordedDayCount = timerStats.getTimerRecordedDayCount();
+		long timerRecordedDayCount = countDistinctUserDates(
+			timerRecordRepository.findMonthlyRecordedAtTimes(userId, fromInclusive, toExclusive),
+			userZone
+		);
+		int activeDayCount = countDistinctUserDates(
+			todoRepository.findMonthlyTodoCreatedAtTimes(userId, fromInclusive, toExclusive),
+			userZone
+		);
 		long averageRecordedMinutes = timerRecordedDayCount == 0
 			? 0L
 			: totalRecordSeconds / timerRecordedDayCount / SECONDS_PER_MINUTE;
 
 		return new StatisticsSummaryResponse(
 			totalRecordSeconds / SECONDS_PER_MINUTE,
-			toInteger(todoStats.getActiveDayCount()),
+			activeDayCount,
 			averageRecordedMinutes,
 			toInteger(todoStats.getCompletedTodoCount()),
 			toInteger(todoStats.getTotalTodoCount())
@@ -108,18 +126,21 @@ public class StatisticsService {
 	}
 
 	public StatisticsDailyResponse getDaily(Long userId, String dateValue) {
+		ZoneId userZone = getUserZone(userId);
 		LocalDate date = statisticsDateParser.parseDate(dateValue);
 		LocalDate nextDate = date.plusDays(1);
+		LocalDateTime fromInclusive = toUtcStartOfDay(date, userZone);
+		LocalDateTime toExclusive = toUtcStartOfDay(nextDate, userZone);
 		long totalRecordSeconds = timerRecordRepository.sumActualSeconds(
 			userId,
-			date.atStartOfDay(),
-			nextDate.atStartOfDay()
+			fromInclusive,
+			toExclusive
 		);
 
 		Map<Long, Long> actualSecondsByTodoId = timerRecordRepository.findDailyTodoStats(
 				userId,
-				date.atStartOfDay(),
-				nextDate.atStartOfDay()
+				fromInclusive,
+				toExclusive
 			).stream()
 			.collect(Collectors.toMap(TimerDailyTodoStats::getTodoId, TimerDailyTodoStats::getActualSeconds));
 
@@ -130,6 +151,28 @@ public class StatisticsService {
 			.toList();
 
 		return new StatisticsDailyResponse(date, toMinutes(totalRecordSeconds), todos);
+	}
+
+	private ZoneId getUserZone(Long userId) {
+		User user = userRepository.findById(userId)
+			.orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+		return ZoneId.of(user.getZoneId());
+	}
+
+	private LocalDateTime toUtcStartOfDay(LocalDate date, ZoneId userZone) {
+		return date.atStartOfDay(userZone)
+			.withZoneSameInstant(ZoneOffset.UTC)
+			.toLocalDateTime();
+	}
+
+	private int countDistinctUserDates(List<LocalDateTime> utcDateTimes, ZoneId userZone) {
+		return (int)utcDateTimes.stream()
+			.filter(Objects::nonNull)
+			.map(utcDateTime -> utcDateTime.atZone(ZoneOffset.UTC)
+				.withZoneSameInstant(userZone)
+				.toLocalDate())
+			.distinct()
+			.count();
 	}
 
 	private int calculateCompletionRate(TodoDailyCompletionStats stats) {

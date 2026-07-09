@@ -23,6 +23,5 @@ public record StatisticsCalendarResponse(
 
 		@Schema(description = "투두 완료율. 투두가 없으면 0", example = "50")
 		Integer completionRate
-	) {
-	}
+	) { }
 }
