@@ -3,6 +3,7 @@ package com.Timo.Timo.domain.timer.controller;
 import com.Timo.Timo.domain.timer.docs.TimerStartControllerDocs;
 import com.Timo.Timo.domain.timer.docs.TimerStatusControllerDocs;
 import com.Timo.Timo.domain.timer.dto.request.TimerActionRequest;
+import com.Timo.Timo.domain.timer.dto.response.TimerActiveResponse;
 import com.Timo.Timo.domain.timer.dto.response.TimerStartResponse;
 import com.Timo.Timo.domain.timer.dto.response.TimerStatusResponse;
 import com.Timo.Timo.domain.timer.enums.TimerAction;
@@ -16,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -59,6 +61,22 @@ public class TimerController implements TimerStartControllerDocs, TimerStatusCon
       case PAUSE -> TimerSuccessCode.TIMER_PAUSED;
       case RESUME -> TimerSuccessCode.TIMER_RESUMED;
     };
+
+    return ResponseEntity.ok()
+        .body(BaseResponse.onSuccess(successCode, response));
+  }
+
+  @Override
+  @GetMapping("/timers/active")
+  public ResponseEntity<BaseResponse<TimerActiveResponse>> getActiveTimer(
+      @AuthenticationPrincipal CustomUserDetails userDetails
+  ){
+    Long userId = userDetails.getUserId();
+    TimerActiveResponse response = timerService.getActiveTimer(userId);
+
+    TimerSuccessCode successCode = response != null
+        ? TimerSuccessCode.TIMER_ACTIVE_FOUND
+        : TimerSuccessCode.TIMER_ACTIVE_NOT_FOUND;
 
     return ResponseEntity.ok()
         .body(BaseResponse.onSuccess(successCode, response));
