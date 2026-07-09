@@ -1,6 +1,8 @@
 package com.Timo.Timo.domain.timer.dto.response;
 
 import com.Timo.Timo.domain.timer.entity.TimerRecord;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
 
 public record TimerActiveResponse (
@@ -13,6 +15,8 @@ public record TimerActiveResponse (
     Integer extendedSeconds,
     Integer elapsedSeconds,
     Integer remainingSeconds,
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @Schema(type = "string", example = "2026-07-09 10:14:19")
     LocalDateTime startedAt
 ){
   public static TimerActiveResponse of(TimerRecord timerRecord, int elapsedSeconds){
