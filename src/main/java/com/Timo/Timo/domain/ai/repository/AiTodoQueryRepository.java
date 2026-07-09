@@ -8,6 +8,7 @@ import java.util.List;
 import org.springframework.stereotype.Repository;
 
 import com.Timo.Timo.domain.ai.dto.TodoDurationHistory;
+import com.Timo.Timo.domain.ai.dto.TodoFeedbackSource;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
@@ -18,6 +19,45 @@ import lombok.RequiredArgsConstructor;
 public class AiTodoQueryRepository {
 
 	private final EntityManager entityManager;
+
+	public TodoFeedbackSource findFeedbackSource(Long userId, Long todoId) {
+		List<?> rows = entityManager.createNativeQuery("""
+				select
+					t.title,
+					t.tag_id,
+					tag.name,
+					t.duration_seconds,
+					coalesce((
+						select tr.actual_seconds
+						from timer_records tr
+						where tr.todo_id = t.id
+							and tr.user_id = :userId
+							and tr.actual_seconds is not null
+						order by coalesce(tr.ended_at, tr.started_at) desc, tr.id desc
+						limit 1
+					), 0)
+				from todos t
+				left join tags tag on tag.id = t.tag_id
+				where t.id = :todoId
+					and t.user_id = :userId
+				""")
+			.setParameter("userId", userId)
+			.setParameter("todoId", todoId)
+			.getResultList();
+
+		if (rows.isEmpty()) {
+			return null;
+		}
+
+		Object[] row = (Object[])rows.get(0);
+		return new TodoFeedbackSource(
+			(String)row[0],
+			toLong(row[1]),
+			(String)row[2],
+			toInteger(row[3]),
+			toInteger(row[4])
+		);
+	}
 
 	public List<TodoDurationHistory> findActualDurationHistoriesBySimilarTitle(
 		Long userId,
