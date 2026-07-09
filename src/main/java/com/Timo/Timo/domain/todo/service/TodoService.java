@@ -79,10 +79,6 @@ public class TodoService {
 
 	@Transactional
 	public TodoStatusChangeResponse changeCompletion(Long userId, Long todoId, TodoStatusUpdateRequest request) {
-		if (request.isCompleted() == null) {
-			throw new CustomException(TodoErrorCode.IS_COMPLETED_REQUIRED);
-		}
-
 		Todo todo = todoRepository.findByIdAndUser_Id(todoId, userId)
 				.orElseThrow(() -> new CustomException(TodoErrorCode.TODO_NOT_FOUND));
 
@@ -102,10 +98,6 @@ public class TodoService {
 	@Transactional
 	public SubtaskStatusChangeResponse changeSubtaskCompletion(
 			Long userId, Long todoId, Long subtaskId, SubtaskStatusUpdateRequest request) {
-		if (request.isCompleted() == null) {
-			throw new CustomException(TodoErrorCode.IS_COMPLETED_REQUIRED);
-		}
-
 		Todo todo = todoRepository.findByIdAndUser_Id(todoId, userId)
 				.orElseThrow(() -> new CustomException(TodoErrorCode.TODO_NOT_FOUND));
 
