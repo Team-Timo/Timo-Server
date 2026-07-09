@@ -2,13 +2,13 @@ package com.Timo.Timo.domain.timer.repository;
 
 import com.Timo.Timo.domain.timer.entity.TimerRecord;
 import com.Timo.Timo.domain.timer.enums.TimerStatus;
-import io.lettuce.core.dynamic.annotation.Param;
 import jakarta.persistence.LockModeType;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface TimerRecordRepository extends JpaRepository<TimerRecord, Long> {
 
