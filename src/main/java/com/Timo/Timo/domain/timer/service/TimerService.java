@@ -1,5 +1,8 @@
 package com.Timo.Timo.domain.timer.service;
 
+import com.Timo.Timo.domain.ai.dto.request.CreateTodoFeedbackRequest;
+import com.Timo.Timo.domain.ai.dto.response.CreateTodoFeedbackResponse;
+import com.Timo.Timo.domain.ai.service.AiTodoService;
 import com.Timo.Timo.domain.timer.dto.response.TimerActiveResponse;
 import com.Timo.Timo.domain.timer.dto.response.TimerFinishResponse;
 import com.Timo.Timo.domain.timer.dto.response.TimerExtendResponse;
@@ -42,6 +45,7 @@ public class TimerService {
   private final TodoRepository todoRepository;
   private final UserRepository userRepository;
   private final TodoInstanceRepository todoInstanceRepository;
+  private final AiTodoService aiTodoService;
 
   @Transactional
   public TimerStartResponse startTimer(Long userId, Long todoId) {
@@ -198,11 +202,18 @@ public class TimerService {
     timerSessionRepository.findByTimerRecordIdAndPausedAtIsNull(timerId)
         .ifPresent(activeSession -> activeSession.pause(now));
 
-    timerRecord.finish(targetStatus, now, actualSeconds, null);
+    timerRecord.finish(targetStatus, now, actualSeconds);
 
     TodoInstance instance = getOrCreateInstance(timerRecord.getTodo(), timerRecord.getStartedAt().toLocalDate());
     instance.stopTimer();
     instance.markCompleted();
+
+    timerRecordRepository.flush();
+    CreateTodoFeedbackResponse feedback = aiTodoService.createFeedback(
+        userId,
+        new CreateTodoFeedbackRequest(timerRecord.getTodo().getId())
+    );
+    timerRecord.updateAiFeedback(feedback.feedback());
 
     return TimerFinishResponse.of(timerRecord);
   }
