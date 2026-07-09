@@ -1,25 +1,32 @@
 package com.Timo.Timo.domain.todo.service;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
+import java.time.ZoneId;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.Timo.Timo.domain.tag.entity.Tag;
 import com.Timo.Timo.domain.tag.exception.TagErrorCode;
 import com.Timo.Timo.domain.tag.repository.TagRepository;
+import com.Timo.Timo.domain.timer.service.TimerService;
 import com.Timo.Timo.domain.todo.dto.request.TodoCreateRequest;
+import com.Timo.Timo.domain.todo.dto.request.TodoStatusUpdateRequest;
 import com.Timo.Timo.domain.todo.dto.request.TodoSubtaskUpdateRequest;
 import com.Timo.Timo.domain.todo.dto.request.TodoUpdateRequest;
 import com.Timo.Timo.domain.todo.dto.response.TodoCreateResponse;
+import com.Timo.Timo.domain.todo.dto.response.TodoDetailResponse;
+import com.Timo.Timo.domain.todo.dto.response.TodoStatusChangeResponse;
 import com.Timo.Timo.domain.todo.entity.Todo;
+import com.Timo.Timo.domain.todo.entity.TodoInstance;
 import com.Timo.Timo.domain.todo.enums.RepeatType;
 import com.Timo.Timo.domain.todo.enums.Weekday;
 import com.Timo.Timo.domain.todo.exception.TodoErrorCode;
 import com.Timo.Timo.domain.todo.repository.TodoInstanceRepository;
 import com.Timo.Timo.domain.todo.repository.TodoRepository;
 import com.Timo.Timo.domain.todo.vo.Duration;
-import com.Timo.Timo.domain.timer.service.TimerService;
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.exception.UserErrorCode;
 import com.Timo.Timo.domain.user.repository.UserRepository;
@@ -38,6 +45,7 @@ public class TodoService {
 	private final TagRepository tagRepository;
 	private final TodoDateCalculator todoDateCalculator;
 	private final TodoCapacityChecker todoCapacityChecker;
+	private final TodoInstanceReorderer todoInstanceReorderer;
 	private final TimerService timerService;
 
 	@Transactional
@@ -72,6 +80,48 @@ public class TodoService {
 
 		Todo savedTodo = todoRepository.save(todo);
 		return TodoCreateResponse.from(savedTodo);
+	}
+
+	public TodoDetailResponse getTodoDetail(Long userId, Long todoId, String dateValue) {
+		Todo todo = todoRepository.findByIdAndUser_Id(todoId, userId)
+				.orElseThrow(() -> new CustomException(TodoErrorCode.TODO_NOT_FOUND));
+
+		LocalDate date = parseDate(dateValue);
+		if (!todoDateCalculator.occursOn(todo, date)) {
+			throw new CustomException(TodoErrorCode.TODO_NOT_FOUND_ON_DATE);
+		}
+
+		TodoInstance instance = todoInstanceRepository
+				.findByTodo_IdAndDate(todo.getId(), date)
+				.orElse(null);
+
+		Tag tag = todo.getTagId() != null
+				? tagRepository.findById(todo.getTagId()).orElse(null)
+				: null;
+
+		return TodoDetailResponse.of(todo, instance, date, tag);
+	}
+
+	@Transactional
+	public TodoStatusChangeResponse changeCompletion(Long userId, Long todoId, TodoStatusUpdateRequest request) {
+		if (request.isCompleted() == null) {
+			throw new CustomException(TodoErrorCode.IS_COMPLETED_REQUIRED);
+		}
+
+		Todo todo = todoRepository.findByIdAndUser_Id(todoId, userId)
+				.orElseThrow(() -> new CustomException(TodoErrorCode.TODO_NOT_FOUND));
+
+		LocalDate date = resolveDate(userId, request.date());
+		if (!todoDateCalculator.occursOn(todo, date)) {
+			throw new CustomException(TodoErrorCode.TODO_NOT_FOUND);
+		}
+
+		if (timerService.hasActiveTimer(todoId)) {
+			throw new CustomException(TodoErrorCode.TIMER_RUNNING);
+		}
+
+		TodoInstance instance = todoInstanceReorderer.applyCompletion(userId, todo, date, request.isCompleted());
+		return TodoStatusChangeResponse.from(todoId, instance);
 	}
 
 	@Transactional
@@ -160,6 +210,27 @@ public class TodoService {
 			case NONE, DAILY -> true;
 		};
 		if (!valid) {
+			throw new CustomException(TodoErrorCode.INVALID_REQUEST);
+		}
+	}
+
+	private LocalDate resolveDate(Long userId, LocalDate requestedDate) {
+		if (requestedDate != null) {
+			return requestedDate;
+		}
+		User user = userRepository.findById(userId)
+				.orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+		return LocalDate.now(ZoneId.of(user.getZoneId()));
+	}
+
+	private LocalDate parseDate(String dateValue) {
+		if (dateValue == null || dateValue.isBlank()) {
+			throw new CustomException(TodoErrorCode.INVALID_REQUEST);
+		}
+
+		try {
+			return LocalDate.parse(dateValue);
+		} catch (DateTimeParseException exception) {
 			throw new CustomException(TodoErrorCode.INVALID_REQUEST);
 		}
 	}

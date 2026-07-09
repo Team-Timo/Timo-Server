@@ -1,6 +1,7 @@
 package com.Timo.Timo.domain.todo.repository;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,5 +30,40 @@ public interface TodoRepository extends JpaRepository<Todo, Long> {
 
 	long countByUser_IdAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
 			Long userId, LocalDate to, LocalDate from
+	);
+
+	@Query("""
+		select
+			ti.date as date,
+			count(ti.id) as totalCount,
+			sum(case when ti.completed = true then 1L else 0L end) as completedCount
+		from TodoInstance ti
+		join ti.todo t
+		where t.user.id = :userId
+		  and ti.date between :from and :to
+		group by ti.date
+		order by ti.date asc
+		""")
+	List<TodoDailyCompletionStats> findDailyCompletionStats(
+			@Param("userId") Long userId,
+			@Param("from") LocalDate from,
+			@Param("to") LocalDate to
+	);
+
+	@Query("""
+		select
+			count(distinct function('date', t.createdAt)) as activeDayCount,
+			count(distinct case when ti.completed = true then t.id else null end) as completedTodoCount,
+			count(distinct t.id) as totalTodoCount
+		from Todo t
+		left join TodoInstance ti on ti.todo = t
+		where t.user.id = :userId
+		  and t.createdAt >= :fromInclusive
+		  and t.createdAt < :toExclusive
+		""")
+	TodoMonthlySummaryStats findMonthlySummaryStats(
+			@Param("userId") Long userId,
+			@Param("fromInclusive") LocalDateTime fromInclusive,
+			@Param("toExclusive") LocalDateTime toExclusive
 	);
 }

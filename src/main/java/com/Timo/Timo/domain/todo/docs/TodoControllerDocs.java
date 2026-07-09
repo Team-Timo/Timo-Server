@@ -3,8 +3,11 @@ package com.Timo.Timo.domain.todo.docs;
 import org.springframework.http.ResponseEntity;
 
 import com.Timo.Timo.domain.todo.dto.request.TodoCreateRequest;
+import com.Timo.Timo.domain.todo.dto.request.TodoStatusUpdateRequest;
 import com.Timo.Timo.domain.todo.dto.request.TodoUpdateRequest;
 import com.Timo.Timo.domain.todo.dto.response.TodoCreateResponse;
+import com.Timo.Timo.domain.todo.dto.response.TodoDetailResponse;
+import com.Timo.Timo.domain.todo.dto.response.TodoStatusChangeResponse;
 import com.Timo.Timo.global.auth.principal.CustomUserDetails;
 import com.Timo.Timo.global.exception.dto.ErrorDto;
 import com.Timo.Timo.global.response.BaseResponse;
@@ -113,6 +116,147 @@ public interface TodoControllerDocs {
 	ResponseEntity<BaseResponse<TodoCreateResponse>> createTodo(
 		@Parameter(hidden = true) CustomUserDetails userDetails,
 		TodoCreateRequest request
+	);
+
+	@Operation(
+		summary = "TODO 상세 조회",
+		description = """
+			todoId와 조회 기준 날짜(date)로 단일 TODO의 상세 정보를 조회합니다.
+
+			아이콘, 제목, 완료 여부, 날짜/요일, 예상 소요 시간, 우선순위, 태그,
+			반복 설정, 타이머 상태, 메모, 정렬 순서, 하위 태스크 목록을 반환합니다.
+
+			완료 여부·타이머 상태·정렬 순서는 date에 해당하는 인스턴스 기준으로 반환되므로,
+			반복 TODO의 경우 조회하려는 날짜를 date로 전달해야 합니다.
+
+			Swagger UI 오른쪽 위의 Authorize 버튼을 눌러 유효한 Access Token을 입력해야 합니다.
+			"""
+	)
+	@ApiResponses({
+		@ApiResponse(
+			responseCode = "200",
+			description = "TODO 상세 조회 성공",
+			useReturnTypeSchema = true
+		),
+		@ApiResponse(
+			responseCode = "400",
+			description = "date가 누락되었거나 날짜 형식(yyyy-MM-dd)이 올바르지 않은 경우",
+			content = @Content(
+				mediaType = "application/json",
+				schema = @Schema(implementation = ErrorDto.class)
+			)
+		),
+		@ApiResponse(
+			responseCode = "401",
+			description = "Access Token이 없거나 만료되었거나 유효하지 않은 경우",
+			content = @Content(
+				mediaType = "application/json",
+				schema = @Schema(implementation = ErrorDto.class)
+			)
+		),
+		@ApiResponse(
+			responseCode = "404",
+			description = "존재하지 않는 투두이거나, 전달한 date에 해당 투두가 존재하지 않는 경우",
+			content = @Content(
+				mediaType = "application/json",
+				schema = @Schema(implementation = ErrorDto.class)
+			)
+		),
+		@ApiResponse(
+			responseCode = "500",
+			description = "서버 내부 오류",
+			content = @Content(
+				mediaType = "application/json",
+				schema = @Schema(implementation = ErrorDto.class)
+			)
+		)
+	})
+	ResponseEntity<BaseResponse<TodoDetailResponse>> getTodoDetail(
+		@Parameter(hidden = true) CustomUserDetails userDetails,
+		@Parameter(description = "조회할 TODO ID", example = "3") Long todoId,
+		@Parameter(description = "조회 기준 날짜 (yyyy-MM-dd)", example = "2026-07-22") String date
+	);
+
+	@Operation(
+		summary = "TODO 완료 상태 변경",
+		description = """
+			TODO의 완료 여부를 변경합니다.
+
+			완료/미완료 상태는 날짜별로 관리되므로 date로 대상 날짜를 지정합니다. date를 생략하면 사용자 타임존 기준 오늘로 처리합니다.
+			완료로 변경 시 해당 날짜 완료 그룹의 하단으로, 미완료로 변경 시 미완료 그룹의 최상단으로 정렬 순서를 재조정하여 반환합니다.
+			해당 TODO에 실행 중이거나 일시정지된 타이머가 있으면 변경할 수 없습니다.
+
+			Swagger UI 오른쪽 위의 Authorize 버튼을 눌러 유효한 Access Token을 입력해야 합니다.
+			"""
+	)
+	@RequestBody(
+		required = true,
+		description = "완료 상태 변경 요청",
+		content = @Content(
+			mediaType = "application/json",
+			schema = @Schema(implementation = TodoStatusUpdateRequest.class),
+			examples = @ExampleObject(
+				name = "완료 상태 변경 요청 예시",
+				value = """
+					{
+					  "isCompleted": true,
+					  "date": "2026-07-22"
+					}
+					"""
+			)
+		)
+	)
+	@ApiResponses({
+		@ApiResponse(
+			responseCode = "200",
+			description = "완료 상태 변경 성공",
+			useReturnTypeSchema = true
+		),
+		@ApiResponse(
+			responseCode = "400",
+			description = "isCompleted가 누락된 경우",
+			content = @Content(
+				mediaType = "application/json",
+				schema = @Schema(implementation = ErrorDto.class)
+			)
+		),
+		@ApiResponse(
+			responseCode = "401",
+			description = "Access Token이 없거나 만료되었거나 유효하지 않은 경우",
+			content = @Content(
+				mediaType = "application/json",
+				schema = @Schema(implementation = ErrorDto.class)
+			)
+		),
+		@ApiResponse(
+			responseCode = "404",
+			description = "존재하지 않는 TODO이거나 해당 날짜에 발생하지 않는 TODO인 경우",
+			content = @Content(
+				mediaType = "application/json",
+				schema = @Schema(implementation = ErrorDto.class)
+			)
+		),
+		@ApiResponse(
+			responseCode = "409",
+			description = "타이머가 실행 중이거나 일시정지된 상태에서 변경을 시도한 경우",
+			content = @Content(
+				mediaType = "application/json",
+				schema = @Schema(implementation = ErrorDto.class)
+			)
+		),
+		@ApiResponse(
+			responseCode = "500",
+			description = "서버 내부 오류",
+			content = @Content(
+				mediaType = "application/json",
+				schema = @Schema(implementation = ErrorDto.class)
+			)
+		)
+	})
+	ResponseEntity<BaseResponse<TodoStatusChangeResponse>> changeTodoStatus(
+		@Parameter(hidden = true) CustomUserDetails userDetails,
+		@Parameter(description = "대상 TODO ID", example = "145") Long todoId,
+		TodoStatusUpdateRequest request
 	);
 
 	@Operation(
