@@ -21,7 +21,7 @@ public interface TimerCompleteControllerDocs {
 			예상 소요 시간이 모두 경과하여 타이머를 자동 종료합니다.
 			종료 시각 기록, 실제 수행 시간 계산 (status → COMPLETED)
 			해당 날짜 TodoInstance 완료 처리 및 타이머 상태 초기화
-			aiFeedback은 현재 null로 반환되며, 추후 AI 연동 예정
+			계획 시간과 실제 수행 기록을 분석한 AI 피드백 반환
 			"""
   )
   @ApiResponses({
