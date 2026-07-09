@@ -2,8 +2,10 @@ package com.Timo.Timo.domain.todo.docs;
 
 import org.springframework.http.ResponseEntity;
 
+import com.Timo.Timo.domain.todo.dto.request.SubtaskStatusUpdateRequest;
 import com.Timo.Timo.domain.todo.dto.request.TodoCreateRequest;
 import com.Timo.Timo.domain.todo.dto.request.TodoStatusUpdateRequest;
+import com.Timo.Timo.domain.todo.dto.response.SubtaskStatusChangeResponse;
 import com.Timo.Timo.domain.todo.dto.response.TodoCreateResponse;
 import com.Timo.Timo.domain.todo.dto.response.TodoStatusChangeResponse;
 import com.Timo.Timo.global.auth.principal.CustomUserDetails;
@@ -196,5 +198,77 @@ public interface TodoControllerDocs {
 		@Parameter(hidden = true) CustomUserDetails userDetails,
 		@Parameter(description = "대상 TODO ID", example = "145") Long todoId,
 		TodoStatusUpdateRequest request
+	);
+
+	@Operation(
+		summary = "하위 태스크 완료 상태 변경",
+		description = """
+			하위 태스크의 완료 여부를 변경합니다.
+
+			todoId로 소유한 TODO를 확인한 뒤, 해당 TODO에 속한 subtaskId의 완료 상태를 변경합니다.
+
+			Swagger UI 오른쪽 위의 Authorize 버튼을 눌러 유효한 Access Token을 입력해야 합니다.
+			"""
+	)
+	@RequestBody(
+		required = true,
+		description = "하위 태스크 완료 상태 변경 요청",
+		content = @Content(
+			mediaType = "application/json",
+			schema = @Schema(implementation = SubtaskStatusUpdateRequest.class),
+			examples = @ExampleObject(
+				name = "하위 태스크 완료 상태 변경 요청 예시",
+				value = """
+					{
+					  "isCompleted": true
+					}
+					"""
+			)
+		)
+	)
+	@ApiResponses({
+		@ApiResponse(
+			responseCode = "200",
+			description = "하위 태스크 완료 상태 변경 성공",
+			useReturnTypeSchema = true
+		),
+		@ApiResponse(
+			responseCode = "400",
+			description = "isCompleted가 누락된 경우",
+			content = @Content(
+				mediaType = "application/json",
+				schema = @Schema(implementation = ErrorDto.class)
+			)
+		),
+		@ApiResponse(
+			responseCode = "401",
+			description = "Access Token이 없거나 만료되었거나 유효하지 않은 경우",
+			content = @Content(
+				mediaType = "application/json",
+				schema = @Schema(implementation = ErrorDto.class)
+			)
+		),
+		@ApiResponse(
+			responseCode = "404",
+			description = "존재하지 않는 TODO이거나 해당 TODO에 속하지 않는 하위 태스크인 경우",
+			content = @Content(
+				mediaType = "application/json",
+				schema = @Schema(implementation = ErrorDto.class)
+			)
+		),
+		@ApiResponse(
+			responseCode = "500",
+			description = "서버 내부 오류",
+			content = @Content(
+				mediaType = "application/json",
+				schema = @Schema(implementation = ErrorDto.class)
+			)
+		)
+	})
+	ResponseEntity<BaseResponse<SubtaskStatusChangeResponse>> changeSubtaskStatus(
+		@Parameter(hidden = true) CustomUserDetails userDetails,
+		@Parameter(description = "대상 TODO ID", example = "5") Long todoId,
+		@Parameter(description = "대상 하위 태스크 ID", example = "2") Long subtaskId,
+		SubtaskStatusUpdateRequest request
 	);
 }

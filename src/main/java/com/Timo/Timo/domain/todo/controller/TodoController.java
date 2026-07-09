@@ -10,8 +10,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.Timo.Timo.domain.todo.docs.TodoControllerDocs;
+ import com.Timo.Timo.domain.todo.dto.request.SubtaskStatusUpdateRequest;
 import com.Timo.Timo.domain.todo.dto.request.TodoCreateRequest;
 import com.Timo.Timo.domain.todo.dto.request.TodoStatusUpdateRequest;
+import com.Timo.Timo.domain.todo.dto.response.SubtaskStatusChangeResponse;
 import com.Timo.Timo.domain.todo.dto.response.TodoCreateResponse;
 import com.Timo.Timo.domain.todo.dto.response.TodoStatusChangeResponse;
 import com.Timo.Timo.domain.todo.exception.TodoSuccessCode;
@@ -56,5 +58,21 @@ public class TodoController implements TodoControllerDocs {
 		return ResponseEntity
 			.status(TodoSuccessCode.STATUS_CHANGED.getHttpStatus())
 			.body(BaseResponse.onSuccess(TodoSuccessCode.STATUS_CHANGED, response));
+	}
+
+	@Override
+	@PatchMapping("/{todoId}/subtasks/{subtaskId}/status")
+	public ResponseEntity<BaseResponse<SubtaskStatusChangeResponse>> changeSubtaskStatus(
+		@AuthenticationPrincipal CustomUserDetails userDetails,
+		@PathVariable Long todoId,
+		@PathVariable Long subtaskId,
+		@Valid @RequestBody SubtaskStatusUpdateRequest request
+	) {
+		SubtaskStatusChangeResponse response =
+			todoService.changeSubtaskCompletion(userDetails.getUserId(), todoId, subtaskId, request);
+
+		return ResponseEntity
+			.status(TodoSuccessCode.SUBTASK_STATUS_CHANGED.getHttpStatus())
+			.body(BaseResponse.onSuccess(TodoSuccessCode.SUBTASK_STATUS_CHANGED, response));
 	}
 }
