@@ -80,7 +80,7 @@ public class TimerService {
 
   @Transactional
   public TimerStatusResponse changeStatus(Long userId, Long timerId, TimerAction action){
-    TimerRecord timerRecord = timerRecordRepository.findById(timerId)
+    TimerRecord timerRecord = timerRecordRepository.findByIdForUpdate(timerId)
         .orElseThrow(() -> new CustomException(TimerErrorCode.TIMER_NOT_FOUND));
 
     if (!timerRecord.getUser().getId().equals(userId)){
