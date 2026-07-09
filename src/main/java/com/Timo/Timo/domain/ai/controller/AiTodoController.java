@@ -21,14 +21,14 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/api/v1/ai")
 @RequiredArgsConstructor
 public class AiTodoController implements AiTodoDocs {
 
 	private final AiTodoService aiTodoService;
 
 	@Override
-	@PostMapping("/ai/duration")
+	@PostMapping("/duration")
 	public ResponseEntity<BaseResponse<RecommendDurationResponse>> recommendDuration(
 		@AuthenticationPrincipal CustomUserDetails userDetails,
 		@Valid @RequestBody RecommendDurationRequest request
