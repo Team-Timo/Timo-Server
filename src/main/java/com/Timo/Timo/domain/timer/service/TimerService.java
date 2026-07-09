@@ -2,6 +2,7 @@ package com.Timo.Timo.domain.timer.service;
 
 import com.Timo.Timo.domain.timer.dto.response.TimerActiveResponse;
 import com.Timo.Timo.domain.timer.dto.response.TimerFinishResponse;
+import com.Timo.Timo.domain.timer.dto.response.TimerExtendResponse;
 import com.Timo.Timo.domain.timer.dto.response.TimerStartResponse;
 import com.Timo.Timo.domain.timer.dto.response.TimerStatusResponse;
 import com.Timo.Timo.domain.timer.entity.TimerRecord;
@@ -114,6 +115,28 @@ public class TimerService {
     int elapsedSeconds = calculateElapsedSeconds(timerId, now);
 
     return TimerStatusResponse.of(timerRecord, elapsedSeconds);
+  }
+
+  @Transactional
+  public TimerExtendResponse extendTimer(Long userId, Long timerId, int extendMinutes){
+    TimerRecord timerRecord = timerRecordRepository.findByIdForUpdate(timerId)
+        .orElseThrow(() -> new CustomException(TimerErrorCode.TIMER_NOT_FOUND));
+
+    if (!timerRecord.getUser().getId().equals(userId)){
+      throw new CustomException(ErrorCode.FORBIDDEN);
+    }
+
+    int extendSeconds = extendMinutes * 60;
+    timerRecord.extend(extendSeconds);
+
+    LocalDateTime now = LocalDateTime.now();
+    int elapsedSeconds = calculateElapsedSeconds(timerId, now);
+    int remainingSeconds = Math.max(
+        0,
+        timerRecord.getPlannedSeconds() + timerRecord.getExtendedSeconds() - elapsedSeconds
+    );
+
+    return TimerExtendResponse.of(timerRecord, remainingSeconds);
   }
 
   public TimerActiveResponse getActiveTimer(Long userId){

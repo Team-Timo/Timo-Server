@@ -1,7 +1,7 @@
 package com.Timo.Timo.domain.timer.docs;
 
-import com.Timo.Timo.domain.timer.dto.request.TimerActionRequest;
-import com.Timo.Timo.domain.timer.dto.response.TimerStatusResponse;
+import com.Timo.Timo.domain.timer.dto.request.TimerExtendRequest;
+import com.Timo.Timo.domain.timer.dto.response.TimerExtendResponse;
 import com.Timo.Timo.global.auth.principal.CustomUserDetails;
 import com.Timo.Timo.global.exception.dto.ErrorDto;
 import com.Timo.Timo.global.response.BaseResponse;
@@ -16,21 +16,29 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
-public interface TimerStatusControllerDocs {
+public interface TimerExtendControllerDocs {
 
   @Operation(
-      summary = "타이머 일시정지/재개",
+      summary = "타이머 연장",
       description = """
-			실행 중인 타이머의 일시정지 / 재개를 처리합니다.<br>
-			PAUSE: 현재 세션의 paused_at 기록, status → PAUSED <br>
-			RESUME: 새 세션 생성, status → RUNNING
+        사용자가 입력한 연장 시간을 현재 타이머에 반영합니다.
+        연장 시간(분)을 초로 변환하여 extended_seconds에 누적
+        RUNNING, PAUSED 상태 모두에서 호출 가능하며, 타이머 상태(status)는 변경되지 않습니다.
 			"""
   )
   @ApiResponses({
       @ApiResponse(
           responseCode = "200",
-          description = "상태 변경 성공",
+          description = "타이머 연장 성공",
           useReturnTypeSchema = true
+      ),
+      @ApiResponse(
+          responseCode = "400",
+          description = "잘못된 데이터 형식 (연장 시간 값 오류)",
+          content = @Content(
+              mediaType = "application/json",
+              schema = @Schema(implementation = ErrorDto.class)
+          )
       ),
       @ApiResponse(
           responseCode = "401",
@@ -58,7 +66,7 @@ public interface TimerStatusControllerDocs {
       ),
       @ApiResponse(
           responseCode = "409",
-          description = "잘못된 상태 전이 (PAUSED 상태에서 PAUSE 요청, 종료된 타이머 조작 등)",
+          description = "이미 종료된 타이머인 경우",
           content = @Content(
               mediaType = "application/json",
               schema = @Schema(implementation = ErrorDto.class)
@@ -73,10 +81,10 @@ public interface TimerStatusControllerDocs {
           )
       )
   })
-  ResponseEntity<BaseResponse<TimerStatusResponse>> changeStatus(
+  ResponseEntity<BaseResponse<TimerExtendResponse>> extendTimer(
       @Parameter(description = "타이머 기록 ID", example = "10")
       @PathVariable Long timerId,
-      @Valid @RequestBody TimerActionRequest request,
+      @Valid @RequestBody TimerExtendRequest request,
       @Parameter(hidden = true) CustomUserDetails userDetails
   );
 }

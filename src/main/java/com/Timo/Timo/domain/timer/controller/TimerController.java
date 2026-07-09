@@ -1,5 +1,6 @@
 package com.Timo.Timo.domain.timer.controller;
 
+import com.Timo.Timo.domain.timer.docs.TimerExtendControllerDocs;
 import com.Timo.Timo.domain.timer.docs.TimerCompleteControllerDocs;
 import com.Timo.Timo.domain.timer.docs.TimerStopControllerDocs;
 import com.Timo.Timo.domain.timer.dto.response.TimerFinishResponse;
@@ -7,6 +8,8 @@ import com.Timo.Timo.domain.timer.docs.TimerActiveControllerDocs;
 import com.Timo.Timo.domain.timer.docs.TimerStartControllerDocs;
 import com.Timo.Timo.domain.timer.docs.TimerStatusControllerDocs;
 import com.Timo.Timo.domain.timer.dto.request.TimerActionRequest;
+import com.Timo.Timo.domain.timer.dto.request.TimerExtendRequest;
+import com.Timo.Timo.domain.timer.dto.response.TimerExtendResponse;
 import com.Timo.Timo.domain.timer.dto.response.TimerActiveResponse;
 import com.Timo.Timo.domain.timer.dto.response.TimerStartResponse;
 import com.Timo.Timo.domain.timer.dto.response.TimerStatusResponse;
@@ -33,7 +36,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
 public class TimerController implements TimerStartControllerDocs, TimerStatusControllerDocs,
-    TimerActiveControllerDocs, TimerCompleteControllerDocs, TimerStopControllerDocs {
+    TimerActiveControllerDocs, TimerCompleteControllerDocs,
+    TimerStopControllerDocs, TimerExtendControllerDocs {
 
   private final TimerService timerService;
 
@@ -54,10 +58,10 @@ public class TimerController implements TimerStartControllerDocs, TimerStatusCon
   @Override
   @PatchMapping("timers/{timerId}/status")
   public ResponseEntity<BaseResponse<TimerStatusResponse>> changeStatus(
-    @PathVariable Long timerId,
-    @Valid @RequestBody TimerActionRequest request,
-    @AuthenticationPrincipal CustomUserDetails userDetails
-  ){
+      @PathVariable Long timerId,
+      @Valid @RequestBody TimerActionRequest request,
+      @AuthenticationPrincipal CustomUserDetails userDetails
+  ) {
     Long userId = userDetails.getUserId();
     TimerStatusResponse response = timerService.changeStatus(userId, timerId, request.action());
 
@@ -68,6 +72,21 @@ public class TimerController implements TimerStartControllerDocs, TimerStatusCon
 
     return ResponseEntity.ok()
         .body(BaseResponse.onSuccess(successCode, response));
+  }
+
+  @Override
+  @PatchMapping("timers/{timerId}/extend")
+  public ResponseEntity<BaseResponse<TimerExtendResponse>> extendTimer(
+      @PathVariable Long timerId,
+      @Valid @RequestBody TimerExtendRequest request,
+      @AuthenticationPrincipal CustomUserDetails userDetails
+  ) {
+    Long userId = userDetails.getUserId();
+    TimerExtendResponse response = timerService.extendTimer(userId, timerId,
+        request.extendMinutes());
+
+    return ResponseEntity.ok()
+        .body(BaseResponse.onSuccess(TimerSuccessCode.TIMER_EXTENDED, response));
   }
 
   @Override
