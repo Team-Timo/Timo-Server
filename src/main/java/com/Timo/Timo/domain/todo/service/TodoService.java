@@ -13,11 +13,13 @@ import com.Timo.Timo.domain.tag.exception.TagErrorCode;
 import com.Timo.Timo.domain.tag.repository.TagRepository;
 import com.Timo.Timo.domain.timer.service.TimerService;
 import com.Timo.Timo.domain.todo.dto.request.TodoCreateRequest;
+import com.Timo.Timo.domain.todo.dto.request.TodoReorderRequest;
 import com.Timo.Timo.domain.todo.dto.request.TodoStatusUpdateRequest;
 import com.Timo.Timo.domain.todo.dto.request.TodoSubtaskUpdateRequest;
 import com.Timo.Timo.domain.todo.dto.request.TodoUpdateRequest;
 import com.Timo.Timo.domain.todo.dto.response.TodoCreateResponse;
 import com.Timo.Timo.domain.todo.dto.response.TodoDetailResponse;
+import com.Timo.Timo.domain.todo.dto.response.TodoReorderResponse;
 import com.Timo.Timo.domain.todo.dto.response.TodoStatusChangeResponse;
 import com.Timo.Timo.domain.todo.entity.Todo;
 import com.Timo.Timo.domain.todo.entity.TodoInstance;
@@ -122,6 +124,20 @@ public class TodoService {
 
 		TodoInstance instance = todoInstanceReorderer.applyCompletion(userId, todo, date, request.isCompleted());
 		return TodoStatusChangeResponse.from(todoId, instance);
+	}
+
+	@Transactional
+	public TodoReorderResponse reorderTodo(Long userId, Long todoId, TodoReorderRequest request) {
+		Todo todo = todoRepository.findByIdAndUser_Id(todoId, userId)
+				.orElseThrow(() -> new CustomException(TodoErrorCode.TODO_NOT_FOUND));
+
+		LocalDate date = resolveDate(userId, request.date());
+		if (!todoDateCalculator.occursOn(todo, date)) {
+			throw new CustomException(TodoErrorCode.TODO_NOT_FOUND);
+		}
+
+		TodoInstance instance = todoInstanceReorderer.applyReorder(userId, todo, date, request.newIndex());
+		return TodoReorderResponse.from(todoId, instance);
 	}
 
 	@Transactional

@@ -16,6 +16,7 @@ public enum TodoSuccessCode implements BaseSuccessCode {
 	STATUS_CHANGED(HttpStatus.OK, "TODO 상태가 변경되었습니다."),
 	UPDATED(HttpStatus.OK, "TODO가 수정되었습니다."),
 	DELETED(HttpStatus.OK, "TODO가 삭제되었습니다."),
+	REORDERED(HttpStatus.OK, "TODO 순서가 변경되었습니다."),
 	;
 
 	private final HttpStatus httpStatus;

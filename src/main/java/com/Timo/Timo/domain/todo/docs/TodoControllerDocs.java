@@ -3,10 +3,12 @@ package com.Timo.Timo.domain.todo.docs;
 import org.springframework.http.ResponseEntity;
 
 import com.Timo.Timo.domain.todo.dto.request.TodoCreateRequest;
+import com.Timo.Timo.domain.todo.dto.request.TodoReorderRequest;
 import com.Timo.Timo.domain.todo.dto.request.TodoStatusUpdateRequest;
 import com.Timo.Timo.domain.todo.dto.request.TodoUpdateRequest;
 import com.Timo.Timo.domain.todo.dto.response.TodoCreateResponse;
 import com.Timo.Timo.domain.todo.dto.response.TodoDetailResponse;
+import com.Timo.Timo.domain.todo.dto.response.TodoReorderResponse;
 import com.Timo.Timo.domain.todo.dto.response.TodoStatusChangeResponse;
 import com.Timo.Timo.global.auth.principal.CustomUserDetails;
 import com.Timo.Timo.global.exception.dto.ErrorDto;
@@ -398,5 +400,89 @@ public interface TodoControllerDocs {
 	ResponseEntity<BaseResponse<Object>> deleteTodo(
 		@Parameter(hidden = true) CustomUserDetails userDetails,
 		@Parameter(description = "삭제할 TODO ID", example = "205") Long todoId
+	);
+
+	@Operation(
+		summary = "TODO 순서 변경",
+		description = """
+			드래그 앤 드롭으로 변경된 TODO의 순서를 반영합니다.
+
+			순서 변경은 같은 날짜의 같은 완료 그룹(미완료 그룹) 내부에서만 가능합니다.
+			완료된 TODO는 순서를 변경할 수 없으며, 완료/미완료 그룹 간 이동은 완료 상태 변경 API로 처리합니다.
+			newIndex는 해당 날짜 미완료 그룹 내에서 0부터 시작하는 목표 위치입니다.
+			date를 생략하면 사용자 타임존 기준 오늘로 처리합니다.
+			서버는 대상 TODO를 새 인덱스로 옮기고 영향받는 TODO들의 정렬 순서를 재계산합니다.
+
+			Swagger UI 오른쪽 위의 Authorize 버튼을 눌러 유효한 Access Token을 입력해야 합니다.
+			"""
+	)
+	@RequestBody(
+		required = true,
+		description = "순서 변경 요청",
+		content = @Content(
+			mediaType = "application/json",
+			schema = @Schema(implementation = TodoReorderRequest.class),
+			examples = @ExampleObject(
+				name = "순서 변경 요청 예시",
+				value = """
+					{
+					  "newIndex": 2,
+					  "date": "2026-07-22"
+					}
+					"""
+			)
+		)
+	)
+	@ApiResponses({
+		@ApiResponse(
+			responseCode = "200",
+			description = "TODO 순서 변경 성공",
+			useReturnTypeSchema = true
+		),
+		@ApiResponse(
+			responseCode = "400",
+			description = "newIndex가 누락되었거나 음수이거나 그룹 크기를 초과하는 경우",
+			content = @Content(
+				mediaType = "application/json",
+				schema = @Schema(implementation = ErrorDto.class)
+			)
+		),
+		@ApiResponse(
+			responseCode = "401",
+			description = "Access Token이 없거나 만료되었거나 유효하지 않은 경우",
+			content = @Content(
+				mediaType = "application/json",
+				schema = @Schema(implementation = ErrorDto.class)
+			)
+		),
+		@ApiResponse(
+			responseCode = "404",
+			description = "존재하지 않는 TODO이거나 해당 날짜에 발생하지 않는 TODO인 경우",
+			content = @Content(
+				mediaType = "application/json",
+				schema = @Schema(implementation = ErrorDto.class)
+			)
+		),
+		@ApiResponse(
+			responseCode = "409",
+			description = "완료된 TODO의 순서를 변경하려는 경우",
+			content = @Content(
+				mediaType = "application/json",
+				schema = @Schema(implementation = ErrorDto.class)
+			)
+		),
+		@ApiResponse(
+			responseCode = "500",
+			description = "서버 내부 오류",
+			content = @Content(
+				mediaType = "application/json",
+				schema = @Schema(implementation = ErrorDto.class)
+			)
+		)
+	})
+	ResponseEntity<BaseResponse<TodoReorderResponse>> reorderTodo(
+		@Parameter(hidden = true) CustomUserDetails userDetails,
+		@Parameter(description = "이동할 TODO ID", example = "145") Long todoId,
+		TodoReorderRequest request
 	);
 }
