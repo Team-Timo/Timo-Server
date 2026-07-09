@@ -18,6 +18,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 public interface AiTodoDocs {
 
 	@Operation(
+		tags = "AI",
 		summary = "AI 예상 소요 시간 추천",
 		description = """
 			투두명과 태그를 기준으로 예상 소요 시간을 추천합니다.
@@ -28,7 +29,6 @@ public interface AiTodoDocs {
 			3. 기록이 없으면 현재 투두명 기준
 
 			Gemini는 위 기록을 종합해 예상 소요 시간을 생성합니다.
-			호출량과 토큰 사용량을 줄이기 위해 각 기록은 최근 순 최대 5개씩만 전달합니다.
 			RPM, RPD, TPM 제한을 초과하면 Gemini 호출 전 429 응답을 반환합니다.
 			"""
 	)

@@ -12,5 +12,4 @@ public record RecommendDurationRequest(
 
 	@Schema(description = "투두 태그 ID", example = "1", nullable = true)
 	Long tagId
-) {
-}
+) {}

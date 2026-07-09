@@ -1,5 +1,6 @@
 package com.Timo.Timo.domain.timer.service;
 
+import com.Timo.Timo.domain.ai.service.AiTodoService;
 import com.Timo.Timo.domain.timer.dto.response.TimerActiveResponse;
 import com.Timo.Timo.domain.timer.dto.response.TimerFinishResponse;
 import com.Timo.Timo.domain.timer.dto.response.TimerExtendResponse;
@@ -27,9 +28,13 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -42,6 +47,8 @@ public class TimerService {
   private final TodoRepository todoRepository;
   private final UserRepository userRepository;
   private final TodoInstanceRepository todoInstanceRepository;
+  private final AiTodoService aiTodoService;
+  private final PlatformTransactionManager transactionManager;
 
   @Transactional
   public TimerStartResponse startTimer(Long userId, Long todoId) {
@@ -174,17 +181,38 @@ public class TimerService {
     timerRecordRepository.deleteByTodoId(todoId);
   }
 
-  @Transactional
   public TimerFinishResponse completeTimer(Long userId, Long timerId) {
     return finishTimer(userId, timerId, TimerStatus.COMPLETED);
   }
 
-  @Transactional
   public TimerFinishResponse stopTimer(Long userId, Long timerId) {
     return finishTimer(userId, timerId, TimerStatus.STOPPED);
   }
 
   private TimerFinishResponse finishTimer(Long userId, Long timerId, TimerStatus targetStatus) {
+    TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
+    FinishedTimer finishedTimer = transactionTemplate.execute(status ->
+        finishTimerInTransaction(userId, timerId, targetStatus)
+    );
+
+    String feedback = generateAiFeedback(userId, finishedTimer.todoId());
+    if (feedback != null) {
+      transactionTemplate.executeWithoutResult(status ->
+          updateAiFeedback(timerId, feedback)
+      );
+    }
+
+    return new TimerFinishResponse(
+        finishedTimer.timerId(),
+        finishedTimer.todoId(),
+        finishedTimer.status(),
+        finishedTimer.plannedSeconds(),
+        finishedTimer.actualSeconds(),
+        feedback
+    );
+  }
+
+  private FinishedTimer finishTimerInTransaction(Long userId, Long timerId, TimerStatus targetStatus) {
     TimerRecord timerRecord = timerRecordRepository.findByIdForUpdate(timerId)
         .orElseThrow(() -> new CustomException(TimerErrorCode.TIMER_NOT_FOUND));
 
@@ -198,12 +226,53 @@ public class TimerService {
     timerSessionRepository.findByTimerRecordIdAndPausedAtIsNull(timerId)
         .ifPresent(activeSession -> activeSession.pause(now));
 
-    timerRecord.finish(targetStatus, now, actualSeconds, null);
+    timerRecord.finish(targetStatus, now, actualSeconds);
 
     TodoInstance instance = getOrCreateInstance(timerRecord.getTodo(), timerRecord.getStartedAt().toLocalDate());
     instance.stopTimer();
     instance.markCompleted();
 
-    return TimerFinishResponse.of(timerRecord);
+    timerRecordRepository.flush();
+
+    return FinishedTimer.from(timerRecord);
+  }
+
+  private String generateAiFeedback(Long userId, Long todoId) {
+    try {
+      return aiTodoService.createFeedback(userId, todoId);
+    } catch (RuntimeException exception) {
+      log.warn(
+          "AI feedback generation failed. todoId={}, userId={}",
+          todoId,
+          userId,
+          exception
+      );
+      return null;
+    }
+  }
+
+  private void updateAiFeedback(Long timerId, String feedback) {
+    TimerRecord timerRecord = timerRecordRepository.findByIdForUpdate(timerId)
+        .orElseThrow(() -> new CustomException(TimerErrorCode.TIMER_NOT_FOUND));
+    timerRecord.updateAiFeedback(feedback);
+  }
+
+  private record FinishedTimer(
+      Long timerId,
+      Long todoId,
+      String status,
+      Integer plannedSeconds,
+      Integer actualSeconds
+  ) {
+
+    private static FinishedTimer from(TimerRecord timerRecord) {
+      return new FinishedTimer(
+          timerRecord.getId(),
+          timerRecord.getTodo().getId(),
+          timerRecord.getStatus().name(),
+          timerRecord.getPlannedSeconds(),
+          timerRecord.getActualSeconds()
+      );
+    }
   }
 }
