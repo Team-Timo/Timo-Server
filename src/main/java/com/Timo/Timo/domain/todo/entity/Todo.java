@@ -118,8 +118,9 @@ public class Todo extends BaseTimeEntity {
 		this.startDate = startDate;
 		this.endDate = endDate;
 		this.repeatType = repeatType;
-		this.repeatWeekdays = repeatWeekdays != null ? new ArrayList<>(repeatWeekdays) : new ArrayList<>();
-		this.repeatDayOfMonth = repeatDayOfMonth;
+		this.repeatWeekdays = repeatType == RepeatType.WEEKLY && repeatWeekdays != null
+				? new ArrayList<>(repeatWeekdays) : new ArrayList<>();
+		this.repeatDayOfMonth = repeatType == RepeatType.MONTHLY ? repeatDayOfMonth : null;
 		this.durationSeconds = durationSeconds;
 		this.priority = priority;
 		this.tagId = tagId;
@@ -202,8 +203,9 @@ public class Todo extends BaseTimeEntity {
 		this.startDate = startDate;
 		this.endDate = endDate;
 		this.repeatType = repeatType;
-		this.repeatWeekdays = repeatWeekdays != null ? new ArrayList<>(repeatWeekdays) : new ArrayList<>();
-		this.repeatDayOfMonth = repeatDayOfMonth;
+		this.repeatWeekdays = repeatType == RepeatType.WEEKLY && repeatWeekdays != null
+				? new ArrayList<>(repeatWeekdays) : new ArrayList<>();
+		this.repeatDayOfMonth = repeatType == RepeatType.MONTHLY ? repeatDayOfMonth : null;
 	}
 
 	public void replaceSubtasks(List<SubtaskEdit> edits) {
