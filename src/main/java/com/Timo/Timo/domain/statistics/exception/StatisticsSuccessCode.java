@@ -1,4 +1,4 @@
-package com.Timo.Timo.domain.todo.exception;
+package com.Timo.Timo.domain.statistics.exception;
 
 import org.springframework.http.HttpStatus;
 
@@ -9,10 +9,9 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public enum TodoSuccessCode implements BaseSuccessCode {
+public enum StatisticsSuccessCode implements BaseSuccessCode {
 
-	CREATED(HttpStatus.CREATED, "TODO가 생성되었습니다."),
-	STATUS_CHANGED(HttpStatus.OK, "TODO 상태가 변경되었습니다.");
+	CALENDAR_RETRIEVED(HttpStatus.OK, "통계 캘린더를 조회했습니다.");
 
 	private final HttpStatus httpStatus;
 	private final String message;

@@ -129,4 +129,8 @@ public class TimerService {
     return todoInstanceRepository.findByTodo_IdAndDate(todo.getId(), date)
         .orElseGet(() -> todoInstanceRepository.save(TodoInstance.of(todo, date, 0)));
   }
+
+  public boolean hasActiveTimer(Long todoId) {
+    return timerRecordRepository.existsByTodo_IdAndStatusIn(todoId, ACTIVE_STATUS);
+  }
 }

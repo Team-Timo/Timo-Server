@@ -14,6 +14,8 @@ public interface TimerRecordRepository extends JpaRepository<TimerRecord, Long> 
 
   Optional<TimerRecord> findByUserIdAndStatusIn(Long userId, List<TimerStatus> statuses);
 
+  boolean existsByTodo_IdAndStatusIn(Long todoId, List<TimerStatus> statuses);
+
   @Lock(LockModeType.PESSIMISTIC_WRITE)
   @Query("select t from TimerRecord t where t.id = :id")
   Optional<TimerRecord> findByIdForUpdate(@Param("id") Long id);
