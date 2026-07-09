@@ -219,7 +219,7 @@ public class Todo extends BaseTimeEntity {
 			if (edit.subtaskId() != null) {
 				Subtask existing = existingById.get(edit.subtaskId());
 				if (existing == null) {
-					throw new CustomException(TodoErrorCode.INVALID_REQUEST);
+					throw new CustomException(TodoErrorCode.SUBTASK_NOT_FOUND);
 				}
 				existing.update(edit.content(), edit.completed(), sortOrder);
 				retained.add(existing);

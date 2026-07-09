@@ -174,7 +174,7 @@ public interface TodoControllerDocs {
 		),
 		@ApiResponse(
 			responseCode = "404",
-			description = "존재하지 않는 TODO이거나 존재하지 않는 태그 ID를 전달한 경우",
+			description = "존재하지 않는 TODO이거나, 존재하지 않는 태그 ID 또는 하위 태스크 ID를 전달한 경우",
 			content = @Content(
 				mediaType = "application/json",
 				schema = @Schema(implementation = ErrorDto.class)
