@@ -22,6 +22,10 @@ public class TodoCapacityChecker {
     private final TodoDateCalculator todoDateCalculator;
 
     public void assertCapacity(Long userId, List<LocalDate> newRuleDates) {
+        assertCapacity(userId, null, newRuleDates);
+    }
+
+    public void assertCapacity(Long userId, Long excludeTodoId, List<LocalDate> newRuleDates) {
         if (newRuleDates.isEmpty()) {
             return;
         }
@@ -33,6 +37,7 @@ public class TodoCapacityChecker {
 
         for (LocalDate date : newRuleDates) {
             long existingCount = existingRules.stream()
+                    .filter(rule -> !rule.getId().equals(excludeTodoId))
                     .filter(rule -> todoDateCalculator.occursOn(rule, date))
                     .count();
 

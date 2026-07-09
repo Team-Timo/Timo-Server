@@ -40,11 +40,21 @@ public class Subtask extends BaseTimeEntity {
 	private boolean completed;
 
 	public static Subtask of(String content, int sortOrder) {
+		return of(content, sortOrder, false);
+	}
+
+	public static Subtask of(String content, int sortOrder, boolean completed) {
 		Subtask subtask = new Subtask();
 		subtask.content = content;
 		subtask.sortOrder = sortOrder;
-		subtask.completed = false;
+		subtask.completed = completed;
 		return subtask;
+	}
+
+	public void update(String content, boolean completed, int sortOrder) {
+		this.content = content;
+		this.completed = completed;
+		this.sortOrder = sortOrder;
 	}
 
 	void assignTodo(Todo todo) {
