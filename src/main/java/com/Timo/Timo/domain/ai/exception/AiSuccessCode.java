@@ -11,7 +11,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum AiSuccessCode implements BaseSuccessCode {
 
-	DURATION_RECOMMENDED(HttpStatus.OK, "AI 예상 소요 시간을 추천했습니다.");
+	DURATION_RECOMMENDED(HttpStatus.OK, "AI 예상 소요 시간을 추천했습니다."),
+	TODO_FEEDBACK_CREATED(HttpStatus.OK, "AI 투두 피드백을 생성했습니다.");
 
 	private final HttpStatus httpStatus;
 	private final String message;

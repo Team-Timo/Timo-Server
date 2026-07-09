@@ -16,7 +16,7 @@ public enum TodoErrorCode implements BaseErrorCode {
 	NO_UPDATE_FIELDS(HttpStatus.BAD_REQUEST, "TODO_400", "수정할 필드가 없습니다."),
 	IS_COMPLETED_REQUIRED(HttpStatus.BAD_REQUEST, "TODO_400", "isCompleted는 필수입니다."),
 	INVALID_INDEX(HttpStatus.BAD_REQUEST, "TODO_400", "유효하지 않은 인덱스 값입니다."),
-	TODO_NOT_FOUND(HttpStatus.NOT_FOUND, "TODO_404", "존재하지 않는 TODO입니다."),
+	TODO_NOT_FOUND(HttpStatus.NOT_FOUND, "TODO_404", "존재하지 않는 투두입니다."),
 	TODO_NOT_FOUND_ON_DATE(HttpStatus.NOT_FOUND, "TODO_404", "해당 날짜에 존재하지 않는 투두입니다."),
 	SUBTASK_NOT_FOUND(HttpStatus.NOT_FOUND, "SUBTASK_404", "존재하지 않는 하위 태스크입니다."),
 	MAX_COUNT_EXCEEDED(HttpStatus.CONFLICT, "TODO_409", "해당 날짜의 투두가 최대 개수(20개)를 초과했습니다."),
