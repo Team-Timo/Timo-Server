@@ -6,12 +6,12 @@ import com.Timo.Timo.domain.timer.docs.TimerStopControllerDocs;
 import com.Timo.Timo.domain.timer.dto.response.TimerFinishResponse;
 import com.Timo.Timo.domain.timer.dto.response.TimerStartResponse;
 import com.Timo.Timo.domain.timer.exception.TimerSuccessCode;
-import com.Timo.Timo.domain.timer.factory.TimerResponseFactory;
 import com.Timo.Timo.domain.timer.service.TimerService;
 import com.Timo.Timo.global.auth.principal.CustomUserDetails;
 import com.Timo.Timo.global.response.BaseResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -28,7 +28,6 @@ public class TimerController implements TimerControllerDocs, TimerCompleteContro
     TimerStopControllerDocs {
 
   private final TimerService timerService;
-  private final TimerResponseFactory timerResponseFactory;
 
   @Override
   @PostMapping("/todos/{todoId}/timers/start")
@@ -40,7 +39,9 @@ public class TimerController implements TimerControllerDocs, TimerCompleteContro
     Long userId = userDetails.getUserId();
     TimerStartResponse response = timerService.startTimer(userId, todoId);
 
-    return timerResponseFactory.startResponse(response);
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(BaseResponse.onSuccess(TimerSuccessCode.TIMER_STARTED, response));
+
   }
 
   @Override
@@ -52,7 +53,8 @@ public class TimerController implements TimerControllerDocs, TimerCompleteContro
     Long userId = userDetails.getUserId();
     TimerFinishResponse response = timerService.completeTimer(userId, timerId);
 
-    return timerResponseFactory.finishResponse(response, TimerSuccessCode.TIMER_COMPLETED);
+    return ResponseEntity.ok()
+        .body(BaseResponse.onSuccess(TimerSuccessCode.TIMER_COMPLETED, response));
   }
 
   @Override
@@ -64,6 +66,7 @@ public class TimerController implements TimerControllerDocs, TimerCompleteContro
     Long userId = userDetails.getUserId();
     TimerFinishResponse response = timerService.stopTimer(userId, timerId);
 
-    return timerResponseFactory.finishResponse(response, TimerSuccessCode.TIMER_STOPPED);
+    return ResponseEntity.ok()
+        .body(BaseResponse.onSuccess(TimerSuccessCode.TIMER_STOPPED, response));
   }
 }
