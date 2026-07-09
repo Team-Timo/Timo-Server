@@ -1,12 +1,12 @@
 package com.Timo.Timo.domain.timer.controller;
 
+import com.Timo.Timo.domain.timer.docs.TimerActiveControllerDocs;
 import com.Timo.Timo.domain.timer.docs.TimerStartControllerDocs;
 import com.Timo.Timo.domain.timer.docs.TimerStatusControllerDocs;
 import com.Timo.Timo.domain.timer.dto.request.TimerActionRequest;
 import com.Timo.Timo.domain.timer.dto.response.TimerActiveResponse;
 import com.Timo.Timo.domain.timer.dto.response.TimerStartResponse;
 import com.Timo.Timo.domain.timer.dto.response.TimerStatusResponse;
-import com.Timo.Timo.domain.timer.enums.TimerAction;
 import com.Timo.Timo.domain.timer.exception.TimerSuccessCode;
 import com.Timo.Timo.domain.timer.service.TimerService;
 import com.Timo.Timo.global.auth.principal.CustomUserDetails;
@@ -29,7 +29,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
-public class TimerController implements TimerStartControllerDocs, TimerStatusControllerDocs {
+public class TimerController implements TimerStartControllerDocs, TimerStatusControllerDocs,
+    TimerActiveControllerDocs {
 
   private final TimerService timerService;
 
