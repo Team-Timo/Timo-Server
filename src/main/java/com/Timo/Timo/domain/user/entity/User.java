@@ -2,7 +2,9 @@ package com.Timo.Timo.domain.user.entity;
 
 import com.Timo.Timo.domain.user.enums.Language;
 import com.Timo.Timo.domain.user.enums.Provider;
+import com.Timo.Timo.domain.user.exception.UserErrorCode;
 import com.Timo.Timo.global.common.BaseTimeEntity;
+import com.Timo.Timo.global.exception.CustomException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -74,6 +76,9 @@ public class User extends BaseTimeEntity {
   @Column(name = "calendar_email")
   private String calendarEmail;
 
+  @Column(name = "terms_agreed", nullable = false)
+  private boolean termsAgreed;
+
   public void update(String name, String profileImageUrl) {
     this.name = name;
     this.profileImageUrl = profileImageUrl;
@@ -85,6 +90,11 @@ public class User extends BaseTimeEntity {
       LocalTime wakeUpTime,
       LocalTime bedTime
   ) {
+
+    if (!termsAgreed) {
+      throw new CustomException(UserErrorCode.TERMS_AGREEMENT_REQUIRED);
+    }
+
     this.language = language;
     this.predictionAccuracy = predictionAccuracy;
     this.wakeUpTime = wakeUpTime;
@@ -123,5 +133,6 @@ public class User extends BaseTimeEntity {
 
     this.calendarConnected = false;
     this.calendarEmail = null;
+    this.termsAgreed = false;
   }
 }
