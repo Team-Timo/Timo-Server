@@ -27,7 +27,7 @@ public class OnboardingService {
     LocalTime bedTime = LocalTime.parse(request.bedTime());
 
     if (!bedTime.isAfter(wakeUpTime)) {
-      throw new CustomException(UserErrorCode.USER_400_INVALID_TIME);
+      throw new CustomException(UserErrorCode.USER_INVALID_TIME);
     }
 
     user.completeOnboarding(
