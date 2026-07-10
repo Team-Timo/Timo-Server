@@ -12,6 +12,8 @@ import com.Timo.Timo.global.jwt.provider.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Service
 @RequiredArgsConstructor
@@ -101,13 +103,18 @@ public class AuthService {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
-    if (accessToken != null) {
-      long remainingExpiry = jwtTokenProvider.getRemainingExpiry(accessToken);
-      blacklistService.addToBlacklist(accessToken, remainingExpiry);
-    }
+    userRepository.delete(user);
+
+    TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+      @Override
+      public void afterCommit(){
+        if (accessToken != null) {
+          long remainingExpiry = jwtTokenProvider.getRemainingExpiry(accessToken);
+          blacklistService.addToBlacklist(accessToken, remainingExpiry);
+        }
+      }
+    });
 
     refreshTokenService.deleteAllRefreshTokens(String.valueOf(userId));
-
-    userRepository.delete(user);
   }
 }

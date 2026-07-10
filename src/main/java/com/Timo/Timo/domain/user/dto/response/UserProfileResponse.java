@@ -8,6 +8,7 @@ public record UserProfileResponse(
 	String email,
 	String profileImageUrl,
 	String language,
+	String zoneId,
 	boolean calendarConnected,
 	String calendarEmail
 ) {
@@ -19,6 +20,7 @@ public record UserProfileResponse(
 			user.getEmail(),
 			user.getProfileImageUrl(),
 			user.getLanguage().name(),
+			user.getZoneId(),
 			user.isCalendarConnected(),
 			user.getCalendarEmail()
 		);

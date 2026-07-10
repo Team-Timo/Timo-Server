@@ -25,11 +25,7 @@ public interface AuthControllerDocs {
       summary = "AccessToken 발급",
       description = """
       1회성 인증 코드(code)를 AccessToken으로 교환합니다.
-      - isNewUser: 이번 요청으로 신규 회원가입이 이루어졌는지 여부 (true면 아직 온보딩을 진행한 적이 없는 사용자)
-      - user.onboardingCompleted: 온보딩 완료 여부 (false면 온보딩 화면으로, true면 홈 화면으로 이동)
-      - 기존 가입자가 온보딩을 중단한 경우에도 isNewUser는 false, onboardingCompleted는 false로 반환될 수 가능
-      - RefreshToken과 sessionId는 Set-Cookie 헤더로 전달되며, 응답 바디에는 포함되지 않음
-			"""
+     	"""
   )
   @SecurityRequirements
   @io.swagger.v3.oas.annotations.parameters.RequestBody(
@@ -93,8 +89,8 @@ public interface AuthControllerDocs {
   @Operation(
       summary = "AccessToken 재발급",
       description = """
-			쿠키로 전달된 RefreshToken과 sessionId를 검증하여 AccessToken 재발급합니다.
-			재발급 성공 시 RefreshToken과 sessionId 쿠키를 갱신합니다.
+			쿠키로 전달된 RefreshToken과 sessionId를 검증하여 AccessToken 재발급
+			재발급 성공 시 RefreshToken과 sessionId 쿠키 갱신
 			"""
 
   )
@@ -174,8 +170,7 @@ public interface AuthControllerDocs {
   @Operation(
       summary = "회원 탈퇴",
       description = """
-			회원 탈퇴를 진행하며, 사용자와 관련된 모든 데이터를 영구 삭제합니다.
-			Swagger UI 오른쪽 위의 Authorize 버튼을 눌러 유효한 Access Token을 입력해야 합니다.
+			회원 탈퇴를 진행하며, 사용자와 관련된 모든 데이터를 영구 삭제합니다.<br>
 			이 작업은 되돌릴 수 없습니다.
 			"""
   )
