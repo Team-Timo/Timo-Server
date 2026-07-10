@@ -74,6 +74,9 @@ public class User extends BaseTimeEntity {
   @Column(name = "calendar_email")
   private String calendarEmail;
 
+  @Column(name = "terms_agreed", nullable = false)
+  private boolean termsAgreed;
+
   public void update(String name, String profileImageUrl) {
     this.name = name;
     this.profileImageUrl = profileImageUrl;
@@ -89,6 +92,7 @@ public class User extends BaseTimeEntity {
     this.predictionAccuracy = predictionAccuracy;
     this.wakeUpTime = wakeUpTime;
     this.bedTime = bedTime;
+    this.termsAgreed = true;
     this.onboardingCompleted = true;
   }
 
@@ -123,5 +127,6 @@ public class User extends BaseTimeEntity {
 
     this.calendarConnected = false;
     this.calendarEmail = null;
+    this.termsAgreed = false;
   }
 }

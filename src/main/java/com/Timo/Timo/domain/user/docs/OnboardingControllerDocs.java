@@ -16,7 +16,10 @@ public interface OnboardingControllerDocs {
 
   @Operation(
       summary = "온보딩 완료",
-      description = "언어, 예측 정확도, 기상/취침 시간을 저장하고 온보딩을 완료 처리합니다.")
+      description = """
+          언어, 예측 정확도, 기상/취침 시간을 저장하고 온보딩을 완료 처리합니다.
+          온보딩 완료 시 이용약관에 동의한 것으로 함께 처리됩니다.
+          """)
   @ApiResponses({
       @ApiResponse(
           responseCode = "200",
