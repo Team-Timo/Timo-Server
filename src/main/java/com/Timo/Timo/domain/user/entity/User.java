@@ -2,9 +2,7 @@ package com.Timo.Timo.domain.user.entity;
 
 import com.Timo.Timo.domain.user.enums.Language;
 import com.Timo.Timo.domain.user.enums.Provider;
-import com.Timo.Timo.domain.user.exception.UserErrorCode;
 import com.Timo.Timo.global.common.BaseTimeEntity;
-import com.Timo.Timo.global.exception.CustomException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -90,15 +88,11 @@ public class User extends BaseTimeEntity {
       LocalTime wakeUpTime,
       LocalTime bedTime
   ) {
-
-    if (!termsAgreed) {
-      throw new CustomException(UserErrorCode.TERMS_AGREEMENT_REQUIRED);
-    }
-
     this.language = language;
     this.predictionAccuracy = predictionAccuracy;
     this.wakeUpTime = wakeUpTime;
     this.bedTime = bedTime;
+    this.termsAgreed = true;
     this.onboardingCompleted = true;
   }
 
