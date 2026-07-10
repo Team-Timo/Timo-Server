@@ -4,5 +4,6 @@ import lombok.Builder;
 
 @Builder
 public record OnboardingResponse(
-    boolean onboardingCompleted
+    boolean onboardingCompleted,
+    boolean termsAgreed
 ) {}
