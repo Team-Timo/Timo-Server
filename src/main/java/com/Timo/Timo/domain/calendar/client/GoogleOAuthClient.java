@@ -10,7 +10,9 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientResponseException;
 
 @Component
 public class GoogleOAuthClient {
@@ -52,6 +54,10 @@ public class GoogleOAuthClient {
           .body(body)
           .retrieve()
           .body(GoogleTokenResponse.class);
+    } catch (ResourceAccessException e) {
+      throw new CustomException(CalendarErrorCode.CALENDAR_503_TIMEOUT);
+    } catch (RestClientResponseException e) {
+      throw new CustomException(CalendarErrorCode.CALENDAR_401_AUTH_FAILED);
     } catch (Exception e) {
       throw new CustomException(CalendarErrorCode.CALENDAR_401_AUTH_FAILED);
     }
@@ -64,6 +70,10 @@ public class GoogleOAuthClient {
           .header("Authorization", "Bearer " + accessToken)
           .retrieve()
           .body(GoogleUserInfoResponse.class);
+    } catch (ResourceAccessException e) {
+      throw new CustomException(CalendarErrorCode.CALENDAR_503_TIMEOUT);
+    } catch (RestClientResponseException e) {
+      throw new CustomException(CalendarErrorCode.CALENDAR_401_AUTH_FAILED);
     } catch (Exception e) {
       throw new CustomException(CalendarErrorCode.CALENDAR_401_AUTH_FAILED);
     }
@@ -75,6 +85,8 @@ public class GoogleOAuthClient {
           .uri("https://oauth2.googleapis.com/revoke?token=" + token)
           .retrieve()
           .toBodilessEntity();
+    } catch (ResourceAccessException e) {
+      throw new CustomException(CalendarErrorCode.CALENDAR_503_TIMEOUT);
     } catch (Exception e) {
       throw new CustomException(CalendarErrorCode.CALENDAR_500_REVOKE_FAILED);
     }
