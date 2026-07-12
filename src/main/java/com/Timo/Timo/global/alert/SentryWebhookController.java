@@ -45,4 +45,4 @@ public class SentryWebhookController {
 		}
 		return webhookSecret.equals(token) || webhookSecret.equals(secretHeader);
 	}
-}정
+}
