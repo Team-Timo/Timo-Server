@@ -31,7 +31,7 @@ app:
   oauth2:
     redirect-uri: http://localhost:5173/oauth/callback
   calendar:
-    redirect-uri: ${FRONTEND_URL}/oauth/calendar/callback
+    redirect-uri: http://localhost:5173/oauth/calendar/callback
   auth:
     cookie-secure: false
 
