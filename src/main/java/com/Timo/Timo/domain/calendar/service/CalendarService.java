@@ -27,6 +27,7 @@ public class CalendarService {
   private final CalendarConnectionRepository calendarConnectionRepository;
   private final UserRepository userRepository;
   private final GoogleOAuthClient googleOAuthClient;
+  private final CalendarConnectionCommandService commandService;
 
   public CalendarConnectResponse connect(Long userId, CalendarConnectRequest request) {
     if (calendarConnectionRepository.existsByUserId(userId)) {
@@ -40,30 +41,7 @@ public class CalendarService {
     GoogleUserInfoResponse userInfo = googleOAuthClient.fetchUserInfo(tokenResponse.accessToken());
     validateSameAccount(user, userInfo);
 
-    return saveConnection(user, tokenResponse, userInfo);
-  }
-
-  @Transactional
-  public CalendarConnectResponse saveConnection(
-      User user,
-      GoogleTokenResponse tokenResponse,
-      GoogleUserInfoResponse userInfo
-  ) {
-    CalendarConnection calendarConnection = CalendarConnection.builder()
-        .user(user)
-        .calendarEmail(userInfo.email())
-        .accessToken(tokenResponse.accessToken())
-        .refreshToken(tokenResponse.refreshToken())
-        .tokenExpiresAt(LocalDateTime.now().plusSeconds(tokenResponse.expiresIn()))
-        .build();
-
-    calendarConnectionRepository.save(calendarConnection);
-
-    return CalendarConnectResponse.builder()
-        .calendarConnected(true)
-        .calendarEmail(calendarConnection.getCalendarEmail())
-        .connectedAt(calendarConnection.getConnectedAt())
-        .build();
+    return commandService.saveConnection(user, tokenResponse, userInfo);
   }
 
   private void validateSameAccount(User user, GoogleUserInfoResponse userInfo) {
