@@ -18,9 +18,9 @@ public interface TimerStartControllerDocs {
   @Operation(
       summary = "타이머 시작",
       description = """
-			  투두의 타이머를 시작합니다.<br>
-		  	한 번에 한 개의 타이머만 실행 가능하며, 이미 실행/일시정지 중인 타이머가 있으면 409를 반환합니다.
-      """
+              투두의 타이머를 시작합니다.
+              한 번에 한 개의 타이머만 실행 가능하며, 이미 실행/일시정지 중인 타이머가 있으면 409를 반환합니다.
+              """
   )
   @ApiResponses({
       @ApiResponse(
