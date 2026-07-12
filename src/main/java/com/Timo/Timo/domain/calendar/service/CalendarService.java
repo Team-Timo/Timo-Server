@@ -15,9 +15,11 @@ import com.Timo.Timo.domain.user.repository.UserRepository;
 import com.Timo.Timo.global.exception.CustomException;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CalendarService {
@@ -26,20 +28,27 @@ public class CalendarService {
   private final UserRepository userRepository;
   private final GoogleOAuthClient googleOAuthClient;
 
-  @Transactional
   public CalendarConnectResponse connect(Long userId, CalendarConnectRequest request) {
-    User user = userRepository.findById(userId)
-        .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
-
     if (calendarConnectionRepository.existsByUserId(userId)) {
       throw new CustomException(CalendarErrorCode.CALENDAR_409_ALREADY_CONNECTED);
     }
 
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
     GoogleTokenResponse tokenResponse = googleOAuthClient.exchangeToken(request.authorizationCode());
     GoogleUserInfoResponse userInfo = googleOAuthClient.fetchUserInfo(tokenResponse.accessToken());
-
     validateSameAccount(user, userInfo);
 
+    return saveConnection(user, tokenResponse, userInfo);
+  }
+
+  @Transactional
+  public CalendarConnectResponse saveConnection(
+      User user,
+      GoogleTokenResponse tokenResponse,
+      GoogleUserInfoResponse userInfo
+  ) {
     CalendarConnection calendarConnection = CalendarConnection.builder()
         .user(user)
         .calendarEmail(userInfo.email())
@@ -63,16 +72,27 @@ public class CalendarService {
     }
   }
 
-  @Transactional
   public CalendarDisconnectResponse disconnect(Long userId) {
     CalendarConnection calendarConnection = calendarConnectionRepository.findByUserId(userId)
         .orElseThrow(() -> new CustomException(CalendarErrorCode.CALENDAR_404_NOT_CONNECTED));
 
-    googleOAuthClient.revokeToken(calendarConnection.getAccessToken());
-    calendarConnectionRepository.delete(calendarConnection);
+    String accessToken = calendarConnection.getAccessToken();
+
+    deleteConnection(calendarConnection);
+
+    try {
+      googleOAuthClient.revokeToken(accessToken);
+    } catch (Exception e) {
+      log.warn("Google token revoke failed after disconnect. userId={}", userId, e);
+    }
 
     return CalendarDisconnectResponse.builder()
         .calendarConnected(false)
         .build();
+  }
+
+  @Transactional
+  public void deleteConnection(CalendarConnection calendarConnection) {
+    calendarConnectionRepository.delete(calendarConnection);
   }
 }
