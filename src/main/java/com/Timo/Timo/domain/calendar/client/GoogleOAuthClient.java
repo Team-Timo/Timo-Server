@@ -4,7 +4,9 @@ import com.Timo.Timo.domain.calendar.dto.response.GoogleTokenResponse;
 import com.Timo.Timo.domain.calendar.dto.response.GoogleUserInfoResponse;
 import com.Timo.Timo.domain.calendar.exception.CalendarErrorCode;
 import com.Timo.Timo.global.exception.CustomException;
+import java.time.Duration;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -13,7 +15,12 @@ import org.springframework.web.client.RestClient;
 @Component
 public class GoogleOAuthClient {
 
-  private final RestClient restClient = RestClient.create();
+  private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(5);
+  private static final Duration READ_TIMEOUT = Duration.ofSeconds(10);
+
+  private final RestClient restClient = RestClient.builder()
+      .requestFactory(buildRequestFactory())
+      .build();
 
   @Value("${spring.security.oauth2.client.registration.google.client-id}")
   private String clientId;
@@ -23,6 +30,13 @@ public class GoogleOAuthClient {
 
   @Value("${app.calendar.redirect-uri}")
   private String redirectUri;
+
+  private static SimpleClientHttpRequestFactory buildRequestFactory() {
+    SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+    factory.setConnectTimeout(CONNECT_TIMEOUT);
+    factory.setReadTimeout(READ_TIMEOUT);
+    return factory;
+  }
 
   public GoogleTokenResponse exchangeToken(String authorizationCode){
     MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
