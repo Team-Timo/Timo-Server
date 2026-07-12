@@ -39,6 +39,9 @@ spring:
 app:
   oauth2:
     redirect-uri: ${FRONTEND_URL}/oauth/callback
+  calendar:
+    redirect-uri: ${CALENDAR_REDIRECT_URI:https://developers.google.com/oauthplayground}
+#    redirect-uri: ${FRONTEND_URL}/oauth/calendar/callback
   auth:
     cookie-secure: true
 

@@ -21,7 +21,7 @@ public class GoogleOAuthClient {
   @Value("${spring.security.oauth2.client.registration.google.client-secret}")
   private String clientSecret;
 
-  @Value("${app.oauth2.redirect-uri}")
+  @Value("${app.calendar.redirect-uri}")
   private String redirectUri;
 
   public GoogleTokenResponse exchangeToken(String authorizationCode){
