@@ -1,4 +1,4 @@
-가package com.Timo.Timo.global.alert;
+package com.Timo.Timo.global.alert;
 
 import java.time.Duration;
 import java.util.Map;
