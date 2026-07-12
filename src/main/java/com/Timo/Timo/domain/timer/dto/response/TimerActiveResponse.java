@@ -6,17 +6,25 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
 
 public record TimerActiveResponse (
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     Long timerId,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     Long todoId,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     String todoTitle,
     String iconType,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     String status,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     Integer plannedSeconds,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     Integer extendedSeconds,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     Integer elapsedSeconds,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     Integer remainingSeconds,
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    @Schema(type = "string", example = "2026-07-09 10:14:19")
+    @Schema(type = "string", example = "2026-07-09 10:14:19", requiredMode = Schema.RequiredMode.REQUIRED)
     LocalDateTime startedAt
 ){
   public static TimerActiveResponse of(TimerRecord timerRecord, int elapsedSeconds){
