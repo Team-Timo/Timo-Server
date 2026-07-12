@@ -11,21 +11,33 @@ import com.Timo.Timo.domain.todo.enums.TodoTimerStatus;
 import com.Timo.Timo.domain.todo.enums.Weekday;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 public record HomeResponse(
+		@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 		HomeFilter filter,
+		@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 		LocalDate baseDate,
+		@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 		List<DayResponse> days
 ) {
 
 	public record DayResponse(
+			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 			LocalDate date,
+			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 			Weekday dayOfWeek,
 			@JsonProperty("isHoliday")
+			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 			boolean isHoliday,
 			@JsonProperty("isToday")
+			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 			boolean isToday,
+			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 			int totalCount,
+			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 			int completedCount,
+			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 			List<TodoResponse> todos
 	) {
 		public static DayResponse of(
@@ -51,24 +63,33 @@ public record HomeResponse(
 	}
 
 	public record TodoResponse(
+			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 			Long todoId,
 			String icon,
+			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 			String title,
+			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 			boolean completed,
 			Integer durationSeconds,
 			String priority,
 			TagResponse tag,
+			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 			boolean hasMemo,
 			@JsonProperty("isRepeated")
+			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 			boolean isRepeated,
+			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 			TodoTimerStatus timerStatus,
 			Integer sortOrder,
+			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 			List<SubtaskResponse> subtasks
 	) {
 	}
 
 	public record TagResponse(
+			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 			Long tagId,
+			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 			String name
 	) {
 		public static TagResponse from(Tag tag) {
@@ -78,8 +99,11 @@ public record HomeResponse(
 	}
 
 	public record SubtaskResponse(
+			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 			Long subtaskId,
+			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 			String content,
+			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 			boolean completed
 	) {
 		public static SubtaskResponse from(Subtask subtask) {

@@ -12,20 +12,30 @@ import com.Timo.Timo.domain.todo.enums.RepeatType;
 import com.Timo.Timo.domain.todo.enums.TodoTimerStatus;
 import com.Timo.Timo.domain.todo.enums.Weekday;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 public record TodoDetailResponse(
+		@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 		Long todoId,
 		String icon,
+		@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 		String title,
+		@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 		boolean completed,
+		@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 		LocalDate date,
+		@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 		String dayOfWeek,
 		Integer durationSeconds,
 		String priority,
 		TagResponse tag,
+		@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 		RepeatResponse repeat,
+		@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 		TodoTimerStatus timerStatus,
 		String memo,
 		Integer sortOrder,
+		@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 		List<SubtaskResponse> subtasks
 ) {
 
@@ -51,7 +61,9 @@ public record TodoDetailResponse(
 	}
 
 	public record TagResponse(
+			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 			Long tagId,
+			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 			String name
 	) {
 		public static TagResponse from(Tag tag) {
@@ -60,6 +72,7 @@ public record TodoDetailResponse(
 	}
 
 	public record RepeatResponse(
+			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 			String type,
 			List<Weekday> weekdays,
 			Integer dayOfMonth
@@ -78,8 +91,11 @@ public record TodoDetailResponse(
 	}
 
 	public record SubtaskResponse(
+			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 			Long subtaskId,
+			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 			String content,
+			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 			boolean completed
 	) {
 		public static SubtaskResponse from(Subtask subtask) {
