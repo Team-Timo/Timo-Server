@@ -181,10 +181,12 @@ public class TimerService {
     timerRecordRepository.deleteByTodoId(todoId);
   }
 
+  @Transactional(readOnly = false)
   public TimerFinishResponse completeTimer(Long userId, Long timerId) {
     return finishTimer(userId, timerId, TimerStatus.COMPLETED);
   }
 
+  @Transactional(readOnly = false)
   public TimerFinishResponse stopTimer(Long userId, Long timerId) {
     return finishTimer(userId, timerId, TimerStatus.STOPPED);
   }
