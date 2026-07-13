@@ -71,6 +71,10 @@ jobs:
               {
                 label: '♻️ remove',
                 patterns: [/\[remove\]/, /(?:^|[^a-z0-9])remove:/]
+              },
+              {
+                label: '⚙️ setting',
+                patterns: [/\[setting\]/, /(?:^|[^a-z0-9])setting:/]
               }
             ];
 
