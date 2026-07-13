@@ -49,8 +49,7 @@ public class SecurityConfig {
           "/oauth2/**",
           "/api/v1/auth/reissue",
           "/api/v1/auth/token",
-          "/api/v1/terms",
-          "/api/v1/sentry/webhook"
+          "/api/v1/terms"
 				).permitAll()
 				.anyRequest().authenticated())
         .oauth2Login(oauth2 -> oauth2
