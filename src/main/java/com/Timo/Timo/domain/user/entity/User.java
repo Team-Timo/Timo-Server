@@ -70,12 +70,6 @@ public class User extends BaseTimeEntity {
   @Column(name = "onboarding_completed", nullable = false)
   private boolean onboardingCompleted;
 
-  @Column(name = "calendar_connected", nullable = false)
-  private boolean calendarConnected;
-
-  @Column(name = "calendar_email")
-  private String calendarEmail;
-
   @Column(name = "terms_agreed", nullable = false)
   private boolean termsAgreed;
 
@@ -126,9 +120,6 @@ public class User extends BaseTimeEntity {
     this.bedTime = LocalTime.of(23, 0);
     this.predictionAccuracy = 0L;
     this.onboardingCompleted = false;
-
-    this.calendarConnected = false;
-    this.calendarEmail = null;
     this.termsAgreed = false;
   }
 }
