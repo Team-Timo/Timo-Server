@@ -2,8 +2,10 @@ package com.Timo.Timo.domain.calendar.controller;
 
 import com.Timo.Timo.domain.calendar.docs.CalendarControllerDocs;
 import com.Timo.Timo.domain.calendar.dto.request.CalendarConnectRequest;
+import com.Timo.Timo.domain.calendar.dto.response.CalendarAuthorizeResponse;
 import com.Timo.Timo.domain.calendar.dto.response.CalendarConnectResponse;
 import com.Timo.Timo.domain.calendar.dto.response.CalendarDisconnectResponse;
+import com.Timo.Timo.domain.calendar.exception.CalendarSuccessCode;
 import com.Timo.Timo.domain.calendar.factory.CalendarResponseFactory;
 import com.Timo.Timo.domain.calendar.service.CalendarService;
 import com.Timo.Timo.global.auth.principal.CustomUserDetails;
@@ -31,29 +33,18 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Calendar", description = "구글 캘린더 연동 API")
 public class CalendarController implements CalendarControllerDocs {
 
-  private static final String GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
-  private static final String CALENDAR_SCOPE = "https://www.googleapis.com/auth/calendar.readonly email";
-
   private final CalendarService calendarService;
   private final CalendarResponseFactory calendarResponseFactory;
 
-  @Value("${spring.security.oauth2.client.registration.google.client-id}")
-  private String clientId;
-
-  @Value("${app.calendar.redirect-uri}")
-  private String redirectUri;
-
   @GetMapping("/authorize")
-  public void authorize(HttpServletResponse response) throws IOException {
-    String url = GOOGLE_AUTH_URL
-        + "?client_id=" + URLEncoder.encode(clientId, StandardCharsets.UTF_8)
-        + "&redirect_uri=" + URLEncoder.encode(redirectUri, StandardCharsets.UTF_8)
-        + "&response_type=code"
-        + "&scope=" + URLEncoder.encode(CALENDAR_SCOPE, StandardCharsets.UTF_8)
-        + "&access_type=offline"
-        + "&prompt=consent";
-
-    response.sendRedirect(url);
+  public ResponseEntity<BaseResponse<CalendarAuthorizeResponse>> authorize(
+      @AuthenticationPrincipal CustomUserDetails userDetails
+  ) {
+    String url = calendarService.buildAuthorizationUrl(userDetails.getUserId());
+    return ResponseEntity.ok(
+        BaseResponse.onSuccess(CalendarSuccessCode.CALENDAR_AUTHORIZE_URL_ISSUED,
+            new CalendarAuthorizeResponse(url))
+    );
   }
 
   @Override
