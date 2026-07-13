@@ -4,10 +4,13 @@ import com.Timo.Timo.domain.calendar.dto.response.CalendarConnectResponse;
 import com.Timo.Timo.domain.calendar.dto.response.GoogleTokenResponse;
 import com.Timo.Timo.domain.calendar.dto.response.GoogleUserInfoResponse;
 import com.Timo.Timo.domain.calendar.entity.CalendarConnection;
+import com.Timo.Timo.domain.calendar.exception.CalendarErrorCode;
 import com.Timo.Timo.domain.calendar.repository.CalendarConnectionRepository;
 import com.Timo.Timo.domain.user.entity.User;
+import com.Timo.Timo.global.exception.CustomException;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,7 +34,11 @@ public class CalendarConnectionCommandService {
         .tokenExpiresAt(LocalDateTime.now().plusSeconds(tokenResponse.expiresIn()))
         .build();
 
-    calendarConnectionRepository.save(calendarConnection);
+    try {
+      calendarConnectionRepository.saveAndFlush(calendarConnection);
+    } catch (DataIntegrityViolationException e) {
+      throw new CustomException(CalendarErrorCode.CALENDAR_ALREADY_CONNECTED);
+    }
 
     return CalendarConnectResponse.builder()
         .calendarConnected(true)
