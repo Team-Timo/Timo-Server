@@ -2,8 +2,8 @@ package com.Timo.Timo.domain.terms.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.Timo.Timo.domain.terms.docs.TermsControllerDocs;
@@ -24,11 +24,12 @@ public class TermsController implements TermsControllerDocs {
 	private final TermsService termsService;
 
 	@Override
-	@GetMapping("/{termsId}")
-	public ResponseEntity<BaseResponse<TermsDetailResponse>> getTerms(
-		@PathVariable Long termsId
+	@GetMapping
+	public ResponseEntity<BaseResponse<TermsDetailResponse>> getTermsByCondition(
+		@RequestParam String type,
+		@RequestParam String language
 	) {
-		TermsDetailResponse response = termsService.getTerms(termsId);
+		TermsDetailResponse response = termsService.getTermsByCondition(type, language);
 
 		return ResponseEntity.ok(
 			BaseResponse.onSuccess(TermsSuccessCode.TERMS_RETRIEVED, response)

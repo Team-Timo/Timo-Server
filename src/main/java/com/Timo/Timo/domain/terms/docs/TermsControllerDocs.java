@@ -15,9 +15,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 public interface TermsControllerDocs {
 	@Operation(
-		summary = "약관 상세 조회",
+		summary = "약관 조건 조회",
 		description = """
-			약관 ID로 특정 약관의 상세 내용을 조회합니다.
+			약관 타입과 언어 기준으로 최신 약관 1건을 조회합니다.
 			"""
 	)
 	@ApiResponses({
@@ -28,7 +28,7 @@ public interface TermsControllerDocs {
 		),
 		@ApiResponse(
 			responseCode = "400",
-			description = "잘못된 약관 ID 형식",
+			description = "잘못된 타입 또는 언어 값",
 			content = @Content(
 				mediaType = "application/json",
 				schema = @Schema(implementation = ErrorDto.class)
@@ -36,7 +36,7 @@ public interface TermsControllerDocs {
 		),
 		@ApiResponse(
 			responseCode = "404",
-			description = "존재하지 않는 약관 ID",
+			description = "조건에 맞는 약관이 없음",
 			content = @Content(
 				mediaType = "application/json",
 				schema = @Schema(implementation = ErrorDto.class)
@@ -51,7 +51,8 @@ public interface TermsControllerDocs {
 			)
 		)
 	})
-	ResponseEntity<BaseResponse<TermsDetailResponse>> getTerms(
-		@Parameter(description = "약관 ID", example = "1") Long termsId
+	ResponseEntity<BaseResponse<TermsDetailResponse>> getTermsByCondition(
+		@Parameter(description = "약관 타입", example = "SERVICE") String type,
+		@Parameter(description = "약관 언어", example = "KO") String language
 	);
 }
