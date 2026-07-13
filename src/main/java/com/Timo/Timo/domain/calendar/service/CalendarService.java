@@ -16,7 +16,6 @@ import com.Timo.Timo.global.exception.CustomException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +38,7 @@ public class CalendarService {
   private final GoogleOAuthClient googleOAuthClient;
   private final CalendarConnectionCommandService commandService;
   private final StringRedisTemplate redisTemplate;
+  private final CalendarStateValidator calendarStateValidator;
 
   @Value("${spring.security.oauth2.client.registration.google.client-id}")
   private String clientId;
@@ -61,13 +61,7 @@ public class CalendarService {
   }
 
   public void validateState(Long userId, String state) {
-    String key = "calendar:oauth:state:" + state;
-    String savedUserId = redisTemplate.opsForValue().get(key);
-
-    if (savedUserId == null || !savedUserId.equals(String.valueOf(userId))) {
-      throw new CustomException(CalendarErrorCode.CALENDAR_STATE_MISMATCH);
-    }
-    redisTemplate.delete(key);
+    calendarStateValidator.validateState(userId, state);
   }
 
   public CalendarConnectResponse connect(Long userId, CalendarConnectRequest request) {
