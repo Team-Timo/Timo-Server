@@ -6,6 +6,7 @@ import com.Timo.Timo.domain.calendar.exception.CalendarErrorCode;
 import com.Timo.Timo.global.exception.CustomException;
 import java.time.Duration;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
@@ -85,7 +86,8 @@ public class GoogleOAuthClient {
 
     try {
       restClient.post()
-          .uri("https://oauth2.googleapis.com/revoke?token=" + token)
+          .uri("https://oauth2.googleapis.com/revoke")
+          .contentType(MediaType.APPLICATION_FORM_URLENCODED)
           .body(body)
           .retrieve()
           .toBodilessEntity();
