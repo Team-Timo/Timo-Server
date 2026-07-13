@@ -48,8 +48,9 @@ public class HomeTodoReader {
 		for (int index = 0; index < occurredRules.size(); index++) {
 			Todo rule = occurredRules.get(index);
 			TodoInstance instance = loaded.instancesByKey().get(new InstanceKey(rule.getId(), date));
+			Tag tag = rule.getTagId() == null ? null : loaded.tagsById().get(rule.getTagId());
 			todos.add(homeTodoMapper.toResponse(
-					new TodoContext(rule, instance, loaded.tagsById().get(rule.getTagId()), index)
+					new TodoContext(rule, instance, tag, index)
 			));
 		}
 
