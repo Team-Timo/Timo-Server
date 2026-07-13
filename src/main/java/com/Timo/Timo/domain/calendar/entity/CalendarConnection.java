@@ -73,4 +73,8 @@ public class CalendarConnection {
     this.tokenExpiresAt = tokenExpiresAt;
     this.connectedAt = LocalDateTime.now();
   }
+
+  public String getTokenToRevoke() {
+    return refreshToken != null ? refreshToken : accessToken;
+  }
 }

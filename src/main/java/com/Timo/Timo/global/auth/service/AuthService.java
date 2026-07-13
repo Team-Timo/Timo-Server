@@ -115,7 +115,7 @@ public class AuthService {
 
     TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
       @Override
-      public void afterCommit(){
+      public void afterCommit() {
         if (accessToken != null) {
           long remainingExpiry = jwtTokenProvider.getRemainingExpiry(accessToken);
           blacklistService.addToBlacklist(accessToken, remainingExpiry);
@@ -128,15 +128,8 @@ public class AuthService {
 
   private void revokeCalendarConnectionIfExists(Long userId) {
     calendarConnectionRepository.findByUserId(userId)
-        .ifPresent(connection -> {
-          try {
-            String tokenToRevoke = connection.getRefreshToken() != null
-                ? connection.getRefreshToken()
-                : connection.getAccessToken();
-            googleOAuthClient.revokeToken(tokenToRevoke);
-          } catch (Exception e) {
-            log.warn("회원 탈퇴 시 캘린더 토큰 revoke 실패. userId={}", userId, e);
-          }
-        });
+        .ifPresent(connection ->
+                googleOAuthClient.revokeToken(connection.getTokenToRevoke())
+        );
   }
 }
