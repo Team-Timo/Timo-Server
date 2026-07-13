@@ -27,6 +27,14 @@ public interface TermsControllerDocs {
 			useReturnTypeSchema = true
 		),
 		@ApiResponse(
+			responseCode = "400",
+			description = "잘못된 약관 ID 형식",
+			content = @Content(
+				mediaType = "application/json",
+				schema = @Schema(implementation = ErrorDto.class)
+			)
+		),
+		@ApiResponse(
 			responseCode = "404",
 			description = "존재하지 않는 약관 ID",
 			content = @Content(
