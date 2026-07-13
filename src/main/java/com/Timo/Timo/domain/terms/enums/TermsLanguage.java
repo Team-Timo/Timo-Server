@@ -8,6 +8,9 @@ public enum TermsLanguage {
 	EN;
 
 	public static TermsLanguage from(String value) {
+		if (value == null || value.isBlank()) {
+			throw new CustomException(ErrorCode.BAD_REQUEST);
+		}
 		try {
 			return TermsLanguage.valueOf(value.trim());
 		} catch (IllegalArgumentException exception) {
