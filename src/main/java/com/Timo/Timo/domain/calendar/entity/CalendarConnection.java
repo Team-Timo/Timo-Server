@@ -1,7 +1,9 @@
 package com.Timo.Timo.domain.calendar.entity;
 
 import com.Timo.Timo.domain.user.entity.User;
+import com.Timo.Timo.global.crypto.AesGcmConverter;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -33,9 +35,11 @@ public class CalendarConnection {
   @Column(name = "calendar_email", nullable = false)
   private String calendarEmail;
 
+  @Convert(converter = AesGcmConverter.class)
   @Column(name = "access_token", nullable = false, length = 2048)
   private String accessToken;
 
+  @Convert(converter = AesGcmConverter.class)
   @Column(name = "refresh_token", length = 2048)
   private String refreshToken;
 
