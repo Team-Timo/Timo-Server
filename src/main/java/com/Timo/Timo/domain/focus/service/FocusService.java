@@ -13,6 +13,7 @@ import com.Timo.Timo.domain.focus.exception.FocusSuccessCode;
 import com.Timo.Timo.domain.home.dto.response.HomeResponse.TodoResponse;
 import com.Timo.Timo.domain.home.service.HomeTodoReader;
 import com.Timo.Timo.domain.home.service.HomeTodoReader.LoadedTodos;
+import com.Timo.Timo.domain.todo.enums.TodoTimerStatus;
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.exception.UserErrorCode;
 import com.Timo.Timo.domain.user.repository.UserRepository;
@@ -39,17 +40,19 @@ public class FocusService {
 			return new FocusTodoResult(FocusSuccessCode.NO_TODO_TODAY, FocusTodoResponse.empty(today));
 		}
 
-		return todos.stream()
-				.filter(todo -> !todo.completed())
+		TodoResponse focusTodo = todos.stream()
+				.filter(todo -> todo.timerStatus() != TodoTimerStatus.STOPPED)
 				.findFirst()
-				.map(todo -> new FocusTodoResult(
-						FocusSuccessCode.GET_FOCUS_TODO,
-						FocusTodoResponse.of(today, todo)
-				))
-				.orElseGet(() -> new FocusTodoResult(
-						FocusSuccessCode.ALL_TODO_COMPLETED,
-						FocusTodoResponse.empty(today)
-				));
+				.orElseGet(() -> todos.stream()
+						.filter(todo -> !todo.completed())
+						.findFirst()
+						.orElse(null));
+
+		if (focusTodo == null) {
+			return new FocusTodoResult(FocusSuccessCode.ALL_TODO_COMPLETED, FocusTodoResponse.empty(today));
+		}
+
+		return new FocusTodoResult(FocusSuccessCode.GET_FOCUS_TODO, FocusTodoResponse.of(today, focusTodo));
 	}
 
 	private User getUser(Long userId) {
