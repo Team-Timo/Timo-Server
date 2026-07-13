@@ -90,11 +90,6 @@ public class User extends BaseTimeEntity {
       LocalTime wakeUpTime,
       LocalTime bedTime
   ) {
-
-    if (!termsAgreed) {
-      throw new CustomException(UserErrorCode.TERMS_AGREEMENT_REQUIRED);
-    }
-
     this.language = language;
     this.predictionAccuracy = predictionAccuracy;
     this.wakeUpTime = wakeUpTime;
