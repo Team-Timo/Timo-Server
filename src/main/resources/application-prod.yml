@@ -31,14 +31,14 @@ spring:
               - email
               - profile
 
-security:
-  crypto:
-    calendar-token-key: ${CALENDAR_TOKEN_ENCRYPTION_KEY}
-
   data:
     redis:
       host: ${REDIS_HOST:redis}
       port: ${REDIS_PORT:6379}
+
+security:
+  crypto:
+    calendar-token-key: ${CALENDAR_TOKEN_ENCRYPTION_KEY}
 
 app:
   oauth2:
