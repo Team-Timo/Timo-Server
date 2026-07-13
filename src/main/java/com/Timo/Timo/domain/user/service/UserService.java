@@ -25,12 +25,6 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 public class UserService {
 
-  @Column(name = "calendar_connected", nullable = false)
-  private boolean calendarConnected;
-
-  @Column(name = "calendar_email")
-  private String calendarEmail;
-
 	private final UserRepository userRepository;
   private final CalendarConnectionRepository calendarConnectionRepository;
 

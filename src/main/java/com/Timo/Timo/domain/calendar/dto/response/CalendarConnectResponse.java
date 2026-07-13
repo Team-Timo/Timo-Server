@@ -10,7 +10,7 @@ public record CalendarConnectResponse(
     boolean calendarConnected,
     String calendarEmail,
 
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    @Schema(example = "2026-07-06 17:51:50", type = "string")
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'", timezone = "UTC")
+    @Schema(example = "2026-06-22T14:00:00Z", type = "string", description = "UTC 기준 연동 시각")
     LocalDateTime connectedAt
 ) {}
