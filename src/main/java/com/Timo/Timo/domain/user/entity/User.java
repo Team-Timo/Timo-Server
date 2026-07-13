@@ -99,6 +99,7 @@ public class User extends BaseTimeEntity {
     this.predictionAccuracy = predictionAccuracy;
     this.wakeUpTime = wakeUpTime;
     this.bedTime = bedTime;
+    this.termsAgreed = true;
     this.onboardingCompleted = true;
   }
 
