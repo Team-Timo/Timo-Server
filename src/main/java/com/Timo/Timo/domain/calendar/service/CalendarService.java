@@ -31,7 +31,7 @@ public class CalendarService {
 
   public CalendarConnectResponse connect(Long userId, CalendarConnectRequest request) {
     if (calendarConnectionRepository.existsByUserId(userId)) {
-      throw new CustomException(CalendarErrorCode.CALENDAR_409_ALREADY_CONNECTED);
+      throw new CustomException(CalendarErrorCode.CALENDAR_ALREADY_CONNECTED);
     }
 
     User user = userRepository.findById(userId)
@@ -46,13 +46,13 @@ public class CalendarService {
 
   private void validateSameAccount(User user, GoogleUserInfoResponse userInfo) {
     if (!user.getEmail().equalsIgnoreCase(userInfo.email())) {
-      throw new CustomException(CalendarErrorCode.CALENDAR_401_EMAIL_MISMATCH);
+      throw new CustomException(CalendarErrorCode.CALENDAR_EMAIL_MISMATCH);
     }
   }
 
   public CalendarDisconnectResponse disconnect(Long userId) {
     CalendarConnection calendarConnection = calendarConnectionRepository.findByUserId(userId)
-        .orElseThrow(() -> new CustomException(CalendarErrorCode.CALENDAR_404_NOT_CONNECTED));
+        .orElseThrow(() -> new CustomException(CalendarErrorCode.CALENDAR_NOT_CONNECTED));
 
     String accessToken = calendarConnection.getAccessToken();
 

@@ -55,11 +55,11 @@ public class GoogleOAuthClient {
           .retrieve()
           .body(GoogleTokenResponse.class);
     } catch (ResourceAccessException e) {
-      throw new CustomException(CalendarErrorCode.CALENDAR_503_TIMEOUT);
+      throw new CustomException(CalendarErrorCode.CALENDAR_TIMEOUT);
     } catch (RestClientResponseException e) {
-      throw new CustomException(CalendarErrorCode.CALENDAR_401_AUTH_FAILED);
+      throw new CustomException(CalendarErrorCode.CALENDAR_AUTH_FAILED);
     } catch (Exception e) {
-      throw new CustomException(CalendarErrorCode.CALENDAR_401_AUTH_FAILED);
+      throw new CustomException(CalendarErrorCode.CALENDAR_AUTH_FAILED);
     }
   }
 
@@ -71,11 +71,11 @@ public class GoogleOAuthClient {
           .retrieve()
           .body(GoogleUserInfoResponse.class);
     } catch (ResourceAccessException e) {
-      throw new CustomException(CalendarErrorCode.CALENDAR_503_TIMEOUT);
+      throw new CustomException(CalendarErrorCode.CALENDAR_TIMEOUT);
     } catch (RestClientResponseException e) {
-      throw new CustomException(CalendarErrorCode.CALENDAR_401_AUTH_FAILED);
+      throw new CustomException(CalendarErrorCode.CALENDAR_AUTH_FAILED);
     } catch (Exception e) {
-      throw new CustomException(CalendarErrorCode.CALENDAR_401_AUTH_FAILED);
+      throw new CustomException(CalendarErrorCode.CALENDAR_AUTH_FAILED);
     }
   }
 
@@ -86,9 +86,9 @@ public class GoogleOAuthClient {
           .retrieve()
           .toBodilessEntity();
     } catch (ResourceAccessException e) {
-      throw new CustomException(CalendarErrorCode.CALENDAR_503_TIMEOUT);
+      throw new CustomException(CalendarErrorCode.CALENDAR_TIMEOUT);
     } catch (Exception e) {
-      throw new CustomException(CalendarErrorCode.CALENDAR_500_REVOKE_FAILED);
+      throw new CustomException(CalendarErrorCode.CALENDAR_REVOKE_FAILED);
     }
   }
 }
