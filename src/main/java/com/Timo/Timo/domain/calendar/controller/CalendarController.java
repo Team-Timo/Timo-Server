@@ -6,18 +6,12 @@ import com.Timo.Timo.domain.calendar.dto.response.CalendarAuthorizeResponse;
 import com.Timo.Timo.domain.calendar.dto.response.CalendarConnectResponse;
 import com.Timo.Timo.domain.calendar.dto.response.CalendarDisconnectResponse;
 import com.Timo.Timo.domain.calendar.exception.CalendarSuccessCode;
-import com.Timo.Timo.domain.calendar.factory.CalendarResponseFactory;
 import com.Timo.Timo.domain.calendar.service.CalendarService;
 import com.Timo.Timo.global.auth.principal.CustomUserDetails;
 import com.Timo.Timo.global.response.BaseResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
-import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -34,7 +28,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class CalendarController implements CalendarControllerDocs {
 
   private final CalendarService calendarService;
-  private final CalendarResponseFactory calendarResponseFactory;
 
   @Override
   @GetMapping("/authorize")
@@ -57,7 +50,9 @@ public class CalendarController implements CalendarControllerDocs {
     Long userId = userDetails.getUserId();
     CalendarConnectResponse response = calendarService.connect(userId, request);
 
-    return calendarResponseFactory.connectResponse(response);
+    return ResponseEntity.ok(
+        BaseResponse.onSuccess(CalendarSuccessCode.CALENDAR_CONNECTED, response)
+    );
   }
 
   @Override
@@ -68,6 +63,8 @@ public class CalendarController implements CalendarControllerDocs {
     Long userId = userDetails.getUserId();
     CalendarDisconnectResponse response = calendarService.disconnect(userId);
 
-    return calendarResponseFactory.disconnectResponse(response);
+    return ResponseEntity.ok(
+        BaseResponse.onSuccess(CalendarSuccessCode.CALENDAR_DISCONNECTED, response)
+    );
   }
 }
