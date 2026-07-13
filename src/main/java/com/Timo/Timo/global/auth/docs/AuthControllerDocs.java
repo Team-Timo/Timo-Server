@@ -89,8 +89,8 @@ public interface AuthControllerDocs {
   @Operation(
       summary = "AccessToken 재발급",
       description = """
-			쿠키로 전달된 RefreshToken과 sessionId를 검증하여 AccessToken 재발급
-			재발급 성공 시 RefreshToken과 sessionId 쿠키 갱신
+			쿠키로 전달된 RefreshToken과 sessionId를 검증하여 AccessToken을 재발급합니다.
+			재발급 성공 시 RefreshToken과 sessionId 쿠키를 갱신합니다.
 			"""
 
   )
@@ -135,7 +135,6 @@ public interface AuthControllerDocs {
       summary = "로그아웃",
       description = """
 			현재 세션을 로그아웃하고 RefreshToken 및 sessionId 쿠키를 만료시킵니다.
-			Swagger UI 오른쪽 위의 Authorize 버튼을 눌러 유효한 Access Token을 입력해야 합니다.
 			"""
   )
   @ApiResponses({
