@@ -97,15 +97,13 @@ public class CalendarService {
     CalendarConnection calendarConnection = calendarConnectionRepository.findByUserId(userId)
         .orElseThrow(() -> new CustomException(CalendarErrorCode.CALENDAR_NOT_CONNECTED));
 
-    String accessToken = calendarConnection.getAccessToken();
+    String tokenToRevoke = calendarConnection.getRefreshToken() != null
+        ? calendarConnection.getRefreshToken()
+        : calendarConnection.getAccessToken();
 
-    deleteConnection(calendarConnection);
+    googleOAuthClient.revokeToken(tokenToRevoke);
 
-    try {
-      googleOAuthClient.revokeToken(accessToken);
-    } catch (Exception e) {
-      log.warn("Google token revoke failed after disconnect. userId={}", userId, e);
-    }
+    commandService.deleteConnection(calendarConnection);
 
     return CalendarDisconnectResponse.builder()
         .calendarConnected(false)

@@ -80,9 +80,13 @@ public class GoogleOAuthClient {
   }
 
   public void revokeToken(String token) {
+    MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+    body.add("token", token);
+
     try {
       restClient.post()
           .uri("https://oauth2.googleapis.com/revoke?token=" + token)
+          .body(body)
           .retrieve()
           .toBodilessEntity();
     } catch (ResourceAccessException e) {
