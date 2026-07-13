@@ -1,5 +1,7 @@
 package com.Timo.Timo.global.auth.service;
 
+import com.Timo.Timo.domain.calendar.client.GoogleOAuthClient;
+import com.Timo.Timo.domain.calendar.repository.CalendarConnectionRepository;
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.exception.UserErrorCode;
 import com.Timo.Timo.domain.user.repository.UserRepository;
@@ -10,11 +12,13 @@ import com.Timo.Timo.global.exception.CustomException;
 import com.Timo.Timo.global.exception.code.ErrorCode;
 import com.Timo.Timo.global.jwt.provider.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -24,6 +28,8 @@ public class AuthService {
   private final UserRepository userRepository;
   private final RefreshTokenService refreshTokenService;
   private final BlackListService blacklistService;
+  private final GoogleOAuthClient googleOAuthClient;
+  private final CalendarConnectionRepository calendarConnectionRepository;
 
   public AuthTokenResponse exchangeCodeForToken(String code) {
 
@@ -103,6 +109,8 @@ public class AuthService {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
+    revokeCalendarConnectionIfExists(userId);
+
     userRepository.delete(user);
 
     TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
@@ -116,5 +124,19 @@ public class AuthService {
     });
 
     refreshTokenService.deleteAllRefreshTokens(String.valueOf(userId));
+  }
+
+  private void revokeCalendarConnectionIfExists(Long userId) {
+    calendarConnectionRepository.findByUserId(userId)
+        .ifPresent(connection -> {
+          try {
+            String tokenToRevoke = connection.getRefreshToken() != null
+                ? connection.getRefreshToken()
+                : connection.getAccessToken();
+            googleOAuthClient.revokeToken(tokenToRevoke);
+          } catch (Exception e) {
+            log.warn("회원 탈퇴 시 캘린더 토큰 revoke 실패. userId={}", userId, e);
+          }
+        });
   }
 }
