@@ -1,6 +1,7 @@
 package com.Timo.Timo.domain.calendar.docs;
 
 import com.Timo.Timo.domain.calendar.dto.request.CalendarConnectRequest;
+import com.Timo.Timo.domain.calendar.dto.response.CalendarAuthorizeResponse;
 import com.Timo.Timo.domain.calendar.dto.response.CalendarConnectResponse;
 import com.Timo.Timo.domain.calendar.dto.response.CalendarDisconnectResponse;
 import com.Timo.Timo.global.auth.principal.CustomUserDetails;
@@ -20,13 +21,40 @@ import org.springframework.web.bind.annotation.RequestBody;
 public interface CalendarControllerDocs {
 
   @Operation(
-      summary = "구글 캘린더 연동",
+      summary = "구글 캘린더 연동 시작",
       description = """
-          구글 OAuth 동의 완료 후 발급된 authorizationCode로 구글 토큰을 교환하여 캘린더 연동합니다.
-          가입 시 사용한 구글 계정과 다른 계정으로 연동을 시도하면 거부됩니다.
-          """,
+			구글 캘린더 연동을 시작하는 구글 인증 URL을 발급합니다.
+			프론트는 이 응답의 authorizationUrl로 window.location.assign 등을 통해 직접 이동해야 합니다.
+			""",
       security = @SecurityRequirement(name = "bearerAuth")
   )
+  @ApiResponses({
+      @ApiResponse(
+          responseCode = "200",
+          description = "인증 URL 발급 성공",
+          useReturnTypeSchema = true
+      ),
+      @ApiResponse(
+          responseCode = "401",
+          description = "Access Token이 없거나 만료되었거나 유효하지 않은 경우",
+          content = @Content(
+              mediaType = "application/json",
+              schema = @Schema(implementation = ErrorDto.class)
+          )
+      ),
+      @ApiResponse(
+          responseCode = "500",
+          description = "서버 내부 오류",
+          content = @Content(
+              mediaType = "application/json",
+              schema = @Schema(implementation = ErrorDto.class)
+          )
+      )
+  })
+  ResponseEntity<BaseResponse<CalendarAuthorizeResponse>> authorize(
+      @Parameter(hidden = true) CustomUserDetails userDetails
+  );
+
   @ApiResponses({
       @ApiResponse(responseCode = "201", description = "연동 성공", useReturnTypeSchema = true),
       @ApiResponse(responseCode = "400", description = "authorizationCode 누락",

@@ -36,6 +36,7 @@ public class CalendarController implements CalendarControllerDocs {
   private final CalendarService calendarService;
   private final CalendarResponseFactory calendarResponseFactory;
 
+  @Override
   @GetMapping("/authorize")
   public ResponseEntity<BaseResponse<CalendarAuthorizeResponse>> authorize(
       @AuthenticationPrincipal CustomUserDetails userDetails
