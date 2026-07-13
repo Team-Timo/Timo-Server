@@ -30,8 +30,10 @@ spring:
             scope:
               - email
               - profile
-    crypto:
-      calendar-token-key: ${CALENDAR_TOKEN_ENCRYPTION_KEY}
+
+security:
+  crypto:
+    calendar-token-key: ${CALENDAR_TOKEN_ENCRYPTION_KEY}
 
   data:
     redis:
