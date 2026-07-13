@@ -24,6 +24,7 @@ public interface CalendarControllerDocs {
       summary = "구글 캘린더 연동 시작",
       description = """
 			구글 캘린더 연동을 시작하는 구글 인증 URL을 발급합니다.
+			
 			프론트는 이 응답의 authorizationUrl로 window.location.assign 등을 통해 직접 이동해야 합니다.
 			""",
       security = @SecurityRequirement(name = "bearerAuth")
@@ -55,6 +56,17 @@ public interface CalendarControllerDocs {
       @Parameter(hidden = true) CustomUserDetails userDetails
   );
 
+  @Operation(
+      summary = "구글 캘린더 연동",
+      description = """
+		  구글 OAuth 동의 완료 후 발급된 authorizationCode와 state로 구글 토큰을 교환하여 캘린더를 연동합니다.
+		  
+		  state는 authorize API 호출 시 발급받은 값을 그대로 전달해야 하며, 검증 후 즉시 만료됩니다.
+		  
+		  가입 시 사용한 구글 계정과 다른 계정으로 연동을 시도하면 거부됩니다.
+		  """,
+      security = @SecurityRequirement(name = "bearerAuth")
+  )
   @ApiResponses({
       @ApiResponse(responseCode = "201", description = "연동 성공", useReturnTypeSchema = true),
       @ApiResponse(responseCode = "400", description = "authorizationCode 누락",
