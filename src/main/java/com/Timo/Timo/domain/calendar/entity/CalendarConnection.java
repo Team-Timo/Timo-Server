@@ -5,6 +5,7 @@ import com.Timo.Timo.global.crypto.AesGcmConverter;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
+import jakarta.persistence.ForeignKey;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -29,7 +30,15 @@ public class CalendarConnection {
   private Long id;
 
   @OneToOne
-  @JoinColumn(name = "user_id", nullable = false, unique = true)
+  @JoinColumn(
+      name = "user_id",
+      nullable = false,
+      unique = true,
+      foreignKey = @ForeignKey(
+          name = "fk_calendar_connections_user",
+          foreignKeyDefinition = "FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE"
+      )
+  )
   private User user;
 
   @Column(name = "calendar_email", nullable = false)
