@@ -22,20 +22,20 @@ spring:
               - email
               - profile
 
-security:
-  crypto:
-    calendar-token-key: ${CALENDAR_TOKEN_ENCRYPTION_KEY}
-
   data:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
 
+security:
+  crypto:
+    calendar-token-key: ${CALENDAR_TOKEN_ENCRYPTION_KEY}
+
 app:
   oauth2:
     redirect-uri: http://localhost:5173/oauth/callback
   calendar:
-    redirect-uri: http://localhost:5173/oauth/calendar/callback
+    redirect-uri: ${FRONTEND_URL}/oauth/calendar/callback
   auth:
     cookie-secure: false
 
