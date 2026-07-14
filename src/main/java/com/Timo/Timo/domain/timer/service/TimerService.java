@@ -61,6 +61,10 @@ public class TimerService {
       throw new CustomException(ErrorCode.FORBIDDEN);
     }
 
+    if (todo.getDurationSeconds() == null) {
+      throw new CustomException(TodoErrorCode.DURATION_REQUIRED);
+    }
+
     timerRecordRepository.findByUserIdAndStatusIn(userId, ACTIVE_STATUS)
         .ifPresent(existing -> {
           throw new CustomException(TimerErrorCode.TIMER_ALREADY_RUNNING);
