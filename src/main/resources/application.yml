@@ -2,8 +2,6 @@ spring:
   application:
     name: timo-server
 
-  profiles:
-    active: local
 
   jpa:
     hibernate:
