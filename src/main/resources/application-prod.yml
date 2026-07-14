@@ -36,9 +36,15 @@ spring:
       host: ${REDIS_HOST:redis}
       port: ${REDIS_PORT:6379}
 
+security:
+  crypto:
+    calendar-token-key: ${CALENDAR_TOKEN_ENCRYPTION_KEY}
+
 app:
   oauth2:
     redirect-uri: ${FRONTEND_URL}/oauth/callback
+  calendar:
+    redirect-uri: ${FRONTEND_URL}/oauth/calendar/callback
   auth:
     cookie-secure: true
 
