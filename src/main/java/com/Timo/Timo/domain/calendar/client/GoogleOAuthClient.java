@@ -82,6 +82,10 @@ public class GoogleOAuthClient {
           .body(body)
           .retrieve()
           .body(GoogleTokenResponse.class);
+    }  catch (ResourceAccessException e) {
+      throw new CustomException(CalendarErrorCode.CALENDAR_TIMEOUT);
+    } catch (RestClientResponseException e) {
+      throw new CustomException(CalendarErrorCode.CALENDAR_AUTH_FAILED);
     } catch (Exception e) {
       throw new CustomException(CalendarErrorCode.CALENDAR_AUTH_FAILED);
     }
@@ -106,6 +110,10 @@ public class GoogleOAuthClient {
           .body(GoogleCalendarEventsResponse.class);
 
       return response.items() != null ? response.items() : List.of();
+    } catch (ResourceAccessException e) {
+      throw new CustomException(CalendarErrorCode.CALENDAR_TIMEOUT);
+    } catch (RestClientResponseException e) {
+      throw new CustomException(CalendarErrorCode.CALENDAR_AUTH_FAILED);
     } catch (Exception e) {
       throw new CustomException(CalendarErrorCode.CALENDAR_AUTH_FAILED);
     }
