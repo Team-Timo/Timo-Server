@@ -7,8 +7,10 @@ import com.Timo.Timo.domain.calendar.dto.response.CalendarDisconnectResponse;
 import com.Timo.Timo.domain.calendar.dto.response.GoogleTokenResponse;
 import com.Timo.Timo.domain.calendar.dto.response.GoogleUserInfoResponse;
 import com.Timo.Timo.domain.calendar.entity.CalendarConnection;
+import com.Timo.Timo.domain.calendar.entity.CalendarRevocationOutbox;
 import com.Timo.Timo.domain.calendar.exception.CalendarErrorCode;
 import com.Timo.Timo.domain.calendar.repository.CalendarConnectionRepository;
+import com.Timo.Timo.domain.calendar.repository.CalendarRevocationOutboxRepository;
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.exception.UserErrorCode;
 import com.Timo.Timo.domain.user.repository.UserRepository;
@@ -39,6 +41,7 @@ public class CalendarService {
   private final CalendarConnectionCommandService commandService;
   private final StringRedisTemplate redisTemplate;
   private final CalendarStateValidator calendarStateValidator;
+  private final CalendarRevocationOutboxRepository calendarRevocationOutboxRepository;
 
   @Value("${spring.security.oauth2.client.registration.google.client-id}")
   private String clientId;
@@ -95,7 +98,11 @@ public class CalendarService {
         ? calendarConnection.getRefreshToken()
         : calendarConnection.getAccessToken();
 
-    googleOAuthClient.revokeToken(tokenToRevoke);
+    calendarRevocationOutboxRepository.save(
+        CalendarRevocationOutbox.builder()
+            .token(tokenToRevoke)
+            .build()
+    );
 
     commandService.deleteConnection(calendarConnection);
 
