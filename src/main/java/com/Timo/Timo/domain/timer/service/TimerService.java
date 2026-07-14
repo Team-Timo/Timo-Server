@@ -61,7 +61,7 @@ public class TimerService {
       throw new CustomException(ErrorCode.FORBIDDEN);
     }
 
-    if (todo.getDurationSeconds() == null) {
+    if (todo.getDurationSeconds() == null || todo.getDurationSeconds() <= 0) {
       throw new CustomException(TodoErrorCode.DURATION_REQUIRED);
     }
 
@@ -185,10 +185,12 @@ public class TimerService {
     timerRecordRepository.deleteByTodoId(todoId);
   }
 
+  @Transactional(readOnly = false)
   public TimerFinishResponse completeTimer(Long userId, Long timerId) {
     return finishTimer(userId, timerId, TimerStatus.COMPLETED);
   }
 
+  @Transactional(readOnly = false)
   public TimerFinishResponse stopTimer(Long userId, Long timerId) {
     return finishTimer(userId, timerId, TimerStatus.STOPPED);
   }
