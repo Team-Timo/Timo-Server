@@ -8,13 +8,20 @@ services:
     networks:
       - timo-network
     command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
 
   app-blue:
     image: ghcr.io/team-timo/timo-server:latest
     container_name: timo-app-blue
     restart: unless-stopped
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
     ports:
       - "127.0.0.1:8080:8080"
     env_file:
@@ -33,7 +40,8 @@ services:
     container_name: timo-app-green
     restart: unless-stopped
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
     ports:
       - "127.0.0.1:8081:8080"
     env_file:
