@@ -53,7 +53,7 @@ public class CalendarEventQueryService {
     Instant timeMax = to.plusDays(1).atStartOfDay(userZone).toInstant();
     List<CalendarEventItem> items = googleOAuthClient.fetchEvents(accessToken, timeMin, timeMax);
 
-    Map<LocalDate, List<CalendarEventResponse>> eventsByDate = groupByDate(items, from, to);
+    Map<LocalDate, List<CalendarEventResponse>> eventsByDate = groupByDate(items, from, to, userZone);
 
     List<CalendarDayResponse> days = from.datesUntil(to.plusDays(1))
         .map(date -> CalendarDayResponse.of(date, eventsByDate.getOrDefault(date, List.of())))
@@ -79,12 +79,12 @@ public class CalendarEventQueryService {
   }
 
   private Map<LocalDate, List<CalendarEventResponse>> groupByDate(
-      List<CalendarEventItem> items, LocalDate from, LocalDate to
+      List<CalendarEventItem> items, LocalDate from, LocalDate to, ZoneId userZone
   ) {
     Map<LocalDate, List<CalendarEventResponse>> eventsByDate = new LinkedHashMap<>();
 
     for (CalendarEventItem item : items) {
-      for (LocalDate date : CalendarEventDateResolver.resolveDates(item)) {
+      for (LocalDate date : CalendarEventDateResolver.resolveDates(item, userZone)) {
         if (date.isBefore(from) || date.isAfter(to)) {
           continue;
         }
