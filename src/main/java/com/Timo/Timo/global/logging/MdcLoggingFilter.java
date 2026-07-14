@@ -1,6 +1,7 @@
 package com.Timo.Timo.global.logging;
 
 import java.io.IOException;
+import java.util.regex.Pattern;
 import java.util.UUID;
 
 import org.slf4j.MDC;
@@ -16,6 +17,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class MdcLoggingFilter extends OncePerRequestFilter {
 
+	private static final Pattern TRACE_ID_PATTERN = Pattern.compile("^[A-Za-z0-9-]{16,64}$");
+
 	@Override
 	protected void doFilterInternal(
 		HttpServletRequest request,
@@ -25,10 +28,10 @@ public class MdcLoggingFilter extends OncePerRequestFilter {
 		long startTime = System.currentTimeMillis();
 		String traceId = resolveTraceId(request);
 
-		MDC.put(LoggingConstants.TRACE_ID, traceId);
-		MDC.put(LoggingConstants.HTTP_METHOD, request.getMethod());
-		MDC.put(LoggingConstants.REQUEST_URI, request.getRequestURI());
-		response.setHeader(LoggingConstants.TRACE_ID_HEADER, traceId);
+		MDC.put("traceId", traceId);
+		MDC.put("method", request.getMethod());
+		MDC.put("uri", request.getRequestURI());
+		response.setHeader(LoggingConstants.HEADER, traceId);
 
 		log.info("Request started");
 
@@ -42,8 +45,8 @@ public class MdcLoggingFilter extends OncePerRequestFilter {
 	}
 
 	private String resolveTraceId(HttpServletRequest request) {
-		String traceId = request.getHeader(LoggingConstants.TRACE_ID_HEADER);
-		if (StringUtils.hasText(traceId)) {
+		String traceId = request.getHeader(LoggingConstants.HEADER);
+		if (StringUtils.hasText(traceId) && TRACE_ID_PATTERN.matcher(traceId).matches()) {
 			return traceId;
 		}
 		return UUID.randomUUID().toString().replace("-", "");

@@ -29,7 +29,6 @@ public class SecurityConfig {
   private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
   private final CorsConfigurationSource corsConfigurationSource;
-  private final MdcLoggingFilter mdcLoggingFilter;
 
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -63,8 +62,8 @@ public class SecurityConfig {
         .exceptionHandling(exception ->
             exception.authenticationEntryPoint(jwtAuthenticationEntryPoint)
         )
-        .addFilterBefore(mdcLoggingFilter, JwtAuthenticationFilter.class)
-        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+        .addFilterBefore(mdcLoggingFilter(), JwtAuthenticationFilter.class);
 
     return http.build();
   }
