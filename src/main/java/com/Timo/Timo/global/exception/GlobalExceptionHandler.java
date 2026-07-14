@@ -14,6 +14,7 @@ import com.Timo.Timo.global.exception.code.BaseErrorCode;
 import com.Timo.Timo.global.exception.code.ErrorCode;
 import com.Timo.Timo.global.exception.dto.ErrorDto;
 
+import io.sentry.Sentry;
 import jakarta.persistence.LockTimeoutException;
 import jakarta.persistence.PessimisticLockException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -73,6 +74,7 @@ public class GlobalExceptionHandler {
 		HttpServletRequest request
 	) {
 		log.error("Unexpected exception occurred.", exception);
+		Sentry.captureException(exception);
 		return createErrorResponse(ErrorCode.INTERNAL_SERVER_ERROR, request);
 	}
 
