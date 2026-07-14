@@ -88,12 +88,15 @@ public interface CalendarControllerDocs {
       summary = "캘린더 일정 조회",
       description = """
         filter(DAY/WEEK/TWO_WEEK)와 baseDate에 따라 연동된 구글 캘린더 일정을 일자별로 조회합니다.
-        - DAY: baseDate 하루
-        - WEEK: baseDate ~ baseDate+6일 (총 7일)
-        - TWO_WEEK: baseDate-6일 ~ baseDate+6일 (총 13일)
+        
+        DAY: baseDate 하루
+        
+        WEEK: baseDate ~ baseDate+6일 (총 7일)
+        
+        TWO_WEEK: baseDate-7일 ~ baseDate+7일 (총 15일)
+        
         baseDate 미입력 시 오늘 날짜가 기본값으로 사용됩니다.
         별도 저장 없이 매 요청마다 구글 API를 직접 호출하여 최신 상태를 반환합니다.
-        Swagger UI 오른쪽 위의 Authorize 버튼을 눌러 유효한 Access Token을 입력해야 합니다.
         """,
       security = @SecurityRequirement(name = "bearerAuth")
   )
@@ -102,6 +105,8 @@ public interface CalendarControllerDocs {
       @ApiResponse(responseCode = "400", description = "유효하지 않은 filter 값이거나 날짜 형식 오류",
           content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class))),
       @ApiResponse(responseCode = "401", description = "토큰 없음/만료/유효하지 않음",
+          content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class))),
+      @ApiResponse(responseCode = "401", description = "Access Token 없음/만료/유효하지 않음, 또는 구글 access token 갱신 실패 등 구글 인증 자체 실패",
           content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class))),
       @ApiResponse(responseCode = "404", description = "연동된 캘린더가 없는 경우",
           content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class))),
