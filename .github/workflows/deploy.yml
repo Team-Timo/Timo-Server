@@ -1,7 +1,6 @@
 name: Deploy to EC2
 
 on:
-  # deploy 브랜치에 실제 커밋이 들어왔을 때 실행
   push:
     branches: [deploy]
 
@@ -11,7 +10,6 @@ permissions:
 
 jobs:
   deploy:
-    # push 이벤트는 이미 deploy 브랜치에 들어온 커밋만 대상으로 함
     runs-on: ubuntu-latest
 
     steps:
@@ -19,7 +17,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. Docker Buildx 설정 (linux/amd64 이미지 빌드용)
+      # 2. Docker Buildx 설정
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -44,31 +42,26 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # 5. EC2에 SSH 접속해서 배포
-      - name: Deploy to EC2
+      # 5. 배포 파일들을 EC2로 복사 (신규)
+      - name: Copy deploy files to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "deploy/docker-compose.prod.yml,deploy/deploy.sh"
+          target: "~/timo-deploy/"
+          strip_components: 1
+
+      # 6. EC2에 SSH 접속해서 Blue/Green 배포 실행
+      - name: Deploy to EC2 (Blue/Green)
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            # ghcr.io 로그인
             echo "${{ secrets.GHCR_TOKEN }}" | sudo docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
-
-            # 최신 이미지 pull
-            sudo docker pull ghcr.io/team-timo/timo-server:latest
-
-            # 배포 디렉토리 이동
             cd ~/timo-deploy
-
-            # 컨테이너 재시작
-            sudo docker compose down
-            sudo docker compose up -d
-
-            # 오래된 이미지 정리
-            sudo docker image prune -f
-
-            # 헬스체크 (30초 대기)
-            echo "Waiting for app to start..."
-            sleep 30
-            curl -f http://localhost:8080/swagger-ui.html || echo "Health check failed, but container is running"
+            chmod +x deploy.sh
+            bash deploy.sh
