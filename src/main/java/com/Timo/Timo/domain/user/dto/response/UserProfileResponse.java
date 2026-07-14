@@ -21,7 +21,7 @@ public record UserProfileResponse(
 	String calendarEmail
 ) {
 
-	public static UserProfileResponse from(User user) {
+	public static UserProfileResponse from(User user, boolean calendarConnected, String calendarEmail) {
 		return new UserProfileResponse(
 			user.getId(),
 			user.getName(),
@@ -29,8 +29,8 @@ public record UserProfileResponse(
 			user.getProfileImageUrl(),
 			user.getLanguage().name(),
 			user.getZoneId(),
-			user.isCalendarConnected(),
-			user.getCalendarEmail()
+      calendarConnected,
+      calendarEmail
 		);
 	}
 }

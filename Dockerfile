@@ -24,9 +24,11 @@ RUN ./gradlew bootJar -x test --no-daemon
 # ==================== Stage 2: 실행 ====================
 FROM eclipse-temurin:17-jre
 
+# curl 설치 (Docker healthcheck용)
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
-# Stage 1에서 만든 JAR 복사
 COPY --from=builder /app/build/libs/*.jar app.jar
 
 # 실행 포트

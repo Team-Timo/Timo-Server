@@ -2,6 +2,7 @@ package com.Timo.Timo.domain.focus.service;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -13,6 +14,10 @@ import com.Timo.Timo.domain.focus.exception.FocusSuccessCode;
 import com.Timo.Timo.domain.home.dto.response.HomeResponse.TodoResponse;
 import com.Timo.Timo.domain.home.service.HomeTodoReader;
 import com.Timo.Timo.domain.home.service.HomeTodoReader.LoadedTodos;
+import com.Timo.Timo.domain.timer.entity.TimerRecord;
+import com.Timo.Timo.domain.timer.enums.TimerStatus;
+import com.Timo.Timo.domain.timer.repository.TimerRecordRepository;
+import com.Timo.Timo.domain.todo.entity.Todo;
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.exception.UserErrorCode;
 import com.Timo.Timo.domain.user.repository.UserRepository;
@@ -25,12 +30,21 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 public class FocusService {
 
+	private static final List<TimerStatus> ACTIVE_TIMER_STATUSES = List.of(TimerStatus.RUNNING, TimerStatus.PAUSED);
+
 	private final UserRepository userRepository;
 	private final HomeTodoReader homeTodoReader;
+	private final TimerRecordRepository timerRecordRepository;
 
 	public FocusTodoResult getFocusTodo(Long userId) {
 		User user = getUser(userId);
-		LocalDate today = LocalDate.now(ZoneId.of(user.getZoneId()));
+		ZoneId userZone = ZoneId.of(user.getZoneId());
+		LocalDate today = LocalDate.now(userZone);
+
+		FocusTodoResult activeTimerFocus = resolveActiveTimerFocus(userId, userZone);
+		if (activeTimerFocus != null) {
+			return activeTimerFocus;
+		}
 
 		LoadedTodos loaded = homeTodoReader.load(userId, today, today);
 		List<TodoResponse> todos = homeTodoReader.sortedTodosOn(loaded, today);
@@ -39,17 +53,42 @@ public class FocusService {
 			return new FocusTodoResult(FocusSuccessCode.NO_TODO_TODAY, FocusTodoResponse.empty(today));
 		}
 
-		return todos.stream()
+		TodoResponse focusTodo = todos.stream()
 				.filter(todo -> !todo.completed())
 				.findFirst()
-				.map(todo -> new FocusTodoResult(
-						FocusSuccessCode.GET_FOCUS_TODO,
-						FocusTodoResponse.of(today, todo)
-				))
-				.orElseGet(() -> new FocusTodoResult(
-						FocusSuccessCode.ALL_TODO_COMPLETED,
-						FocusTodoResponse.empty(today)
-				));
+				.orElse(null);
+
+		if (focusTodo == null) {
+			return new FocusTodoResult(FocusSuccessCode.ALL_TODO_COMPLETED, FocusTodoResponse.empty(today));
+		}
+
+		String memo = loaded.rules().stream()
+				.filter(rule -> rule.getId().equals(focusTodo.todoId()))
+				.findFirst()
+				.map(Todo::getMemo)
+				.orElse(null);
+
+		return new FocusTodoResult(FocusSuccessCode.GET_FOCUS_TODO, FocusTodoResponse.of(today, focusTodo, memo));
+	}
+
+	private FocusTodoResult resolveActiveTimerFocus(Long userId, ZoneId userZone) {
+		TimerRecord activeTimer = timerRecordRepository
+				.findByUserIdAndStatusIn(userId, ACTIVE_TIMER_STATUSES)
+				.orElse(null);
+		if (activeTimer == null) {
+			return null;
+		}
+
+		Todo todo = activeTimer.getTodo();
+		LocalDate timerDate = activeTimer.getStartedAt()
+				.atZone(ZoneOffset.UTC).withZoneSameInstant(userZone).toLocalDate();
+
+		TodoResponse focusTodo = homeTodoReader.todoResponseOn(todo, timerDate);
+
+		return new FocusTodoResult(
+				FocusSuccessCode.GET_FOCUS_TODO,
+				FocusTodoResponse.of(timerDate, focusTodo, todo.getMemo())
+		);
 	}
 
 	private User getUser(Long userId) {

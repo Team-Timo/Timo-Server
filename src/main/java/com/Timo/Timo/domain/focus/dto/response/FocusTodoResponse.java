@@ -20,12 +20,12 @@ public record FocusTodoResponse(
 		boolean hasTodo,
 		FocusTodoDetailResponse todo
 ) {
-	public static FocusTodoResponse of(LocalDate date, TodoResponse todo) {
+	public static FocusTodoResponse of(LocalDate date, TodoResponse todo, String memo) {
 		return new FocusTodoResponse(
 				date,
 				Weekday.from(date.getDayOfWeek()),
 				true,
-				FocusTodoDetailResponse.from(todo)
+				FocusTodoDetailResponse.from(todo, memo)
 		);
 	}
 
@@ -52,10 +52,11 @@ public record FocusTodoResponse(
 			@JsonProperty("isRepeated")
 			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 			boolean isRepeated,
+			String memo,
 			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 			List<SubtaskResponse> subtasks
 	) {
-		public static FocusTodoDetailResponse from(TodoResponse todo) {
+		public static FocusTodoDetailResponse from(TodoResponse todo, String memo) {
 			return new FocusTodoDetailResponse(
 					todo.todoId(),
 					todo.icon(),
@@ -65,6 +66,7 @@ public record FocusTodoResponse(
 					todo.priority(),
 					todo.tag(),
 					todo.isRepeated(),
+					memo,
 					todo.subtasks()
 			);
 		}

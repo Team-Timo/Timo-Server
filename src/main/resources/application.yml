@@ -2,8 +2,6 @@ spring:
   application:
     name: timo-server
 
-  profiles:
-    active: local
 
   jpa:
     hibernate:
@@ -29,3 +27,12 @@ springdoc:
     path: /swagger-ui.html
   default-produces-media-type: application/json
   default-consumes-media-type: application/json
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never

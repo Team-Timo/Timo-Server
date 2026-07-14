@@ -1,5 +1,7 @@
 package com.Timo.Timo.domain.user.service;
 
+import com.Timo.Timo.domain.calendar.repository.CalendarConnectionRepository;
+import jakarta.persistence.Column;
 import java.time.DateTimeException;
 import java.time.ZoneId;
 
@@ -24,13 +26,19 @@ import lombok.RequiredArgsConstructor;
 public class UserService {
 
 	private final UserRepository userRepository;
+  private final CalendarConnectionRepository calendarConnectionRepository;
 
 	public UserProfileResponse getMyProfile(Long userId) {
-		User user = userRepository.findById(userId)
-			.orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
-		return UserProfileResponse.from(user);
-	}
+    boolean calendarConnected = calendarConnectionRepository.existsByUserId(userId);
+    String calendarEmail = calendarConnectionRepository.findByUserId(userId)
+        .map(connection -> connection.getCalendarEmail())
+        .orElse(null);
+
+    return UserProfileResponse.from(user, calendarConnected, calendarEmail);
+  }
 
 	@Transactional
 	public UpdateLanguageResponse updateLanguage(Long userId, UpdateLanguageRequest request) {

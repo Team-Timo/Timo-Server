@@ -36,9 +36,15 @@ spring:
       host: ${REDIS_HOST:redis}
       port: ${REDIS_PORT:6379}
 
+security:
+  crypto:
+    calendar-token-key: ${CALENDAR_TOKEN_ENCRYPTION_KEY}
+
 app:
   oauth2:
     redirect-uri: ${FRONTEND_URL}/oauth/callback
+  calendar:
+    redirect-uri: ${FRONTEND_URL}/oauth/calendar/callback
   auth:
     cookie-secure: true
 
@@ -61,3 +67,9 @@ ai:
 logging:
   level:
     root: INFO
+
+sentry:
+  dsn: ${SENTRY_DSN}
+  environment: ${SENTRY_ENVIRONMENT:prod}
+  traces-sample-rate: ${SENTRY_TRACES_SAMPLE_RATE:0.0}
+  release: ${SENTRY_RELEASE:unknown}

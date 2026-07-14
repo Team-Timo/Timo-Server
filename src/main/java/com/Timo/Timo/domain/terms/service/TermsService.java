@@ -1,17 +1,13 @@
 package com.Timo.Timo.domain.terms.service;
 
-import java.util.List;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.Timo.Timo.domain.terms.dto.response.TermsListResponse;
-import com.Timo.Timo.domain.terms.dto.response.TermsListResponse.TermsResponse;
+import com.Timo.Timo.domain.terms.dto.response.TermsDetailResponse;
 import com.Timo.Timo.domain.terms.entity.Terms;
+import com.Timo.Timo.domain.terms.enums.TermsLanguage;
 import com.Timo.Timo.domain.terms.enums.TermsType;
 import com.Timo.Timo.domain.terms.repository.TermsRepository;
-import com.Timo.Timo.global.exception.CustomException;
-import com.Timo.Timo.global.exception.code.ErrorCode;
 
 import lombok.RequiredArgsConstructor;
 
@@ -21,29 +17,21 @@ import lombok.RequiredArgsConstructor;
 public class TermsService {
 	private final TermsRepository termsRepository;
 
-	public TermsListResponse getTerms(String type) {
-		List<Terms> terms = type == null
-			? termsRepository.findAllByOrderByIdAsc()
-			: termsRepository.findAllByTypeOrderByIdAsc(parseType(type));
+	public TermsDetailResponse getTermsByCondition(String type, String language) {
+		Terms terms = termsRepository.findFirstByTypeAndLanguageOrderByIdDesc(
+				TermsType.from(type),
+				TermsLanguage.from(language)
+			)
+			.orElse(null);
 
-		return new TermsListResponse(
-			terms.stream()
-				.map(this::toResponse)
-				.toList()
-		);
-	}
-
-	private TermsType parseType(String type) {
-		if (type.isBlank()) {
-			throw new CustomException(ErrorCode.BAD_REQUEST);
+		if (terms == null) {
+			return null;
 		}
-		return TermsType.from(type);
-	}
 
-	private TermsResponse toResponse(Terms terms) {
-		return new TermsResponse(
-			terms.getId(),
+		return new TermsDetailResponse(
 			terms.getType().name(),
+			terms.getLanguage().name(),
+			terms.getVersion(),
 			terms.getTitle(),
 			terms.getContent()
 		);
