@@ -2,6 +2,7 @@ package com.Timo.Timo.domain.calendar.utils;
 
 import com.Timo.Timo.domain.calendar.dto.client.CalendarEventItem;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AccessLevel;
@@ -10,9 +11,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class CalendarEventDateResolver {
 
-  public static List<LocalDate> resolveDates(CalendarEventItem item) {
-    LocalDate startDate = GoogleEventDateParser.parseStart(item.start());
-    LocalDate endDate = GoogleEventDateParser.parseEnd(item.end());
+  public static List<LocalDate> resolveDates(CalendarEventItem item, ZoneId userZone) {
+    LocalDate startDate = GoogleEventDateParser.parseStart(item.start(), userZone);
+    LocalDate endDate = GoogleEventDateParser.parseEnd(item.end(), userZone);
 
     if (startDate == null || endDate == null) {
       return List.of();
