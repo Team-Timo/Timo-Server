@@ -2,6 +2,7 @@ package com.Timo.Timo.domain.tag.exception;
 
 import java.time.LocalDateTime;
 
+import org.slf4j.MDC;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +15,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 
 import com.Timo.Timo.domain.tag.controller.TagController;
 import com.Timo.Timo.global.exception.dto.ErrorDto;
+import com.Timo.Timo.global.logging.LoggingConstants;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -64,11 +66,17 @@ public class TagExceptionHandler {
 			errorCode.getHttpStatus().value(),
 			errorCode.getCode(),
 			message,
-			request.getRequestURI()
+			request.getRequestURI(),
+			resolveTraceId()
 		);
 
 		return ResponseEntity
 			.status(errorCode.getHttpStatus())
 			.body(response);
+	}
+
+	private String resolveTraceId() {
+		String traceId = MDC.get(LoggingConstants.TRACE_ID);
+		return traceId != null ? traceId : LoggingConstants.UNKNOWN;
 	}
 }
