@@ -1,6 +1,6 @@
 package com.Timo.Timo.domain.calendar.utils;
 
-import com.Timo.Timo.domain.calendar.dto.CalendarEventItem;
+import com.Timo.Timo.domain.calendar.dto.client.CalendarEventItem;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;

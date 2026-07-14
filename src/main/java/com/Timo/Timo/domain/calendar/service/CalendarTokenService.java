@@ -1,7 +1,7 @@
 package com.Timo.Timo.domain.calendar.service;
 
 import com.Timo.Timo.domain.calendar.client.GoogleOAuthClient;
-import com.Timo.Timo.domain.calendar.dto.response.GoogleTokenResponse;
+import com.Timo.Timo.domain.calendar.dto.client.GoogleTokenResponse;
 import com.Timo.Timo.domain.calendar.entity.CalendarConnection;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;

@@ -1,7 +1,7 @@
 package com.Timo.Timo.domain.calendar.service;
 
 import com.Timo.Timo.domain.calendar.client.GoogleOAuthClient;
-import com.Timo.Timo.domain.calendar.dto.CalendarEventItem;
+import com.Timo.Timo.domain.calendar.dto.client.CalendarEventItem;
 import com.Timo.Timo.domain.calendar.dto.response.CalendarDayResponse;
 import com.Timo.Timo.domain.calendar.dto.response.CalendarEventResponse;
 import com.Timo.Timo.domain.calendar.dto.response.CalendarEventsResponse;

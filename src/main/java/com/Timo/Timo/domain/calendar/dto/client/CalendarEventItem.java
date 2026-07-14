@@ -1,4 +1,4 @@
-package com.Timo.Timo.domain.calendar.dto;
+package com.Timo.Timo.domain.calendar.dto.client;
 
 public record CalendarEventItem (
     String id,

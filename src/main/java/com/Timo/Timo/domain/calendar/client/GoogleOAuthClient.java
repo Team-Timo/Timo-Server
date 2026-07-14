@@ -1,9 +1,9 @@
 package com.Timo.Timo.domain.calendar.client;
 
-import com.Timo.Timo.domain.calendar.dto.CalendarEventItem;
+import com.Timo.Timo.domain.calendar.dto.client.CalendarEventItem;
 import com.Timo.Timo.domain.calendar.dto.response.CalendarEventsResponse;
-import com.Timo.Timo.domain.calendar.dto.response.GoogleTokenResponse;
-import com.Timo.Timo.domain.calendar.dto.response.GoogleUserInfoResponse;
+import com.Timo.Timo.domain.calendar.dto.client.GoogleTokenResponse;
+import com.Timo.Timo.domain.calendar.dto.client.GoogleUserInfoResponse;
 import com.Timo.Timo.domain.calendar.exception.CalendarErrorCode;
 import com.Timo.Timo.global.exception.CustomException;
 import java.time.Duration;

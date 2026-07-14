@@ -1,8 +1,8 @@
 package com.Timo.Timo.domain.calendar.service;
 
 import com.Timo.Timo.domain.calendar.dto.response.CalendarConnectResponse;
-import com.Timo.Timo.domain.calendar.dto.response.GoogleTokenResponse;
-import com.Timo.Timo.domain.calendar.dto.response.GoogleUserInfoResponse;
+import com.Timo.Timo.domain.calendar.dto.client.GoogleTokenResponse;
+import com.Timo.Timo.domain.calendar.dto.client.GoogleUserInfoResponse;
 import com.Timo.Timo.domain.calendar.entity.CalendarConnection;
 import com.Timo.Timo.domain.calendar.exception.CalendarErrorCode;
 import com.Timo.Timo.domain.calendar.repository.CalendarConnectionRepository;

@@ -1,6 +1,6 @@
 package com.Timo.Timo.domain.calendar.utils;
 
-import com.Timo.Timo.domain.calendar.dto.GoogleEventDateTime;
+import com.Timo.Timo.domain.calendar.dto.client.GoogleEventDateTime;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import lombok.AccessLevel;
