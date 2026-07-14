@@ -55,8 +55,8 @@ public class FocusService {
 
 		String memo = loaded.rules().stream()
 				.filter(rule -> rule.getId().equals(focusTodo.todoId()))
-				.map(Todo::getMemo)
 				.findFirst()
+				.map(Todo::getMemo)
 				.orElse(null);
 
 		return new FocusTodoResult(FocusSuccessCode.GET_FOCUS_TODO, FocusTodoResponse.of(today, focusTodo, memo));
