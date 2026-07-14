@@ -4,7 +4,7 @@ import com.Timo.Timo.domain.calendar.client.GoogleOAuthClient;
 import com.Timo.Timo.domain.calendar.dto.CalendarEventItem;
 import com.Timo.Timo.domain.calendar.dto.response.CalendarDayResponse;
 import com.Timo.Timo.domain.calendar.dto.response.CalendarEventResponse;
-import com.Timo.Timo.domain.calendar.dto.response.CalendarEventsViewResponse;
+import com.Timo.Timo.domain.calendar.dto.response.CalendarEventsResponse;
 import com.Timo.Timo.domain.calendar.entity.CalendarConnection;
 import com.Timo.Timo.domain.calendar.enums.CalendarFilter;
 import com.Timo.Timo.domain.calendar.exception.CalendarErrorCode;
@@ -36,7 +36,7 @@ public class CalendarEventQueryService {
   private final CalendarTokenService calendarTokenService;
   private final GoogleOAuthClient googleOAuthClient;
 
-  public CalendarEventsViewResponse getEvents(Long userId, String filterValue, String baseDateValue) {
+  public CalendarEventsResponse getEvents(Long userId, String filterValue, String baseDateValue) {
     User user = getUser(userId);
     ZoneId userZone = ZoneId.of(user.getZoneId());
 
@@ -59,7 +59,7 @@ public class CalendarEventQueryService {
         .map(date -> CalendarDayResponse.of(date, eventsByDate.getOrDefault(date, List.of())))
         .toList();
 
-    return CalendarEventsViewResponse.of(filter, baseDate, days);
+    return CalendarEventsResponse.of(filter, baseDate, days);
   }
 
   private User getUser(Long userId) {
