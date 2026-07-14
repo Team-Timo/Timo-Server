@@ -23,20 +23,12 @@ public interface TermsControllerDocs {
 	@ApiResponses({
 		@ApiResponse(
 			responseCode = "200",
-			description = "약관 조회 성공",
+			description = "약관 조회 성공, 조건에 맞는 약관이 없으면 data는 null",
 			useReturnTypeSchema = true
 		),
 		@ApiResponse(
 			responseCode = "400",
 			description = "잘못된 타입 또는 언어 값",
-			content = @Content(
-				mediaType = "application/json",
-				schema = @Schema(implementation = ErrorDto.class)
-			)
-		),
-		@ApiResponse(
-			responseCode = "404",
-			description = "조건에 맞는 약관이 없음",
 			content = @Content(
 				mediaType = "application/json",
 				schema = @Schema(implementation = ErrorDto.class)

@@ -7,9 +7,7 @@ import com.Timo.Timo.domain.terms.dto.response.TermsDetailResponse;
 import com.Timo.Timo.domain.terms.entity.Terms;
 import com.Timo.Timo.domain.terms.enums.TermsLanguage;
 import com.Timo.Timo.domain.terms.enums.TermsType;
-import com.Timo.Timo.domain.terms.exception.TermsErrorCode;
 import com.Timo.Timo.domain.terms.repository.TermsRepository;
-import com.Timo.Timo.global.exception.CustomException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -24,7 +22,11 @@ public class TermsService {
 				TermsType.from(type),
 				TermsLanguage.from(language)
 			)
-			.orElseThrow(() -> new CustomException(TermsErrorCode.TERMS_NOT_FOUND));
+			.orElse(null);
+
+		if (terms == null) {
+			return null;
+		}
 
 		return new TermsDetailResponse(
 			terms.getType().name(),
