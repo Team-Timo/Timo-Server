@@ -3,13 +3,14 @@ package com.Timo.Timo.domain.calendar.utils;
 import com.Timo.Timo.domain.calendar.dto.client.GoogleEventDateTime;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class GoogleEventDateParser {
 
-  public static LocalDate parseStart(GoogleEventDateTime start) {
+  public static LocalDate parseStart(GoogleEventDateTime start, ZoneId userZone) {
     if (start == null) {
       return null;
     }
@@ -17,12 +18,12 @@ public class GoogleEventDateParser {
       return LocalDate.parse(start.date());
     }
     if (start.dateTime() != null) {
-      return OffsetDateTime.parse(start.dateTime()).toLocalDate();
+      return OffsetDateTime.parse(start.dateTime()).atZoneSameInstant(userZone).toLocalDate();
     }
     return null;
   }
 
-  public static LocalDate parseEnd(GoogleEventDateTime end) {
+  public static LocalDate parseEnd(GoogleEventDateTime end, ZoneId userZone) {
     if (end == null) {
       return null;
     }
@@ -30,7 +31,7 @@ public class GoogleEventDateParser {
       return LocalDate.parse(end.date()).minusDays(1);
     }
     if (end.dateTime() != null) {
-      return OffsetDateTime.parse(end.dateTime()).toLocalDate();
+      return OffsetDateTime.parse(end.dateTime()).atZoneSameInstant(userZone).toLocalDate();
     }
     return null;
   }
