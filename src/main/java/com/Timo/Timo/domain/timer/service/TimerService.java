@@ -26,6 +26,8 @@ import com.Timo.Timo.global.exception.code.ErrorCode;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -82,7 +84,7 @@ public class TimerService {
         .build();
     timerSessionRepository.save(session);
 
-    TodoInstance instance = getOrCreateInstance(todo, now.toLocalDate());
+    TodoInstance instance = getOrCreateInstance(todo, resolveTimerDate(timerRecord));
     instance.startTimer();
 
     return TimerStartResponse.from(timerRecord);
@@ -99,7 +101,7 @@ public class TimerService {
 
     LocalDateTime now = LocalDateTime.now();
 
-    TodoInstance instance = getOrCreateInstance(timerRecord.getTodo(), timerRecord.getStartedAt().toLocalDate());
+    TodoInstance instance = getOrCreateInstance(timerRecord.getTodo(), resolveTimerDate(timerRecord));
 
     if (action == TimerAction.PAUSE) {
       timerRecord.pause();
@@ -171,6 +173,11 @@ public class TimerService {
         .orElseGet(() -> todoInstanceRepository.save(TodoInstance.of(todo, date, 0)));
   }
 
+  private LocalDate resolveTimerDate(TimerRecord timerRecord) {
+    ZoneId userZone = ZoneId.of(timerRecord.getUser().getZoneId());
+    return timerRecord.getStartedAt().atZone(ZoneOffset.UTC).withZoneSameInstant(userZone).toLocalDate();
+  }
+
   public boolean hasActiveTimer(Long todoId) {
     return timerRecordRepository.existsByTodo_IdAndStatusIn(todoId, ACTIVE_STATUS);
   }
@@ -230,7 +237,7 @@ public class TimerService {
 
     timerRecord.finish(targetStatus, now, actualSeconds);
 
-    TodoInstance instance = getOrCreateInstance(timerRecord.getTodo(), timerRecord.getStartedAt().toLocalDate());
+    TodoInstance instance = getOrCreateInstance(timerRecord.getTodo(), resolveTimerDate(timerRecord));
     instance.stopTimer();
     instance.markCompleted();
 
