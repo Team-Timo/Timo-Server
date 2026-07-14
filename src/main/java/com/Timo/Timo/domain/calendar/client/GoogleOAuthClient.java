@@ -1,7 +1,7 @@
 package com.Timo.Timo.domain.calendar.client;
 
 import com.Timo.Timo.domain.calendar.dto.client.CalendarEventItem;
-import com.Timo.Timo.domain.calendar.dto.response.CalendarEventsResponse;
+import com.Timo.Timo.domain.calendar.dto.client.GoogleCalendarEventsResponse;
 import com.Timo.Timo.domain.calendar.dto.client.GoogleTokenResponse;
 import com.Timo.Timo.domain.calendar.dto.client.GoogleUserInfoResponse;
 import com.Timo.Timo.domain.calendar.exception.CalendarErrorCode;
@@ -99,11 +99,11 @@ public class GoogleOAuthClient {
         .toUriString();
 
     try {
-      CalendarEventsResponse response = restClient.get()
+      GoogleCalendarEventsResponse response = restClient.get()
           .uri(uri)
           .header("Authorization", "Bearer " + accessToken)
           .retrieve()
-          .body(CalendarEventsResponse.class);
+          .body(GoogleCalendarEventsResponse.class);
 
       return response.items() != null ? response.items() : List.of();
     } catch (Exception e) {
