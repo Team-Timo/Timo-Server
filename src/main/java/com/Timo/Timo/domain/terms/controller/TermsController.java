@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.Timo.Timo.domain.terms.docs.TermsControllerDocs;
-import com.Timo.Timo.domain.terms.dto.response.TermsListResponse;
+import com.Timo.Timo.domain.terms.dto.response.TermsDetailResponse;
 import com.Timo.Timo.domain.terms.exception.TermsSuccessCode;
 import com.Timo.Timo.domain.terms.service.TermsService;
 import com.Timo.Timo.global.response.BaseResponse;
@@ -25,10 +25,11 @@ public class TermsController implements TermsControllerDocs {
 
 	@Override
 	@GetMapping
-	public ResponseEntity<BaseResponse<TermsListResponse>> getTerms(
-		@RequestParam(required = false) String type
+	public ResponseEntity<BaseResponse<TermsDetailResponse>> getTermsByCondition(
+		@RequestParam String type,
+		@RequestParam String language
 	) {
-		TermsListResponse response = termsService.getTerms(type);
+		TermsDetailResponse response = termsService.getTermsByCondition(type, language);
 
 		return ResponseEntity.ok(
 			BaseResponse.onSuccess(TermsSuccessCode.TERMS_RETRIEVED, response)
