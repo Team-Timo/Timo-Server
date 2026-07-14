@@ -3,9 +3,6 @@ package com.Timo.Timo.domain.terms.dto.response;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 public record TermsDetailResponse(
-	@Schema(description = "약관 ID")
-	Long termsId,
-
 	@Schema(description = "약관 타입")
 	String type,
 
