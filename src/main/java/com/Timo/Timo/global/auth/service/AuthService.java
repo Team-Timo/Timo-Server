@@ -1,5 +1,9 @@
 package com.Timo.Timo.global.auth.service;
 
+import com.Timo.Timo.domain.calendar.client.GoogleOAuthClient;
+import com.Timo.Timo.domain.calendar.entity.CalendarRevocationOutbox;
+import com.Timo.Timo.domain.calendar.repository.CalendarConnectionRepository;
+import com.Timo.Timo.domain.calendar.repository.CalendarRevocationOutboxRepository;
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.exception.UserErrorCode;
 import com.Timo.Timo.domain.user.repository.UserRepository;
@@ -10,11 +14,13 @@ import com.Timo.Timo.global.exception.CustomException;
 import com.Timo.Timo.global.exception.code.ErrorCode;
 import com.Timo.Timo.global.jwt.provider.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -24,6 +30,8 @@ public class AuthService {
   private final UserRepository userRepository;
   private final RefreshTokenService refreshTokenService;
   private final BlackListService blacklistService;
+  private final CalendarConnectionRepository calendarConnectionRepository;
+  private final CalendarRevocationOutboxRepository calendarRevocationOutboxRepository;
 
   public AuthTokenResponse exchangeCodeForToken(String code) {
 
@@ -103,11 +111,13 @@ public class AuthService {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
+    revokeCalendarConnectionIfExists(userId);
+
     userRepository.delete(user);
 
     TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
       @Override
-      public void afterCommit(){
+      public void afterCommit() {
         if (accessToken != null) {
           long remainingExpiry = jwtTokenProvider.getRemainingExpiry(accessToken);
           blacklistService.addToBlacklist(accessToken, remainingExpiry);
@@ -116,5 +126,19 @@ public class AuthService {
     });
 
     refreshTokenService.deleteAllRefreshTokens(String.valueOf(userId));
+  }
+
+  private void revokeCalendarConnectionIfExists(Long userId) {
+    calendarConnectionRepository.findByUserId(userId).ifPresent(connection -> {
+      String tokenToRevoke = connection.getRefreshToken() != null
+          ? connection.getRefreshToken()
+          : connection.getAccessToken();
+
+      calendarRevocationOutboxRepository.save(
+          CalendarRevocationOutbox.builder()
+              .token(tokenToRevoke)
+              .build()
+      );
+    });
   }
 }
