@@ -39,6 +39,7 @@ public class OnboardingService {
 
     return OnboardingResponse.builder()
         .onboardingCompleted(true)
+        .termsAgreed(user.isTermsAgreed())
         .build();
   }
 }

@@ -4,10 +4,15 @@ import com.Timo.Timo.domain.timer.entity.TimerRecord;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 public record TimerFinishResponse(
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     Long timerId,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     Long todoId,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     String status,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     Integer plannedSeconds,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     Integer actualSeconds,
     @Schema(description = "AI 피드백 문구. AI 호출 실패 시 null", nullable = true)
     String aiFeedback

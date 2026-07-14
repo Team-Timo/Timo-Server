@@ -6,12 +6,16 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
 
 public record TimerStartResponse(
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     Long timerId,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     Long todoId,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     String status,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     Integer plannedSeconds,
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    @Schema(example = "2026-07-06 17:51:50", type = "string")
+    @Schema(example = "2026-07-06 17:51:50", type = "string", requiredMode = Schema.RequiredMode.REQUIRED)
     LocalDateTime startedAt
 ) {
   public static TimerStartResponse from(TimerRecord timerRecord) {

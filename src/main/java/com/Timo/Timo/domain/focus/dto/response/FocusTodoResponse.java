@@ -9,18 +9,23 @@ import com.Timo.Timo.domain.home.dto.response.HomeResponse.TodoResponse;
 import com.Timo.Timo.domain.todo.enums.Weekday;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 public record FocusTodoResponse(
+		@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 		LocalDate date,
+		@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 		Weekday dayOfWeek,
+		@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 		boolean hasTodo,
 		FocusTodoDetailResponse todo
 ) {
-	public static FocusTodoResponse of(LocalDate date, TodoResponse todo) {
+	public static FocusTodoResponse of(LocalDate date, TodoResponse todo, String memo) {
 		return new FocusTodoResponse(
 				date,
 				Weekday.from(date.getDayOfWeek()),
 				true,
-				FocusTodoDetailResponse.from(todo)
+				FocusTodoDetailResponse.from(todo, memo)
 		);
 	}
 
@@ -34,18 +39,24 @@ public record FocusTodoResponse(
 	}
 
 	public record FocusTodoDetailResponse(
+			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 			Long todoId,
 			String icon,
+			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 			String title,
+			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 			boolean completed,
 			Integer durationSeconds,
 			String priority,
 			TagResponse tag,
 			@JsonProperty("isRepeated")
+			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 			boolean isRepeated,
+			String memo,
+			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 			List<SubtaskResponse> subtasks
 	) {
-		public static FocusTodoDetailResponse from(TodoResponse todo) {
+		public static FocusTodoDetailResponse from(TodoResponse todo, String memo) {
 			return new FocusTodoDetailResponse(
 					todo.todoId(),
 					todo.icon(),
@@ -55,6 +66,7 @@ public record FocusTodoResponse(
 					todo.priority(),
 					todo.tag(),
 					todo.isRepeated(),
+					memo,
 					todo.subtasks()
 			);
 		}

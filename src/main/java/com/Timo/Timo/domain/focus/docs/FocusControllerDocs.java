@@ -10,6 +10,7 @@ import com.Timo.Timo.global.response.BaseResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -29,7 +30,71 @@ public interface FocusControllerDocs {
 			@ApiResponse(
 					responseCode = "200",
 					description = "집중 모드 TODO 조회 성공 / 오늘의 TODO가 없거나 모두 완료한 경우",
-					useReturnTypeSchema = true
+					content = @Content(
+							mediaType = "application/json",
+							schema = @Schema(implementation = FocusTodoResponse.class),
+							examples = {
+									@ExampleObject(
+											name = "집중 모드 TODO 조회 성공",
+											value = """
+													{
+													  "status": 200,
+													  "message": "집중 모드 TODO 조회 성공",
+													  "data": {
+													    "date": "2026-07-14",
+													    "dayOfWeek": "MON",
+													    "hasTodo": true,
+													    "todo": {
+													      "todoId": 1,
+													      "icon": "📚",
+													      "title": "알고리즘 문제 풀기",
+													      "completed": false,
+													      "durationSeconds": 1800,
+													      "priority": "HIGH",
+													      "tag": {
+													        "tagId": 1,
+													        "name": "과제"
+													      },
+													      "isRepeated": false,
+													      "memo": "백준 골드 2문제 목표",
+													      "subtasks": []
+													    }
+													  }
+													}
+													"""
+									),
+									@ExampleObject(
+											name = "오늘의 TODO가 없는 경우",
+											value = """
+													{
+													  "status": 200,
+													  "message": "오늘의 TODO가 없습니다.",
+													  "data": {
+													    "date": "2026-07-14",
+													    "dayOfWeek": "MON",
+													    "hasTodo": false,
+													    "todo": null
+													  }
+													}
+													"""
+									),
+									@ExampleObject(
+											name = "오늘의 TODO를 모두 완료한 경우",
+											value = """
+													{
+													  "status": 200,
+													  "message": "오늘의 TODO를 모두 완료했습니다.",
+													  "data": {
+													    "date": "2026-07-14",
+													    "dayOfWeek": "MON",
+													    "hasTodo": false,
+													    "todo": null
+													  }
+													}
+													"""
+									)
+							}
+					)
 			),
 			@ApiResponse(
 					responseCode = "401",
