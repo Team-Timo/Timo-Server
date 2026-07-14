@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public enum CalendarErrorCode implements BaseErrorCode {
 
+  INVALID_FILTER_OR_DATE(HttpStatus.BAD_REQUEST, "CALENDAR_400", "유효하지 않은 필터 값이거나 날짜 형식이 올바르지 않습니다."),
   CALENDAR_AUTH_FAILED(HttpStatus.UNAUTHORIZED, "CALENDAR_401", "구글 캘린더 인증에 실패했습니다."),
   CALENDAR_EMAIL_MISMATCH(HttpStatus.UNAUTHORIZED, "CALENDAR_401", "가입 시 사용한 구글 계정으로만 연동할 수 있습니다."),
   CALENDAR_STATE_MISMATCH(HttpStatus.UNAUTHORIZED, "CALENDAR_401", "유효하지 않은 인증 요청입니다."),
