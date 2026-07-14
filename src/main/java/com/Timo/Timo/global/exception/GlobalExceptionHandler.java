@@ -9,7 +9,6 @@ import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import com.Timo.Timo.global.exception.code.BaseErrorCode;
 import com.Timo.Timo.global.exception.code.ErrorCode;
@@ -43,14 +42,6 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(HttpMessageNotReadableException.class)
 	public ResponseEntity<ErrorDto> handleHttpMessageNotReadableException(
 		HttpMessageNotReadableException exception,
-		HttpServletRequest request
-	) {
-		return createErrorResponse(ErrorCode.BAD_REQUEST, request);
-	}
-
-	@ExceptionHandler(MethodArgumentTypeMismatchException.class)
-	public ResponseEntity<ErrorDto> handleMethodArgumentTypeMismatchException(
-		MethodArgumentTypeMismatchException exception,
 		HttpServletRequest request
 	) {
 		return createErrorResponse(ErrorCode.BAD_REQUEST, request);
