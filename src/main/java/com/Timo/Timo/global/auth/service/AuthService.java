@@ -1,7 +1,9 @@
 package com.Timo.Timo.global.auth.service;
 
 import com.Timo.Timo.domain.calendar.client.GoogleOAuthClient;
+import com.Timo.Timo.domain.calendar.entity.CalendarRevocationOutbox;
 import com.Timo.Timo.domain.calendar.repository.CalendarConnectionRepository;
+import com.Timo.Timo.domain.calendar.repository.CalendarRevocationOutboxRepository;
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.exception.UserErrorCode;
 import com.Timo.Timo.domain.user.repository.UserRepository;
@@ -28,8 +30,8 @@ public class AuthService {
   private final UserRepository userRepository;
   private final RefreshTokenService refreshTokenService;
   private final BlackListService blacklistService;
-  private final GoogleOAuthClient googleOAuthClient;
   private final CalendarConnectionRepository calendarConnectionRepository;
+  private final CalendarRevocationOutboxRepository calendarRevocationOutboxRepository;
 
   public AuthTokenResponse exchangeCodeForToken(String code) {
 
@@ -127,9 +129,16 @@ public class AuthService {
   }
 
   private void revokeCalendarConnectionIfExists(Long userId) {
-    calendarConnectionRepository.findByUserId(userId)
-        .ifPresent(connection ->
-                googleOAuthClient.revokeToken(connection.getTokenToRevoke())
-        );
+    calendarConnectionRepository.findByUserId(userId).ifPresent(connection -> {
+      String tokenToRevoke = connection.getRefreshToken() != null
+          ? connection.getRefreshToken()
+          : connection.getAccessToken();
+
+      calendarRevocationOutboxRepository.save(
+          CalendarRevocationOutbox.builder()
+              .token(tokenToRevoke)
+              .build()
+      );
+    });
   }
 }
