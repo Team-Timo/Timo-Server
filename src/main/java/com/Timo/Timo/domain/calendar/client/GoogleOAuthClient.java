@@ -1,10 +1,14 @@
 package com.Timo.Timo.domain.calendar.client;
 
+import com.Timo.Timo.domain.calendar.dto.CalendarEventItem;
+import com.Timo.Timo.domain.calendar.dto.response.CalendarEventsResponse;
 import com.Timo.Timo.domain.calendar.dto.response.GoogleTokenResponse;
 import com.Timo.Timo.domain.calendar.dto.response.GoogleUserInfoResponse;
 import com.Timo.Timo.domain.calendar.exception.CalendarErrorCode;
 import com.Timo.Timo.global.exception.CustomException;
 import java.time.Duration;
+import java.time.Instant;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
@@ -14,6 +18,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @Component
 public class GoogleOAuthClient {
@@ -59,6 +64,48 @@ public class GoogleOAuthClient {
       throw new CustomException(CalendarErrorCode.CALENDAR_TIMEOUT);
     } catch (RestClientResponseException e) {
       throw new CustomException(CalendarErrorCode.CALENDAR_AUTH_FAILED);
+    } catch (Exception e) {
+      throw new CustomException(CalendarErrorCode.CALENDAR_AUTH_FAILED);
+    }
+  }
+
+  public GoogleTokenResponse refreshAccessToken(String refreshToken) {
+    MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+    body.add("client_id", clientId);
+    body.add("client_secret", clientSecret);
+    body.add("refresh_token", refreshToken);
+    body.add("grant_type", "refresh_token");
+
+    try {
+      return restClient.post()
+          .uri("https://oauth2.googleapis.com/token")
+          .body(body)
+          .retrieve()
+          .body(GoogleTokenResponse.class);
+    } catch (Exception e) {
+      throw new CustomException(CalendarErrorCode.CALENDAR_AUTH_FAILED);
+    }
+  }
+
+
+  public List<CalendarEventItem> fetchEvents(String accessToken, Instant timeMin, Instant timeMax) {
+    String uri = UriComponentsBuilder
+        .fromUriString("https://www.googleapis.com/calendar/v3/calendars/primary/events")
+        .queryParam("timeMin", timeMin.toString())
+        .queryParam("timeMax", timeMax.toString())
+        .queryParam("singleEvents", true)
+        .queryParam("orderBy", "startTime")
+        .queryParam("maxResults", 100)
+        .toUriString();
+
+    try {
+      CalendarEventsResponse response = restClient.get()
+          .uri(uri)
+          .header("Authorization", "Bearer " + accessToken)
+          .retrieve()
+          .body(CalendarEventsResponse.class);
+
+      return response.items() != null ? response.items() : List.of();
     } catch (Exception e) {
       throw new CustomException(CalendarErrorCode.CALENDAR_AUTH_FAILED);
     }
