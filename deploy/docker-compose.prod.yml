@@ -1,0 +1,55 @@
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: timo-redis
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    networks:
+      - timo-network
+    command: redis-server --appendonly yes
+
+  app-blue:
+    image: ghcr.io/team-timo/timo-server:latest
+    container_name: timo-app-blue
+    restart: unless-stopped
+    depends_on:
+      - redis
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    networks:
+      - timo-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 60s
+
+  app-green:
+    image: ghcr.io/team-timo/timo-server:latest
+    container_name: timo-app-green
+    restart: unless-stopped
+    depends_on:
+      - redis
+    ports:
+      - "8081:8080"
+    env_file:
+      - .env
+    networks:
+      - timo-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 60s
+
+networks:
+  timo-network:
+    driver: bridge
+
+volumes:
+  redis-data:
