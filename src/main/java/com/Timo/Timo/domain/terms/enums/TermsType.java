@@ -8,6 +8,9 @@ public enum TermsType {
 	PRIVACY;
 
 	public static TermsType from(String value) {
+		if (value == null || value.isBlank()) {
+			throw new CustomException(ErrorCode.BAD_REQUEST);
+		}
 		try {
 			return TermsType.valueOf(value.trim());
 		} catch (IllegalArgumentException exception) {
