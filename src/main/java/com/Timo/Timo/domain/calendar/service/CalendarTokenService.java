@@ -3,6 +3,8 @@ package com.Timo.Timo.domain.calendar.service;
 import com.Timo.Timo.domain.calendar.client.GoogleOAuthClient;
 import com.Timo.Timo.domain.calendar.dto.client.GoogleTokenResponse;
 import com.Timo.Timo.domain.calendar.entity.CalendarConnection;
+import com.Timo.Timo.domain.calendar.exception.CalendarErrorCode;
+import com.Timo.Timo.global.exception.CustomException;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,6 +23,11 @@ public class CalendarTokenService {
 
     if (!expiringSoon) {
       return connection.getAccessToken();
+    }
+
+    String refreshToken = connection.getRefreshToken();
+    if (refreshToken == null) {
+      throw new CustomException(CalendarErrorCode.CALENDAR_AUTH_FAILED);
     }
 
     GoogleTokenResponse refreshed = googleOAuthClient.refreshAccessToken(connection.getRefreshToken());
