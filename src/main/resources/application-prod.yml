@@ -67,3 +67,9 @@ ai:
 logging:
   level:
     root: INFO
+
+sentry:
+  dsn: ${SENTRY_DSN}
+  environment: ${SENTRY_ENVIRONMENT:prod}
+  traces-sample-rate: ${SENTRY_TRACES_SAMPLE_RATE:0.0}
+  release: ${SENTRY_RELEASE:unknown}
