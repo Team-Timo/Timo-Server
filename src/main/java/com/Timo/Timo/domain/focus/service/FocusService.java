@@ -13,6 +13,7 @@ import com.Timo.Timo.domain.focus.exception.FocusSuccessCode;
 import com.Timo.Timo.domain.home.dto.response.HomeResponse.TodoResponse;
 import com.Timo.Timo.domain.home.service.HomeTodoReader;
 import com.Timo.Timo.domain.home.service.HomeTodoReader.LoadedTodos;
+import com.Timo.Timo.domain.todo.entity.Todo;
 import com.Timo.Timo.domain.todo.enums.TodoTimerStatus;
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.exception.UserErrorCode;
@@ -52,7 +53,13 @@ public class FocusService {
 			return new FocusTodoResult(FocusSuccessCode.ALL_TODO_COMPLETED, FocusTodoResponse.empty(today));
 		}
 
-		return new FocusTodoResult(FocusSuccessCode.GET_FOCUS_TODO, FocusTodoResponse.of(today, focusTodo));
+		String memo = loaded.rules().stream()
+				.filter(rule -> rule.getId().equals(focusTodo.todoId()))
+				.map(Todo::getMemo)
+				.findFirst()
+				.orElse(null);
+
+		return new FocusTodoResult(FocusSuccessCode.GET_FOCUS_TODO, FocusTodoResponse.of(today, focusTodo, memo));
 	}
 
 	private User getUser(Long userId) {
