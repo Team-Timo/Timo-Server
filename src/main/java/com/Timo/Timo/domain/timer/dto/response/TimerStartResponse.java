@@ -3,6 +3,7 @@ package com.Timo.Timo.domain.timer.dto.response;
 import com.Timo.Timo.domain.timer.entity.TimerRecord;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public record TimerStartResponse(
@@ -10,6 +11,9 @@ public record TimerStartResponse(
     Long timerId,
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     Long todoId,
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    @Schema(type = "string", example = "2026-07-15", requiredMode = Schema.RequiredMode.REQUIRED)
+    LocalDate date,
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     String status,
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
@@ -22,6 +26,7 @@ public record TimerStartResponse(
     return new TimerStartResponse(
         timerRecord.getId(),
         timerRecord.getTodo().getId(),
+        timerRecord.getTimerDate(),
         timerRecord.getStatus().name(),
         timerRecord.getPlannedSeconds(),
         timerRecord.getStartedAt()

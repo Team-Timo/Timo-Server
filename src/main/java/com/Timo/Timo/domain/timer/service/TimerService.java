@@ -26,8 +26,6 @@ import com.Timo.Timo.global.exception.code.ErrorCode;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -178,8 +176,7 @@ public class TimerService {
   }
 
   private LocalDate resolveTimerDate(TimerRecord timerRecord) {
-    ZoneId userZone = ZoneId.of(timerRecord.getUser().getZoneId());
-    return timerRecord.getStartedAt().atZone(ZoneOffset.UTC).withZoneSameInstant(userZone).toLocalDate();
+    return timerRecord.getTimerDate();
   }
 
   public boolean hasActiveTimer(Long todoId) {

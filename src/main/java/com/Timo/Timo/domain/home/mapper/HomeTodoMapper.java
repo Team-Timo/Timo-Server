@@ -29,7 +29,7 @@ public class HomeTodoMapper {
 				todo.getDurationSeconds(),
 				todo.getPriority() != null ? todo.getPriority().name() : null,
 				mapTag(context.tag()),
-				todo.getMemo() != null && !todo.getMemo().isBlank(),
+				!todo.getSubtasks().isEmpty(),
 				todo.getRepeatType() != RepeatType.NONE,
 				resolveTimerStatus(instance),
 				instance != null ? instance.getSortOrder() : context.defaultSortOrder(),
