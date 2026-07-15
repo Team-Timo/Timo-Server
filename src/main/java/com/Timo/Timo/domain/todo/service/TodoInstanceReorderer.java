@@ -85,32 +85,26 @@ public class TodoInstanceReorderer {
 	}
 
 	private Map<Long, TodoInstance> materializeDayGroup(Long userId, LocalDate date) {
-		List<Todo> occurringRules = todoRepository.findRulesInRange(userId, date, date).stream()
-				.filter(rule -> todoDateCalculator.occursOn(rule, date))
-				.toList();
+    Map<Long, TodoInstance> result = new LinkedHashMap<>();
 
-		List<Long> todoIds = occurringRules.stream()
-				.map(Todo::getId)
-				.toList();
+    List<TodoInstance> existingInstances = todoInstanceRepository.findDailyInstances(userId, date);
+    for (TodoInstance instance : existingInstances) {
+      result.put(instance.getTodo().getId(), instance);
+    }
 
-		Map<Long, TodoInstance> existing = todoIds.isEmpty()
-				? Map.of()
-				: todoInstanceRepository.findByTodoIdsAndDateRange(todoIds, date, date).stream()
-						.collect(Collectors.toMap(
-								instance -> instance.getTodo().getId(),
-								Function.identity()
-						));
+    List<Todo> occurringRules = todoRepository.findRulesInRange(userId, date, date).stream()
+        .filter(rule -> todoDateCalculator.occursOn(rule, date))
+        .toList();
 
-		Map<Long, TodoInstance> result = new LinkedHashMap<>();
-		for (int index = 0; index < occurringRules.size(); index++) {
-			Todo rule = occurringRules.get(index);
-			TodoInstance instance = existing.get(rule.getId());
-			if (instance == null) {
-				instance = todoInstanceRepository.save(TodoInstance.of(rule, date, index));
-			}
-			result.put(rule.getId(), instance);
-		}
-		return result;
+    int nextSortOrder = result.size();
+    for (Todo rule : occurringRules) {
+      if (!result.containsKey(rule.getId())) {
+        TodoInstance created = todoInstanceRepository.save(TodoInstance.of(rule, date, nextSortOrder++));
+        result.put(rule.getId(), created);
+      }
+    }
+
+    return result;
 	}
 
 	private void moveToCompletedBottom(TodoInstance target, Iterable<TodoInstance> group) {
