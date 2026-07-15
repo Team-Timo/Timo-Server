@@ -26,6 +26,8 @@ services:
       - "127.0.0.1:8080:8080"
     env_file:
       - .env
+    environment:
+      - INSTANCE_NAME=blue
     networks:
       - timo-network
     healthcheck:
@@ -46,6 +48,8 @@ services:
       - "127.0.0.1:8081:8080"
     env_file:
       - .env
+    environment:
+      - INSTANCE_NAME=green
     networks:
       - timo-network
     healthcheck:
@@ -55,9 +59,46 @@ services:
       retries: 12
       start_period: 60s
 
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: timo-prometheus
+    restart: unless-stopped
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+    ports:
+      - "127.0.0.1:9090:9090"
+    networks:
+      - timo-network
+
+  grafana:
+    image: grafana/grafana:11.3.0
+    container_name: timo-grafana
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    ports:
+      - "127.0.0.1:3000:3000"
+    networks:
+      - timo-network
+
 networks:
   timo-network:
     driver: bridge
 
 volumes:
   redis-data:
+  prometheus-data:
+  grafana-data:
