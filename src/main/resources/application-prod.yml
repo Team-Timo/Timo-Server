@@ -42,7 +42,7 @@ security:
 
 app:
   oauth2:
-    redirect-uri: ${FRONTEND_URL}/oauth/callback
+    allowed-frontend-urls: ${FRONTEND_URLS}
   calendar:
     redirect-uri: ${FRONTEND_URL}/oauth/calendar/callback
   auth:
