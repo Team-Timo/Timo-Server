@@ -202,6 +202,11 @@ public class Todo extends BaseTimeEntity {
 			List<Weekday> repeatWeekdays,
 			Integer repeatDayOfMonth
 	) {
+		if (this.repeatType == RepeatType.DAILY && repeatType == RepeatType.DAILY
+				&& !startDate.equals(this.startDate)) {
+			throw new CustomException(TodoErrorCode.DAILY_DATE_CHANGE_NOT_ALLOWED);
+		}
+
 		this.startDate = startDate;
 		this.endDate = endDate;
 		this.repeatType = repeatType;
