@@ -25,13 +25,13 @@ import org.springframework.web.cors.CorsConfigurationSource;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final OAuthOriginCaptureFilter oAuthOriginCaptureFilter;
   private final CustomOAuth2UserService customOAuth2UserService;
   private final OAuthSuccessHandler oAuthSuccessHandler;
   private final OAuthFailureHandler oAuthFailureHandler;
   private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
   private final CorsConfigurationSource corsConfigurationSource;
+  private final OAuthOriginCaptureFilter oAuthOriginCaptureFilter;
 
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -67,8 +67,8 @@ public class SecurityConfig {
             exception.authenticationEntryPoint(jwtAuthenticationEntryPoint)
         )
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-        .addFilterBefore(mdcLoggingFilter(), JwtAuthenticationFilter.class);
-                .addFilterBefore(oAuthOriginCaptureFilter, OAuth2AuthorizationRequestRedirectFilter.class);
+        .addFilterBefore(mdcLoggingFilter(), JwtAuthenticationFilter.class)
+        .addFilterBefore(oAuthOriginCaptureFilter, OAuth2AuthorizationRequestRedirectFilter.class);
 
     return http.build();
   }
