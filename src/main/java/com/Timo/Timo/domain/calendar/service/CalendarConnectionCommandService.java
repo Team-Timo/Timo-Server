@@ -9,6 +9,10 @@ import com.Timo.Timo.domain.calendar.repository.CalendarConnectionRepository;
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.global.exception.CustomException;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -43,12 +47,20 @@ public class CalendarConnectionCommandService {
     return CalendarConnectResponse.builder()
         .calendarConnected(true)
         .calendarEmail(calendarConnection.getCalendarEmail())
-        .connectedAt(calendarConnection.getConnectedAt())
+        .connectedAt(resolveConnectedAt(calendarConnection, user))
         .build();
   }
 
   @Transactional
   public void deleteConnection(CalendarConnection calendarConnection) {
     calendarConnectionRepository.delete(calendarConnection);
+  }
+
+  private String resolveConnectedAt(CalendarConnection calendarConnection, User user) {
+    ZoneId userZone = ZoneId.of(user.getZoneId());
+    ZonedDateTime zoned = calendarConnection.getConnectedAt()
+        .atZone(ZoneOffset.UTC)
+        .withZoneSameInstant(userZone);
+    return zoned.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
   }
 }
