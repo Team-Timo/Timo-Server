@@ -8,6 +8,7 @@ import com.Timo.Timo.global.exception.CustomException;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -16,7 +17,7 @@ public class CalendarTokenService {
 
   private final GoogleOAuthClient googleOAuthClient;
 
-  @Transactional
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
   public String ensureValidAccessToken(CalendarConnection connection) {
     LocalDateTime expiresAt = connection.getTokenExpiresAt();
     boolean expiringSoon = expiresAt == null || expiresAt.isBefore(LocalDateTime.now().plusMinutes(2));
