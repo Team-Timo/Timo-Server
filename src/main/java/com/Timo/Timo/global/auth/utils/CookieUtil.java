@@ -6,22 +6,32 @@ import org.springframework.http.ResponseCookie;
 public class CookieUtil {
 
   public static ResponseCookie createCookie(String name, String value, long maxAgeSeconds, boolean secure) {
-    return ResponseCookie.from(name, value)
+    ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from(name, value)
         .httpOnly(true)
         .secure(secure)
         .path("/api/v1/auth")
         .maxAge(Duration.ofSeconds(maxAgeSeconds))
-        .sameSite(secure ? "None" : "Strict")
-        .build();
+        .sameSite(secure ? "None" : "Strict");
+
+    if (secure) {
+      builder.partitioned(true);
+    }
+
+    return builder.build();
   }
 
   public static ResponseCookie expireCookie(String name, boolean secure) {
-    return ResponseCookie.from(name, "")
+    ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from(name, "")
         .httpOnly(true)
         .secure(secure)
         .path("/api/v1/auth")
         .maxAge(0)
-        .sameSite(secure ? "None" : "Strict")
-        .build();
+        .sameSite(secure ? "None" : "Strict");
+
+    if (secure) {
+      builder.partitioned(true);
+    }
+
+    return builder.build();
   }
 }
