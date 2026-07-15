@@ -74,7 +74,7 @@ public record HomeResponse(
 			String priority,
 			TagResponse tag,
 			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
-			boolean hasMemo,
+			boolean hasSubtask,
 			@JsonProperty("isRepeated")
 			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 			boolean isRepeated,

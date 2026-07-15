@@ -17,10 +17,10 @@ public record OnboardingRequest(
     Long predictionAccuracy,
 
     @NotNull(message = "wakeupTime은 필수입니다.")
-    @Pattern(regexp = "^([01]\\d|2[0-3]):[0-5]\\d$", message = "wakeUpTime 형식은 HH:MM 이어야 합니다.")
+    @Pattern(regexp = "^([01]\\d|2[0-3]):[0-5]\\d$|^24:00$", message = "wakeUpTime 형식은 HH:MM 이어야 합니다.")
     String wakeUpTime,
 
     @NotNull(message = "bedTime은 필수입니다.")
-    @Pattern(regexp = "^([01]\\d|2[0-3]):[0-5]\\d$", message = "bedTime 형식은 HH:MM 이어야 합니다.")
+    @Pattern(regexp = "^([01]\\d|2[0-3]):[0-5]\\d$|^24:00$", message = "bedTime 형식은 HH:MM 이어야 합니다.")
     String bedTime
 ){}

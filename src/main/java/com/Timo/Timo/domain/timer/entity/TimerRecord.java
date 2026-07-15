@@ -17,7 +17,10 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -125,5 +128,10 @@ public class TimerRecord {
 
   public boolean isFinished() {
     return this.status == TimerStatus.COMPLETED || this.status == TimerStatus.STOPPED;
+  }
+
+  public LocalDate getTimerDate() {
+    ZoneId userZone = ZoneId.of(user.getZoneId());
+    return startedAt.atZone(ZoneOffset.UTC).withZoneSameInstant(userZone).toLocalDate();
   }
 }
