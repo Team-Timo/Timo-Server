@@ -36,7 +36,15 @@ management:
   endpoints:
     web:
       exposure:
-        include: health
+        include: health,prometheus,info
   endpoint:
     health:
       show-details: never
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      instance: ${INSTANCE_NAME:unknown}
+  prometheus:
+    metrics:
+      export:
+        enabled: true
