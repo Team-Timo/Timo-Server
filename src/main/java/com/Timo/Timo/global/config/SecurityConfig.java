@@ -5,7 +5,9 @@ import com.Timo.Timo.global.auth.handler.OAuthFailureHandler;
 import com.Timo.Timo.global.auth.handler.OAuthSuccessHandler;
 import com.Timo.Timo.global.auth.service.CustomOAuth2UserService;
 import com.Timo.Timo.global.jwt.filter.JwtAuthenticationFilter;
+import com.Timo.Timo.global.logging.MdcLoggingFilter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -21,48 +23,63 @@ import org.springframework.web.cors.CorsConfigurationSource;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final CustomOAuth2UserService customOAuth2UserService;
-    private final OAuthSuccessHandler oAuthSuccessHandler;
-    private final OAuthFailureHandler oAuthFailureHandler;
-    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final CorsConfigurationSource corsConfigurationSource;  // ← 주입받기
+  private final CustomOAuth2UserService customOAuth2UserService;
+  private final OAuthSuccessHandler oAuthSuccessHandler;
+  private final OAuthFailureHandler oAuthFailureHandler;
+  private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+  private final JwtAuthenticationFilter jwtAuthenticationFilter;
+  private final CorsConfigurationSource corsConfigurationSource;
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(AbstractHttpConfigurer::disable)
-                .formLogin(AbstractHttpConfigurer::disable)
-                .httpBasic(AbstractHttpConfigurer::disable)
-                .cors(cors -> cors.configurationSource(corsConfigurationSource))  // ← 주입된 것 사용
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(
-                                "/",
-                                "/swagger-ui/**",
-                                "/swagger-ui.html",
-                                "/v3/api-docs/**",
-                                "/login/**",
-                                "/oauth2/**",
-                                "/api/v1/auth/reissue",
-                                "/api/v1/auth/token",
-                                "/api/v1/terms",
-                                "/actuator/health"
-                        ).permitAll()
-                        .anyRequest().authenticated())
-                .oauth2Login(oauth2 -> oauth2
-                        .userInfoEndpoint(userInfo ->
-                                userInfo.userService(customOAuth2UserService)
-                        )
-                        .successHandler(oAuthSuccessHandler)
-                        .failureHandler(oAuthFailureHandler)
-                )
-                .exceptionHandling(exception ->
-                        exception.authenticationEntryPoint(jwtAuthenticationEntryPoint)
-                )
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+	@Bean
+	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+		http
+			.csrf(AbstractHttpConfigurer::disable)
+			.formLogin(AbstractHttpConfigurer::disable)
+			.httpBasic(AbstractHttpConfigurer::disable)
+      .cors(cors -> cors.configurationSource(corsConfigurationSource))
+			.sessionManagement(session -> session
+				.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+			.authorizeHttpRequests(authorize -> authorize
+				.requestMatchers(
+          "/",
+					"/swagger-ui/**",
+					"/swagger-ui.html",
+					"/v3/api-docs/**",
+          "/login/**",
+          "/oauth2/**",
+          "/api/v1/auth/reissue",
+          "/api/v1/auth/token",
+          "/api/v1/terms",
+          "/actuator/health"
+				).permitAll()
+				.anyRequest().authenticated())
+        .oauth2Login(oauth2 -> oauth2
+            .userInfoEndpoint(userInfo ->
+                userInfo.userService(customOAuth2UserService)
+            )
+            .successHandler(oAuthSuccessHandler)
+            .failureHandler(oAuthFailureHandler)
+        )
+        .exceptionHandling(exception ->
+            exception.authenticationEntryPoint(jwtAuthenticationEntryPoint)
+        )
+        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+        .addFilterBefore(mdcLoggingFilter(), JwtAuthenticationFilter.class);
 
-        return http.build();
-    }
+    return http.build();
+  }
+
+  @Bean
+  public MdcLoggingFilter mdcLoggingFilter() {
+    return new MdcLoggingFilter();
+  }
+
+  @Bean
+  public FilterRegistrationBean<MdcLoggingFilter> mdcLoggingFilterRegistration(
+      MdcLoggingFilter mdcLoggingFilter
+  ) {
+    FilterRegistrationBean<MdcLoggingFilter> registrationBean = new FilterRegistrationBean<>(mdcLoggingFilter);
+    registrationBean.setEnabled(false);
+    return registrationBean;
+  }
 }
