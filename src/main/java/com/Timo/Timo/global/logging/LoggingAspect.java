@@ -24,28 +24,25 @@ public class LoggingAspect {
 
 		try {
 			Object result = joinPoint.proceed();
-			long durationMs = System.currentTimeMillis() - startTime;
-			log.info("Service completed target={} durationMs={}", signature, durationMs);
+			log.info("Service completed target={} durationMs={}", signature, System.currentTimeMillis() - startTime);
 			return result;
 		} catch (CustomException exception) {
-			long durationMs = System.currentTimeMillis() - startTime;
 			log.warn(
 				"Service handled exception target={} durationMs={} errorCode={}",
 				signature,
-				durationMs,
+				System.currentTimeMillis() - startTime,
 				exception.getErrorCode().getCode()
 			);
 			throw exception;
-		} catch (Exception exception) {
-			long durationMs = System.currentTimeMillis() - startTime;
+		} catch (Throwable throwable) {
 			log.error(
 				"Service exception target={} durationMs={} exceptionType={}",
 				signature,
-				durationMs,
-				exception.getClass().getSimpleName(),
-				exception
+				System.currentTimeMillis() - startTime,
+				throwable.getClass().getSimpleName(),
+				throwable
 			);
-			throw exception;
+			throw throwable;
 		}
 	}
 }
