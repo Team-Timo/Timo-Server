@@ -7,8 +7,10 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+@Component
 public class OriginValidationFilter extends OncePerRequestFilter {
 
   private static final List<String> PROTECTED_PATHS = List.of(
