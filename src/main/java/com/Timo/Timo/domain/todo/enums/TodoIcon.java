@@ -1,6 +1,7 @@
 package com.Timo.Timo.domain.todo.enums;
 
 public enum TodoIcon {
+	NONE,
 	ICON_1,
 	ICON_2,
 	ICON_3,
