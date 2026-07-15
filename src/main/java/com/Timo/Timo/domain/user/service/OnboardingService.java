@@ -26,8 +26,8 @@ public class OnboardingService {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
-    LocalTime wakeUpTime = LocalTime.parse(request.wakeUpTime());
-    LocalTime bedTime = LocalTime.parse(request.bedTime());
+    LocalTime wakeUpTime = parseTime(request.wakeUpTime());
+    LocalTime bedTime = parseTime(request.bedTime());
 
     if (wakeUpTime.equals(bedTime)) {
       throw new CustomException(UserErrorCode.USER_INVALID_TIME);
