@@ -4,6 +4,7 @@ import com.Timo.Timo.domain.calendar.dto.request.CalendarConnectRequest;
 import com.Timo.Timo.domain.calendar.dto.response.CalendarAuthorizeResponse;
 import com.Timo.Timo.domain.calendar.dto.response.CalendarConnectResponse;
 import com.Timo.Timo.domain.calendar.dto.response.CalendarDisconnectResponse;
+import com.Timo.Timo.domain.calendar.dto.response.CalendarEventsResponse;
 import com.Timo.Timo.global.auth.principal.CustomUserDetails;
 import com.Timo.Timo.global.exception.dto.ErrorDto;
 import com.Timo.Timo.global.response.BaseResponse;
@@ -81,6 +82,43 @@ public interface CalendarControllerDocs {
   ResponseEntity<BaseResponse<CalendarConnectResponse>> connectCalendar(
       @Parameter(hidden = true) CustomUserDetails userDetails,
       @Valid @RequestBody CalendarConnectRequest request
+  );
+
+  @Operation(
+      summary = "캘린더 일정 조회",
+      description = """
+        filter(DAY/WEEK/TWO_WEEK)와 baseDate에 따라 연동된 구글 캘린더 일정을 일자별로 조회합니다.
+        
+        DAY: baseDate 하루
+        
+        WEEK: baseDate ~ baseDate+6일 (총 7일)
+        
+        TWO_WEEK: baseDate-7일 ~ baseDate+7일 (총 15일)
+        
+        baseDate 미입력 시 오늘 날짜가 기본값으로 사용됩니다.
+        별도 저장 없이 매 요청마다 구글 API를 직접 호출하여 최신 상태를 반환합니다.
+        """,
+      security = @SecurityRequirement(name = "bearerAuth")
+  )
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "조회 성공", useReturnTypeSchema = true),
+      @ApiResponse(responseCode = "400", description = "유효하지 않은 filter 값이거나 날짜 형식 오류",
+          content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class))),
+      @ApiResponse(responseCode = "401", description = "Access Token 없음/만료/유효하지 않음, 또는 구글 access token 갱신 실패 등 구글 인증 자체 실패",
+          content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class))),
+      @ApiResponse(responseCode = "404", description = "연동된 캘린더가 없는 경우",
+          content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class))),
+      @ApiResponse(responseCode = "429", description = "구글 캘린더 API 요청이 일시적으로 제한된 경우",
+          content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class))),
+      @ApiResponse(responseCode = "502", description = "구글 캘린더 서버와의 통신 중 오류가 발생한 경우",
+          content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class))),
+      @ApiResponse(responseCode = "500", description = "서버 내부 오류",
+          content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class)))
+  })
+  ResponseEntity<BaseResponse<CalendarEventsResponse>> getCalendarEvents(
+      @Parameter(hidden = true) CustomUserDetails userDetails,
+      @Parameter(description = "조회 필터", example = "WEEK") String filter,
+      @Parameter(description = "기준 날짜 (YYYY-MM-DD), 미입력 시 오늘", example = "2026-07-14") String baseDate
   );
 
   @Operation(
