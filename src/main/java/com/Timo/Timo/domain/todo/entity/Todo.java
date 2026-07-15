@@ -113,7 +113,7 @@ public class Todo extends BaseTimeEntity {
 			String memo
 	) {
 		this.user = user;
-		this.icon = icon;
+		this.icon = icon == TodoIcon.NONE ? null : icon;
 		this.title = title;
 		this.startDate = startDate;
 		this.endDate = endDate;
@@ -173,7 +173,9 @@ public class Todo extends BaseTimeEntity {
 			Long tagId,
 			String memo
 	) {
-		if (icon != null) {
+		if (icon == TodoIcon.NONE) {
+			this.icon = null;
+		} else if (icon != null) {
 			this.icon = icon;
 		}
 		if (title != null) {
