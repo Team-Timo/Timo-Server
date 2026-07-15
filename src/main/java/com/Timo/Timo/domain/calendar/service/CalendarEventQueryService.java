@@ -47,7 +47,7 @@ public class CalendarEventQueryService {
 
     CalendarConnection connection = calendarConnectionRepository.findByUserId(userId)
         .orElseThrow(() -> new CustomException(CalendarErrorCode.CALENDAR_NOT_CONNECTED));
-    String accessToken = calendarTokenService.ensureValidAccessToken(connection);
+    String accessToken = calendarTokenService.ensureValidAccessToken(userId);
 
     Instant timeMin = from.atStartOfDay(userZone).toInstant();
     Instant timeMax = to.plusDays(1).atStartOfDay(userZone).toInstant();
