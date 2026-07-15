@@ -56,8 +56,11 @@ public class UserService {
 			.orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
 		String zoneId = normalizeZoneId(request.zoneId());
-		user.updateZoneId(zoneId);
+		if (zoneId.equals(user.getZoneId())) {
+			return new UpdateTimezoneResponse(user.getZoneId());
+		}
 
+		user.updateZoneId(zoneId);
 		return new UpdateTimezoneResponse(user.getZoneId());
 	}
 
