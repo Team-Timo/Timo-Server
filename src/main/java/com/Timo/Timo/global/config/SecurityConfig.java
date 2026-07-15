@@ -89,4 +89,14 @@ public class SecurityConfig {
     registrationBean.setEnabled(false);
     return registrationBean;
   }
+
+  @Bean
+  public FilterRegistrationBean<OriginValidationFilter> originValidationFilterRegistration(
+      OriginValidationFilter originValidationFilter
+  ) {
+    FilterRegistrationBean<OriginValidationFilter> registrationBean =
+        new FilterRegistrationBean<>(originValidationFilter);
+    registrationBean.setEnabled(false);
+    return registrationBean;
+  }
 }
