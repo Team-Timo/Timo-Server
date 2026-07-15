@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 public class OriginValidationFilter extends OncePerRequestFilter {
@@ -16,11 +17,8 @@ public class OriginValidationFilter extends OncePerRequestFilter {
       "/api/v1/auth/withdraw"
   );
 
-  private final List<String> allowedOrigins;
-
-  public OriginValidationFilter(List<String> allowedOrigins) {
-    this.allowedOrigins = allowedOrigins;
-  }
+  @Value("${app.oauth2.allowed-frontend-urls}")
+  private List<String> allowedFrontendUrls;
 
   @Override
   protected void doFilterInternal(
@@ -30,7 +28,7 @@ public class OriginValidationFilter extends OncePerRequestFilter {
 
     if (PROTECTED_PATHS.stream().anyMatch(path::equals)) {
       String origin = request.getHeader("Origin");
-      if (origin == null || !allowedOrigins.contains(origin)) {
+      if (origin == null || !allowedFrontendUrls.contains(origin)) {
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
         return;
       }
