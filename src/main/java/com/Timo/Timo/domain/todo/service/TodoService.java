@@ -163,7 +163,6 @@ public class TodoService {
 		Todo todo = todoRepository.findByIdAndUser_Id(todoId, userId)
 				.orElseThrow(() -> new CustomException(TodoErrorCode.TODO_NOT_FOUND));
 
-		// 타이머 실행 중에는 일정/소요시간 변경을 막는다. (그 외 필드 수정은 허용)
 		boolean changesTimerSensitiveFields = request.durationSeconds() != null || isScheduleChanged(request);
 		if (changesTimerSensitiveFields && timerService.hasActiveTimer(todoId)) {
 			throw new CustomException(TodoErrorCode.TIMER_RUNNING);
@@ -215,6 +214,12 @@ public class TodoService {
 
 		LocalDate startDate = request.date() != null ? request.date() : todo.getStartDate();
 		RepeatType repeatType = request.repeatType() != null ? request.repeatType() : todo.getRepeatType();
+
+		if (todo.getRepeatType() == RepeatType.DAILY && repeatType == RepeatType.DAILY
+				&& request.date() != null) {
+			throw new CustomException(TodoErrorCode.DAILY_DATE_CHANGE_NOT_ALLOWED);
+		}
+
 		List<Weekday> repeatWeekdays = request.repeatWeekdays() != null
 				? request.repeatWeekdays() : todo.getRepeatWeekdays();
 		Integer repeatDayOfMonth = request.repeatDayOfMonth() != null
