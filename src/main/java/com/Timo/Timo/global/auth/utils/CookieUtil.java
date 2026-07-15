@@ -11,7 +11,7 @@ public class CookieUtil {
         .secure(secure)
         .path("/api/v1/auth")
         .maxAge(Duration.ofSeconds(maxAgeSeconds))
-        .sameSite("None")
+        .sameSite(secure ? "None" : "Strict")
         .build();
   }
 
@@ -21,7 +21,7 @@ public class CookieUtil {
         .secure(secure)
         .path("/api/v1/auth")
         .maxAge(0)
-        .sameSite("None")
+        .sameSite(secure ? "None" : "Strict")
         .build();
   }
 }
