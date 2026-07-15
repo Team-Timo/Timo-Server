@@ -26,7 +26,7 @@ public class OnboardingService {
     LocalTime wakeUpTime = LocalTime.parse(request.wakeUpTime());
     LocalTime bedTime = LocalTime.parse(request.bedTime());
 
-    if (!bedTime.isAfter(wakeUpTime)) {
+    if (wakeUpTime.equals(bedTime)) {
       throw new CustomException(UserErrorCode.USER_INVALID_TIME);
     }
 
