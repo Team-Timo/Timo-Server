@@ -2,6 +2,7 @@ package com.Timo.Timo.domain.todo.exception;
 
 import java.time.LocalDateTime;
 
+import org.slf4j.MDC;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.Timo.Timo.domain.todo.controller.TodoController;
 import com.Timo.Timo.global.exception.dto.ErrorDto;
+import com.Timo.Timo.global.logging.LoggingConstants;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -42,11 +44,17 @@ public class TodoExceptionHandler {
 			errorCode.getHttpStatus().value(),
 			errorCode.getCode(),
 			errorCode.getMessage(),
-			request.getRequestURI()
+			request.getRequestURI(),
+			resolveTraceId()
 		);
 
 		return ResponseEntity
 			.status(errorCode.getHttpStatus())
 			.body(response);
+	}
+
+	private String resolveTraceId() {
+		String traceId = MDC.get(LoggingConstants.TRACE_ID);
+		return traceId != null ? traceId : LoggingConstants.UNKNOWN;
 	}
 }

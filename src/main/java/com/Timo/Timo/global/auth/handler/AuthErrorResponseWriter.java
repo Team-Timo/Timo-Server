@@ -2,11 +2,13 @@ package com.Timo.Timo.global.auth.handler;
 
 import com.Timo.Timo.global.exception.code.BaseErrorCode;
 import com.Timo.Timo.global.exception.dto.ErrorDto;
+import com.Timo.Timo.global.logging.LoggingConstants;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.MDC;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 
@@ -24,12 +26,18 @@ public class AuthErrorResponseWriter {
         errorCode.getHttpStatus().value(),
         errorCode.getCode(),
         errorCode.getMessage(),
-        path
+        path,
+        resolveTraceId()
     );
 
     response.setStatus(errorCode.getHttpStatus().value());
     response.setContentType(MediaType.APPLICATION_JSON_VALUE);
     response.setCharacterEncoding("UTF-8");
     response.getWriter().write(objectMapper.writeValueAsString(errorDto));
+  }
+
+  private String resolveTraceId() {
+    String traceId = MDC.get(LoggingConstants.TRACE_ID);
+    return traceId != null ? traceId : LoggingConstants.UNKNOWN;
   }
 }

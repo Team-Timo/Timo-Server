@@ -9,10 +9,12 @@ import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.slf4j.MDC;
 
 import com.Timo.Timo.global.exception.code.BaseErrorCode;
 import com.Timo.Timo.global.exception.code.ErrorCode;
 import com.Timo.Timo.global.exception.dto.ErrorDto;
+import com.Timo.Timo.global.logging.LoggingConstants;
 
 import io.sentry.Sentry;
 import jakarta.persistence.LockTimeoutException;
@@ -29,6 +31,7 @@ public class GlobalExceptionHandler {
 		CustomException exception,
 		HttpServletRequest request
 	) {
+		log.warn("Handled custom exception code={} path={}", exception.getErrorCode().getCode(), request.getRequestURI());
 		return createErrorResponse(exception.getErrorCode(), request);
 	}
 
@@ -37,6 +40,7 @@ public class GlobalExceptionHandler {
 		MethodArgumentNotValidException exception,
 		HttpServletRequest request
 	) {
+		log.warn("Validation failed path={}", request.getRequestURI());
 		return createErrorResponse(ErrorCode.BAD_REQUEST, request);
 	}
 
@@ -45,6 +49,7 @@ public class GlobalExceptionHandler {
 		HttpMessageNotReadableException exception,
 		HttpServletRequest request
 	) {
+		log.warn("Unreadable request body path={}", request.getRequestURI());
 		return createErrorResponse(ErrorCode.BAD_REQUEST, request);
 	}
 
@@ -53,6 +58,7 @@ public class GlobalExceptionHandler {
 		HttpRequestMethodNotSupportedException exception,
 		HttpServletRequest request
 	) {
+		log.warn("Method not allowed path={}", request.getRequestURI());
 		return createErrorResponse(ErrorCode.METHOD_NOT_ALLOWED, request);
 	}
 
@@ -65,6 +71,7 @@ public class GlobalExceptionHandler {
 		RuntimeException exception,
 		HttpServletRequest request
 	) {
+		log.warn("Concurrency conflict path={}", request.getRequestURI());
 		return createErrorResponse(ErrorCode.CONCURRENCY_CONFLICT, request);
 	}
 
@@ -87,11 +94,18 @@ public class GlobalExceptionHandler {
 			errorCode.getHttpStatus().value(),
 			errorCode.getCode(),
 			errorCode.getMessage(),
-			request.getRequestURI()
+			request.getRequestURI(),
+			resolveTraceId()
 		);
 
 		return ResponseEntity
 			.status(errorCode.getHttpStatus())
 			.body(response);
+	}
+
+	private String resolveTraceId() {
+		return MDC.get(LoggingConstants.TRACE_ID) != null
+			? MDC.get(LoggingConstants.TRACE_ID)
+			: LoggingConstants.UNKNOWN;
 	}
 }

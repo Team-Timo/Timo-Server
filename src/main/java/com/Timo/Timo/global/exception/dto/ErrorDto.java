@@ -12,6 +12,6 @@ public record ErrorDto(
 	int status,
 	String errorCode,
 	String message,
-	String path
-) {
-}
+	String path,
+	String traceId
+) {}
