@@ -49,7 +49,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "deploy/docker-compose.prod.yml,deploy/deploy.sh"
+          source: "deploy/docker-compose.prod.yml,deploy/deploy.sh,deploy/prometheus/prometheus.yml,deploy/grafana/provisioning/datasources/prometheus.yml"
           target: "~/timo-deploy/"
           strip_components: 1
 
