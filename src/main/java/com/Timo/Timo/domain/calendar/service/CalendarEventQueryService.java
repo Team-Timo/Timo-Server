@@ -5,10 +5,8 @@ import com.Timo.Timo.domain.calendar.dto.client.CalendarEventItem;
 import com.Timo.Timo.domain.calendar.dto.response.CalendarDayResponse;
 import com.Timo.Timo.domain.calendar.dto.response.CalendarEventResponse;
 import com.Timo.Timo.domain.calendar.dto.response.CalendarEventsResponse;
-import com.Timo.Timo.domain.calendar.entity.CalendarConnection;
 import com.Timo.Timo.domain.calendar.enums.CalendarFilter;
 import com.Timo.Timo.domain.calendar.exception.CalendarErrorCode;
-import com.Timo.Timo.domain.calendar.repository.CalendarConnectionRepository;
 import com.Timo.Timo.domain.calendar.utils.CalendarEventDateResolver;
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.exception.UserErrorCode;
@@ -32,7 +30,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class CalendarEventQueryService {
 
   private final UserRepository userRepository;
-  private final CalendarConnectionRepository calendarConnectionRepository;
   private final CalendarTokenService calendarTokenService;
   private final GoogleOAuthClient googleOAuthClient;
 
@@ -45,8 +42,6 @@ public class CalendarEventQueryService {
     LocalDate from = filter.rangeStart(baseDate);
     LocalDate to = filter.rangeEnd(baseDate);
 
-    CalendarConnection connection = calendarConnectionRepository.findByUserId(userId)
-        .orElseThrow(() -> new CustomException(CalendarErrorCode.CALENDAR_NOT_CONNECTED));
     String accessToken = calendarTokenService.ensureValidAccessToken(userId);
 
     Instant timeMin = from.atStartOfDay(userZone).toInstant();
