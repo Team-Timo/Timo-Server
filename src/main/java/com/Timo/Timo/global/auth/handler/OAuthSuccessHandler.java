@@ -1,5 +1,6 @@
 package com.Timo.Timo.global.auth.handler;
 
+import com.Timo.Timo.global.auth.filter.OAuthOriginCaptureFilter;
 import com.Timo.Timo.global.auth.principal.CustomUserDetails;
 import com.Timo.Timo.global.auth.service.AuthCodeService;
 import com.Timo.Timo.global.auth.service.RefreshTokenService;
@@ -8,6 +9,7 @@ import com.Timo.Timo.global.jwt.provider.JwtTokenProvider;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -24,8 +26,11 @@ public class OAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
   private final RefreshTokenService refreshTokenService;
   private final AuthCodeService authCodeService;
 
-  @Value("${app.oauth2.redirect-uri}")
-  private String redirectUri;
+  @Value("${app.oauth2.allowed-frontend-urls}")
+  private List<String> allowedFrontendUrls;
+
+  @Value("${app.oauth2.callback-path}")
+  private String callbackPath;
 
   @Value("${app.auth.cookie-secure}")
   private boolean cookieSecure;
@@ -36,6 +41,8 @@ public class OAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
       HttpServletResponse response,
       Authentication authentication
   ) throws IOException {
+
+    String frontendOrigin = resolveFrontendOrigin(request);
 
     CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
     Long userId = userDetails.getUserId();
@@ -56,10 +63,23 @@ public class OAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
         onboardingCompleted
     );
 
-    String redirectUrl = UriComponentsBuilder.fromUriString(redirectUri)
+    String redirectUrl = UriComponentsBuilder.fromUriString(frontendOrigin + callbackPath)
         .queryParam("code", code)
         .build().toUriString();
 
     getRedirectStrategy().sendRedirect(request, response, redirectUrl);
+  }
+
+  private String resolveFrontendOrigin(HttpServletRequest request) {
+    String origin = null;
+    if (request.getSession(false) != null) {
+      origin = (String) request.getSession().getAttribute(OAuthOriginCaptureFilter.SESSION_KEY);
+      request.getSession().removeAttribute(OAuthOriginCaptureFilter.SESSION_KEY);
+    }
+
+    if (origin != null && allowedFrontendUrls.contains(origin)) {
+      return origin;
+    }
+    return allowedFrontendUrls.get(0);
   }
 }

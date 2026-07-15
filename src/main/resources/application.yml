@@ -28,6 +28,10 @@ springdoc:
   default-produces-media-type: application/json
   default-consumes-media-type: application/json
 
+app:
+  oauth2:
+    callback-path: /oauth/callback
+
 management:
   endpoints:
     web:
