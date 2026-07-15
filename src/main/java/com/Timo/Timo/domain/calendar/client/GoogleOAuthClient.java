@@ -8,6 +8,7 @@ import com.Timo.Timo.domain.calendar.exception.CalendarErrorCode;
 import com.Timo.Timo.global.exception.CustomException;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
@@ -91,25 +92,42 @@ public class GoogleOAuthClient {
     }
   }
 
-
   public List<CalendarEventItem> fetchEvents(String accessToken, Instant timeMin, Instant timeMax) {
-    String uri = UriComponentsBuilder
+    List<CalendarEventItem> allItems = new ArrayList<>();
+    String pageToken = null;
+
+    do {
+      GoogleCalendarEventsResponse response = fetchEventsPage(accessToken, timeMin, timeMax, pageToken);
+      if (response.items() != null) {
+        allItems.addAll(response.items());
+      }
+      pageToken = response.nextPageToken();
+    } while (pageToken != null);
+
+    return allItems;
+  }
+
+  private GoogleCalendarEventsResponse fetchEventsPage(
+      String accessToken, Instant timeMin, Instant timeMax, String pageToken
+  ) {
+    UriComponentsBuilder builder = UriComponentsBuilder
         .fromUriString("https://www.googleapis.com/calendar/v3/calendars/primary/events")
         .queryParam("timeMin", timeMin.toString())
         .queryParam("timeMax", timeMax.toString())
         .queryParam("singleEvents", true)
         .queryParam("orderBy", "startTime")
-        .queryParam("maxResults", 100)
-        .toUriString();
+        .queryParam("maxResults", 250);
+
+    if (pageToken != null) {
+      builder.queryParam("pageToken", pageToken);
+    }
 
     try {
-      GoogleCalendarEventsResponse response = restClient.get()
-          .uri(uri)
+      return restClient.get()
+          .uri(builder.toUriString())
           .header("Authorization", "Bearer " + accessToken)
           .retrieve()
           .body(GoogleCalendarEventsResponse.class);
-
-      return response.items() != null ? response.items() : List.of();
     } catch (ResourceAccessException e) {
       throw new CustomException(CalendarErrorCode.CALENDAR_TIMEOUT);
     } catch (RestClientResponseException e) {
