@@ -1,0 +1,13 @@
+groups:
+  - name: timo-app
+    rules:
+      # 블루/그린 중 한쪽만 켜져 있는 건 정상이므로,
+      # 개별 인스턴스 down이 아니라 "살아있는 인스턴스가 0개"일 때만 경보한다.
+      - alert: AllInstancesDown
+        expr: sum(up{job="timo-server"}) == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "timo-server 활성 인스턴스 없음 (서비스 다운)"
+          description: "블루/그린 모두 스크래핑 실패 상태입니다. 1분 이상 지속되어 서비스 다운으로 판단합니다."
