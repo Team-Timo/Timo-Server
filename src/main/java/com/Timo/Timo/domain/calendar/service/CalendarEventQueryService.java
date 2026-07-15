@@ -28,11 +28,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class CalendarEventQueryService {
 
   private final UserRepository userRepository;
-  private final CalendarConnectionRepository calendarConnectionRepository;
   private final CalendarTokenService calendarTokenService;
   private final GoogleOAuthClient googleOAuthClient;
 
@@ -45,8 +43,6 @@ public class CalendarEventQueryService {
     LocalDate from = filter.rangeStart(baseDate);
     LocalDate to = filter.rangeEnd(baseDate);
 
-    CalendarConnection connection = calendarConnectionRepository.findByUserId(userId)
-        .orElseThrow(() -> new CustomException(CalendarErrorCode.CALENDAR_NOT_CONNECTED));
     String accessToken = calendarTokenService.ensureValidAccessToken(userId);
 
     Instant timeMin = from.atStartOfDay(userZone).toInstant();
