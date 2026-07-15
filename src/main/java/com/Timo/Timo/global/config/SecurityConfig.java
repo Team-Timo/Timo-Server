@@ -50,7 +50,8 @@ public class SecurityConfig {
           "/api/v1/auth/reissue",
           "/api/v1/auth/token",
           "/api/v1/terms",
-          "/actuator/health"
+          "/actuator/health",
+                        "/actuator/prometheus"
 				).permitAll()
 				.anyRequest().authenticated())
         .oauth2Login(oauth2 -> oauth2
