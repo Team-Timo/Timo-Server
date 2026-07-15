@@ -14,6 +14,7 @@ public enum TodoErrorCode implements BaseErrorCode {
 	INVALID_REQUEST(HttpStatus.BAD_REQUEST, "TODO_400", "필수 필드가 누락되었거나 형식이 올바르지 않습니다."),
 	INVALID_TITLE(HttpStatus.BAD_REQUEST, "TODO_400", "투두명은 한국어 20자/영어 30자를 초과할 수 없습니다."),
 	NO_UPDATE_FIELDS(HttpStatus.BAD_REQUEST, "TODO_400", "수정할 필드가 없습니다."),
+	DAILY_DATE_CHANGE_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "TODO_400", "매일 반복되는 투두는 날짜를 변경할 수 없습니다."),
 	INVALID_INDEX(HttpStatus.BAD_REQUEST, "TODO_400", "유효하지 않은 인덱스 값입니다."),
   DURATION_REQUIRED(HttpStatus.BAD_REQUEST, "TODO_400", "예상 소요 시간이 설정되지 않은 투두입니다."),
 	TODO_NOT_FOUND(HttpStatus.NOT_FOUND, "TODO_404", "존재하지 않는 투두입니다."),
