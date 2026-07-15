@@ -215,11 +215,6 @@ public class TodoService {
 		LocalDate startDate = request.date() != null ? request.date() : todo.getStartDate();
 		RepeatType repeatType = request.repeatType() != null ? request.repeatType() : todo.getRepeatType();
 
-		if (todo.getRepeatType() == RepeatType.DAILY && repeatType == RepeatType.DAILY
-				&& request.date() != null) {
-			throw new CustomException(TodoErrorCode.DAILY_DATE_CHANGE_NOT_ALLOWED);
-		}
-
 		List<Weekday> repeatWeekdays = request.repeatWeekdays() != null
 				? request.repeatWeekdays() : todo.getRepeatWeekdays();
 		Integer repeatDayOfMonth = request.repeatDayOfMonth() != null
