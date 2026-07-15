@@ -11,6 +11,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
@@ -83,12 +84,24 @@ public class GoogleOAuthClient {
           .body(body)
           .retrieve()
           .body(GoogleTokenResponse.class);
-    }  catch (ResourceAccessException e) {
+    } catch (ResourceAccessException e) {
       throw new CustomException(CalendarErrorCode.CALENDAR_TIMEOUT);
     } catch (RestClientResponseException e) {
-      throw new CustomException(CalendarErrorCode.CALENDAR_AUTH_FAILED);
+      HttpStatusCode status = e.getStatusCode();
+      if (status.value() == 401 || status.value() == 403) {
+        throw new CustomException(CalendarErrorCode.CALENDAR_AUTH_FAILED);
+      }
+      if (status.value() == 429) {
+        throw new CustomException(CalendarErrorCode.CALENDAR_RATE_LIMITED);
+      }
+      if (status.is5xxServerError()) {
+        throw new CustomException(CalendarErrorCode.CALENDAR_UPSTREAM_ERROR);
+      }
+      throw new CustomException(CalendarErrorCode.CALENDAR_UPSTREAM_ERROR);
+    } catch (CustomException e) {
+      throw e;
     } catch (Exception e) {
-      throw new CustomException(CalendarErrorCode.CALENDAR_AUTH_FAILED);
+      throw new CustomException(CalendarErrorCode.CALENDAR_INTERNAL_ERROR);
     }
   }
 
@@ -131,9 +144,21 @@ public class GoogleOAuthClient {
     } catch (ResourceAccessException e) {
       throw new CustomException(CalendarErrorCode.CALENDAR_TIMEOUT);
     } catch (RestClientResponseException e) {
-      throw new CustomException(CalendarErrorCode.CALENDAR_AUTH_FAILED);
+      HttpStatusCode status = e.getStatusCode();
+      if (status.value() == 401 || status.value() == 403) {
+        throw new CustomException(CalendarErrorCode.CALENDAR_AUTH_FAILED);
+      }
+      if (status.value() == 429) {
+        throw new CustomException(CalendarErrorCode.CALENDAR_RATE_LIMITED);
+      }
+      if (status.is5xxServerError()) {
+        throw new CustomException(CalendarErrorCode.CALENDAR_UPSTREAM_ERROR);
+      }
+      throw new CustomException(CalendarErrorCode.CALENDAR_UPSTREAM_ERROR);
+    } catch (CustomException e) {
+      throw e;
     } catch (Exception e) {
-      throw new CustomException(CalendarErrorCode.CALENDAR_AUTH_FAILED);
+      throw new CustomException(CalendarErrorCode.CALENDAR_INTERNAL_ERROR);
     }
   }
 
