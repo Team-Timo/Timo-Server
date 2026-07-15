@@ -1,4 +1,4 @@
-package com.Timo.Timo.domain.calendar.dto.response;
+package com.Timo.Timo.domain.calendar.dto.client;
 
 public record GoogleUserInfoResponse(
     String email
