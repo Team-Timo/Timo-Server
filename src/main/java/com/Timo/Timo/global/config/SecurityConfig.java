@@ -1,5 +1,6 @@
 package com.Timo.Timo.global.config;
 
+import com.Timo.Timo.global.auth.filter.OriginValidationFilter;
 import com.Timo.Timo.global.auth.handler.JwtAuthenticationEntryPoint;
 import com.Timo.Timo.global.auth.handler.OAuthFailureHandler;
 import com.Timo.Timo.global.auth.filter.OAuthOriginCaptureFilter;
@@ -32,6 +33,7 @@ public class SecurityConfig {
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
   private final CorsConfigurationSource corsConfigurationSource;
   private final OAuthOriginCaptureFilter oAuthOriginCaptureFilter;
+  private final OriginValidationFilter originValidationFilter;
 
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -69,7 +71,8 @@ public class SecurityConfig {
         )
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
         .addFilterBefore(mdcLoggingFilter(), JwtAuthenticationFilter.class)
-        .addFilterBefore(oAuthOriginCaptureFilter, OAuth2AuthorizationRequestRedirectFilter.class);
+        .addFilterBefore(oAuthOriginCaptureFilter, OAuth2AuthorizationRequestRedirectFilter.class)
+        .addFilterBefore(originValidationFilter, JwtAuthenticationFilter.class);
 
     return http.build();
   }
@@ -84,6 +87,16 @@ public class SecurityConfig {
       MdcLoggingFilter mdcLoggingFilter
   ) {
     FilterRegistrationBean<MdcLoggingFilter> registrationBean = new FilterRegistrationBean<>(mdcLoggingFilter);
+    registrationBean.setEnabled(false);
+    return registrationBean;
+  }
+
+  @Bean
+  public FilterRegistrationBean<OriginValidationFilter> originValidationFilterRegistration(
+      OriginValidationFilter originValidationFilter
+  ) {
+    FilterRegistrationBean<OriginValidationFilter> registrationBean =
+        new FilterRegistrationBean<>(originValidationFilter);
     registrationBean.setEnabled(false);
     return registrationBean;
   }
