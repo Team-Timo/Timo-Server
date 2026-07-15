@@ -2,6 +2,7 @@ package com.Timo.Timo.global.config;
 
 import com.Timo.Timo.global.auth.handler.JwtAuthenticationEntryPoint;
 import com.Timo.Timo.global.auth.handler.OAuthFailureHandler;
+import com.Timo.Timo.global.auth.filter.OAuthOriginCaptureFilter;
 import com.Timo.Timo.global.auth.handler.OAuthSuccessHandler;
 import com.Timo.Timo.global.auth.service.CustomOAuth2UserService;
 import com.Timo.Timo.global.jwt.filter.JwtAuthenticationFilter;
@@ -14,6 +15,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -29,6 +31,7 @@ public class SecurityConfig {
   private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
   private final CorsConfigurationSource corsConfigurationSource;
+  private final OAuthOriginCaptureFilter oAuthOriginCaptureFilter;
 
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -64,7 +67,8 @@ public class SecurityConfig {
             exception.authenticationEntryPoint(jwtAuthenticationEntryPoint)
         )
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-        .addFilterBefore(mdcLoggingFilter(), JwtAuthenticationFilter.class);
+        .addFilterBefore(mdcLoggingFilter(), JwtAuthenticationFilter.class)
+        .addFilterBefore(oAuthOriginCaptureFilter, OAuth2AuthorizationRequestRedirectFilter.class);
 
     return http.build();
   }
