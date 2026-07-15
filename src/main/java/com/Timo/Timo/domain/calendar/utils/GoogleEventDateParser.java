@@ -2,6 +2,7 @@ package com.Timo.Timo.domain.calendar.utils;
 
 import com.Timo.Timo.domain.calendar.dto.client.GoogleEventDateTime;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import lombok.AccessLevel;
@@ -31,7 +32,12 @@ public class GoogleEventDateParser {
       return LocalDate.parse(end.date()).minusDays(1);
     }
     if (end.dateTime() != null) {
-      return OffsetDateTime.parse(end.dateTime()).atZoneSameInstant(userZone).toLocalDate();
+      var endZonedDateTime = OffsetDateTime.parse(end.dateTime()).atZoneSameInstant(userZone);
+      LocalDate endDate = endZonedDateTime.toLocalDate();
+      if (endZonedDateTime.toLocalTime().equals(LocalTime.MIDNIGHT)) {
+        return endDate.minusDays(1);
+      }
+      return endDate;
     }
     return null;
   }
