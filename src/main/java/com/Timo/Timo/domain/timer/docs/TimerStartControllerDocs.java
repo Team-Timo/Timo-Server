@@ -20,6 +20,9 @@ public interface TimerStartControllerDocs {
       description = """
               투두의 타이머를 시작합니다.
               한 번에 한 개의 타이머만 실행 가능하며, 이미 실행/일시정지 중인 타이머가 있으면 409를 반환합니다.
+
+              응답의 date는 타이머가 귀속되는 날짜(사용자 시간대 기준 시작일)입니다.
+              반복 투두는 여러 날짜에 같은 todoId로 노출되므로, 실행중 표시는 todoId가 아닌 (todoId, date) 조합으로 구분해야 합니다.
               """
   )
   @ApiResponses({
