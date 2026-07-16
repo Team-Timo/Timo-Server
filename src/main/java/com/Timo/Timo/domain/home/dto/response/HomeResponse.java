@@ -106,11 +106,11 @@ public record HomeResponse(
 			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 			boolean completed
 	) {
-		public static SubtaskResponse from(Subtask subtask) {
+		public static SubtaskResponse from(Subtask subtask, boolean completed) {
 			return new SubtaskResponse(
 					subtask.getId(),
 					subtask.getContent(),
-					subtask.isCompleted()
+					completed
 			);
 		}
 	}
