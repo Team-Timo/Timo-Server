@@ -26,6 +26,7 @@ import com.Timo.Timo.global.exception.code.ErrorCode;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -51,7 +52,7 @@ public class TimerService {
   private final PlatformTransactionManager transactionManager;
 
   @Transactional
-  public TimerStartResponse startTimer(Long userId, Long todoId) {
+  public TimerStartResponse startTimer(Long userId, Long todoId, LocalDate targetDate) {
     User user = userRepository.findByIdForUpdate(userId)
         .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
     Todo todo = todoRepository.findById(todoId)
@@ -72,11 +73,16 @@ public class TimerService {
 
     LocalDateTime now = LocalDateTime.now();
 
+    LocalDate resolvedDate = targetDate != null
+        ? targetDate
+        : LocalDate.now(ZoneId.of(user.getZoneId()));
+
     TimerRecord timerRecord = TimerRecord.builder()
         .user(user)
         .todo(todo)
         .plannedSeconds(todo.getDurationSeconds())
         .startedAt(now)
+        .targetDate(resolvedDate)
         .build();
     timerRecordRepository.save(timerRecord);
 

@@ -19,7 +19,9 @@ import com.Timo.Timo.global.auth.principal.CustomUserDetails;
 import com.Timo.Timo.global.response.BaseResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -28,6 +30,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -45,11 +48,13 @@ public class TimerController implements TimerStartControllerDocs, TimerStatusCon
   @PostMapping("/todos/{todoId}/timers/start")
   public ResponseEntity<BaseResponse<TimerStartResponse>> startTimer(
       @PathVariable Long todoId,
+      @RequestParam(required = false)
+      @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
       @AuthenticationPrincipal CustomUserDetails userDetails
   ) {
 
     Long userId = userDetails.getUserId();
-    TimerStartResponse response = timerService.startTimer(userId, todoId);
+    TimerStartResponse response = timerService.startTimer(userId, todoId, date);
 
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(BaseResponse.onSuccess(TimerSuccessCode.TIMER_STARTED, response));
