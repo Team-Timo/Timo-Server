@@ -1,10 +1,10 @@
 package com.Timo.Timo.domain.calendar.repository;
 
 import com.Timo.Timo.domain.calendar.entity.CalendarConnection;
-import io.lettuce.core.dynamic.annotation.Param;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface CalendarConnectionRepository extends JpaRepository<CalendarConnection, Long> {
 
