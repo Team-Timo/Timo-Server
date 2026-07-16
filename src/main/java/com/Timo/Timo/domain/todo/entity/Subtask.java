@@ -14,6 +14,8 @@ import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
 @Table(name = "subtasks")
@@ -28,7 +30,8 @@ public class Subtask extends BaseTimeEntity {
 
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
 	@JoinColumn(name = "todo_id", nullable = false)
-	private Todo todo;
+  @OnDelete(action = OnDeleteAction.CASCADE)
+  private Todo todo;
 
 	@Column(name = "content", nullable = false, length = 20)
 	private String content;

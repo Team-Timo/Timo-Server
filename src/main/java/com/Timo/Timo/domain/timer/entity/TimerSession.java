@@ -16,6 +16,8 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
 @Table(name = "timer_sessions")
@@ -30,6 +32,7 @@ public class TimerSession {
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "timer_record_id", nullable = false)
+  @OnDelete(action = OnDeleteAction.CASCADE)
   private TimerRecord timerRecord;
 
   @Column(name = "started_at", nullable = false)

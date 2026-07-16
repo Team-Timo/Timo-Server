@@ -15,6 +15,8 @@ import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
 @Table(name = "tags",
@@ -33,7 +35,8 @@ public class Tag {
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "user_id")
-	private User user;
+  @OnDelete(action = OnDeleteAction.CASCADE)
+  private User user;
 
 	@Column(name = "name", nullable = false, length = 10)
 	private String name;
