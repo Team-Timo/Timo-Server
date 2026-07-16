@@ -113,13 +113,16 @@ public class TodoService {
 				.orElseThrow(() -> new CustomException(TodoErrorCode.TODO_NOT_FOUND));
 
 		LocalDate date = resolveDate(userId, request.date());
-		if (!todoDateCalculator.occursOn(todo, date)) {
-			throw new CustomException(TodoErrorCode.TODO_NOT_FOUND);
-		}
 
-		if (timerService.hasActiveTimer(todoId)) {
-			throw new CustomException(TodoErrorCode.TIMER_RUNNING);
-		}
+    boolean instanceExists = todoInstanceRepository.findByTodo_IdAndDate(todoId, date).isPresent();
+
+    if (!instanceExists && !todoDateCalculator.occursOn(todo, date)) {
+      throw new CustomException(TodoErrorCode.TODO_NOT_FOUND);
+    }
+
+    if (timerService.hasActiveTimer(todoId)) {
+      throw new CustomException(TodoErrorCode.TIMER_RUNNING);
+    }
 
 		TodoInstance instance = todoInstanceReorderer.applyCompletion(userId, todo, date, request.isCompleted());
 		return TodoStatusChangeResponse.from(todoId, instance);
