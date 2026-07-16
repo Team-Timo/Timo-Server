@@ -170,8 +170,7 @@ public class Todo extends BaseTimeEntity {
 			String title,
 			Integer durationSeconds,
 			TodoPriority priority,
-			Long tagId,
-			String memo
+			Long tagId
 	) {
 		if (icon == TodoIcon.NONE) {
 			this.icon = null;
@@ -189,9 +188,6 @@ public class Todo extends BaseTimeEntity {
 		}
 		if (tagId != null) {
 			this.tagId = tagId;
-		}
-		if (memo != null) {
-			this.memo = memo;
 		}
 	}
 
@@ -230,10 +226,10 @@ public class Todo extends BaseTimeEntity {
 				if (existing == null) {
 					throw new CustomException(TodoErrorCode.SUBTASK_NOT_FOUND);
 				}
-				existing.update(edit.content(), edit.completed(), sortOrder);
+				existing.update(edit.content(), sortOrder);
 				retained.add(existing);
 			} else {
-				Subtask created = Subtask.of(edit.content(), sortOrder, edit.completed());
+				Subtask created = Subtask.of(edit.content(), sortOrder);
 				created.assignTodo(this);
 				retained.add(created);
 			}
@@ -247,7 +243,7 @@ public class Todo extends BaseTimeEntity {
 		}
 	}
 
-	public record SubtaskEdit(Long subtaskId, String content, boolean completed) { }
+	public record SubtaskEdit(Long subtaskId, String content) { }
 
 	public List<Subtask> getSubtasks() {
 		if (subtasks == null) {

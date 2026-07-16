@@ -12,7 +12,6 @@ import com.Timo.Timo.domain.todo.validation.ValidTodoTitle;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.Size;
 
 public record TodoUpdateRequest(
 		TodoIcon icon,
@@ -37,9 +36,6 @@ public record TodoUpdateRequest(
 		@Max(31)
 		Integer repeatDayOfMonth,
 
-		@Size(max = 300)
-		String memo,
-
 		@Valid
 		List<TodoSubtaskUpdateRequest> subtasks
 ) {
@@ -53,7 +49,6 @@ public record TodoUpdateRequest(
 				&& repeatType == null
 				&& repeatWeekdays == null
 				&& repeatDayOfMonth == null
-				&& memo == null
 				&& subtasks == null;
 	}
 }
