@@ -78,7 +78,6 @@ public class TodoInstanceReorderer {
 	private TodoInstance requireTarget(Map<Long, TodoInstance> instancesByTodoId, Todo targetRule) {
 		TodoInstance target = instancesByTodoId.get(targetRule.getId());
 		if (target == null) {
-			// 해당 날짜에 발생하지 않는 규칙이면 그룹에 인스턴스가 없다.
 			throw new CustomException(TodoErrorCode.TODO_NOT_FOUND);
 		}
 		return target;
@@ -96,12 +95,35 @@ public class TodoInstanceReorderer {
         .filter(rule -> todoDateCalculator.occursOn(rule, date))
         .toList();
 
-    int nextSortOrder = result.size();
-    for (Todo rule : occurringRules) {
-      if (!result.containsKey(rule.getId())) {
-        TodoInstance created = todoInstanceRepository.save(TodoInstance.of(rule, date, nextSortOrder++));
-        result.put(rule.getId(), created);
-      }
+    List<TodoInstance> newInstances = occurringRules.stream()
+        .filter(rule -> !result.containsKey(rule.getId()))
+        .sorted(Comparator.comparing(Todo::getCreatedAt).thenComparing(Todo::getId).reversed())
+        .map(rule -> todoInstanceRepository.save(TodoInstance.of(rule, date, 0)))
+        .toList();
+
+    if (newInstances.isEmpty()) {
+      return result;
+    }
+
+    List<TodoInstance> existingIncomplete = existingInstances.stream()
+        .filter(instance -> !instance.isCompleted())
+        .sorted(Comparator.comparingInt(TodoInstance::getSortOrder))
+        .toList();
+    List<TodoInstance> existingCompleted = existingInstances.stream()
+        .filter(TodoInstance::isCompleted)
+        .sorted(Comparator.comparingInt(TodoInstance::getSortOrder))
+        .toList();
+
+    int sortOrder = 0;
+    for (TodoInstance instance : newInstances) {
+      instance.updateSortOrder(sortOrder++);
+      result.put(instance.getTodo().getId(), instance);
+    }
+    for (TodoInstance instance : existingIncomplete) {
+      instance.updateSortOrder(sortOrder++);
+    }
+    for (TodoInstance instance : existingCompleted) {
+      instance.updateSortOrder(sortOrder++);
     }
 
     return result;
