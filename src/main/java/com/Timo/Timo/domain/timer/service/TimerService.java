@@ -1,6 +1,8 @@
 package com.Timo.Timo.domain.timer.service;
 
 import com.Timo.Timo.domain.ai.service.AiTodoService;
+import com.Timo.Timo.domain.ai.service.AiHistoryCacheService;
+import com.Timo.Timo.domain.ai.service.AiFeedbackPersistenceService;
 import com.Timo.Timo.domain.timer.dto.response.TimerActiveResponse;
 import com.Timo.Timo.domain.timer.dto.response.TimerFinishResponse;
 import com.Timo.Timo.domain.timer.dto.response.TimerExtendResponse;
@@ -49,6 +51,8 @@ public class TimerService {
   private final UserRepository userRepository;
   private final TodoInstanceReorderer todoInstanceReorderer;
   private final AiTodoService aiTodoService;
+  private final AiHistoryCacheService aiHistoryCacheService;
+  private final AiFeedbackPersistenceService aiFeedbackPersistenceService;
   private final PlatformTransactionManager transactionManager;
 
   @Transactional
@@ -205,12 +209,11 @@ public class TimerService {
     FinishedTimer finishedTimer = transactionTemplate.execute(status ->
         finishTimerInTransaction(userId, timerId, targetStatus)
     );
+    aiHistoryCacheService.bumpUserHistoryVersion(userId);
 
     String feedback = generateAiFeedback(userId, finishedTimer.todoId());
     if (feedback != null) {
-      transactionTemplate.executeWithoutResult(status ->
-          updateAiFeedback(timerId, feedback)
-      );
+      aiFeedbackPersistenceService.persistFeedback(timerId, feedback);
     }
 
     return new TimerFinishResponse(
@@ -260,12 +263,6 @@ public class TimerService {
       );
       return null;
     }
-  }
-
-  private void updateAiFeedback(Long timerId, String feedback) {
-    TimerRecord timerRecord = timerRecordRepository.findByIdForUpdate(timerId)
-        .orElseThrow(() -> new CustomException(TimerErrorCode.TIMER_NOT_FOUND));
-    timerRecord.updateAiFeedback(feedback);
   }
 
   private record FinishedTimer(
