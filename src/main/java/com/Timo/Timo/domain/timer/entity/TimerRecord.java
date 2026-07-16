@@ -136,6 +136,9 @@ public class TimerRecord {
   }
 
   public LocalDate getTimerDate() {
+    if (targetDate != null) {
+      return targetDate;
+    }
     ZoneId userZone = ZoneId.of(user.getZoneId());
     return startedAt.atZone(ZoneOffset.UTC).withZoneSameInstant(userZone).toLocalDate();
   }
