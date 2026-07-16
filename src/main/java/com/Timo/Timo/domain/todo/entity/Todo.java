@@ -36,6 +36,8 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
 @Table(name = "todos")
@@ -50,7 +52,8 @@ public class Todo extends BaseTimeEntity {
 
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
 	@JoinColumn(name = "user_id", nullable = false)
-	private User user;
+  @OnDelete(action = OnDeleteAction.CASCADE)
+  private User user;
 
 	@Enumerated(EnumType.STRING)
 	@Column(name = "icon", length = 20)

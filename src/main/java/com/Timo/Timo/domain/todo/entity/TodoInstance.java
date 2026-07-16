@@ -21,6 +21,8 @@ import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
 @Table(
@@ -41,6 +43,7 @@ public class TodoInstance extends BaseTimeEntity {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "todo_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Todo todo;
 
     @Column(name = "instance_date", nullable = false)

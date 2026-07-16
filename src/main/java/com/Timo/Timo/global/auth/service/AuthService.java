@@ -129,16 +129,13 @@ public class AuthService {
   }
 
   private void revokeCalendarConnectionIfExists(Long userId) {
-    calendarConnectionRepository.findByUserId(userId).ifPresent(connection -> {
-      String tokenToRevoke = connection.getRefreshToken() != null
-          ? connection.getRefreshToken()
-          : connection.getAccessToken();
-
-      calendarRevocationOutboxRepository.save(
-          CalendarRevocationOutbox.builder()
-              .token(tokenToRevoke)
-              .build()
-      );
-    });
+    calendarConnectionRepository.findTokenToRevokeByUserId(userId)
+        .ifPresent(tokenToRevoke ->
+            calendarRevocationOutboxRepository.save(
+                CalendarRevocationOutbox.builder()
+                    .token(tokenToRevoke)
+                    .build()
+            )
+        );
   }
 }
