@@ -2,7 +2,6 @@ package com.Timo.Timo.domain.focus.service;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -41,7 +40,7 @@ public class FocusService {
 		ZoneId userZone = ZoneId.of(user.getZoneId());
 		LocalDate today = LocalDate.now(userZone);
 
-		FocusTodoResult activeTimerFocus = resolveActiveTimerFocus(userId, userZone);
+		FocusTodoResult activeTimerFocus = resolveActiveTimerFocus(userId);
 		if (activeTimerFocus != null) {
 			return activeTimerFocus;
 		}
@@ -71,7 +70,7 @@ public class FocusService {
 		return new FocusTodoResult(FocusSuccessCode.GET_FOCUS_TODO, FocusTodoResponse.of(today, focusTodo, memo));
 	}
 
-	private FocusTodoResult resolveActiveTimerFocus(Long userId, ZoneId userZone) {
+	private FocusTodoResult resolveActiveTimerFocus(Long userId) {
 		TimerRecord activeTimer = timerRecordRepository
 				.findByUserIdAndStatusIn(userId, ACTIVE_TIMER_STATUSES)
 				.orElse(null);
@@ -80,8 +79,7 @@ public class FocusService {
 		}
 
 		Todo todo = activeTimer.getTodo();
-		LocalDate timerDate = activeTimer.getStartedAt()
-				.atZone(ZoneOffset.UTC).withZoneSameInstant(userZone).toLocalDate();
+		LocalDate timerDate = activeTimer.getTimerDate();
 
 		TodoResponse focusTodo = homeTodoReader.todoResponseOn(todo, timerDate);
 
