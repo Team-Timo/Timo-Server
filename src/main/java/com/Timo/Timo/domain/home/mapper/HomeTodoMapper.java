@@ -1,6 +1,7 @@
 package com.Timo.Timo.domain.home.mapper;
 
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.stereotype.Component;
 
@@ -33,7 +34,7 @@ public class HomeTodoMapper {
 				todo.getRepeatType() != RepeatType.NONE,
 				resolveTimerStatus(instance),
 				instance != null ? instance.getSortOrder() : context.defaultSortOrder(),
-				mapSubtasks(todo.getSubtasks())
+				mapSubtasks(todo.getSubtasks(), context.completedSubtaskIds())
 		);
 	}
 
@@ -45,9 +46,9 @@ public class HomeTodoMapper {
 		return instance != null ? instance.getTimerStatus() : TodoTimerStatus.STOPPED;
 	}
 
-	private List<SubtaskResponse> mapSubtasks(List<Subtask> subtasks) {
+	private List<SubtaskResponse> mapSubtasks(List<Subtask> subtasks, Set<Long> completedSubtaskIds) {
 		return subtasks.stream()
-				.map(SubtaskResponse::from)
+				.map(subtask -> SubtaskResponse.from(subtask, completedSubtaskIds.contains(subtask.getId())))
 				.toList();
 	}
 
@@ -55,7 +56,8 @@ public class HomeTodoMapper {
 			Todo todo,
 			TodoInstance instance,
 			Tag tag,
-			int defaultSortOrder
+			int defaultSortOrder,
+			Set<Long> completedSubtaskIds
 	) {
 	}
 }
