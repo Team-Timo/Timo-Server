@@ -57,6 +57,9 @@ public class TimerRecord {
   @Column(name = "started_at", nullable = false)
   private LocalDateTime startedAt;
 
+  @Column(name = "target_date")
+  private LocalDate targetDate;
+
   @Column(name = "ended_at")
   private LocalDateTime endedAt;
 
@@ -75,11 +78,13 @@ public class TimerRecord {
   private LocalDateTime createdAt;
 
   @Builder
-  private TimerRecord(User user, Todo todo, Integer plannedSeconds, LocalDateTime startedAt) {
+  private TimerRecord(User user, Todo todo, Integer plannedSeconds, LocalDateTime startedAt,
+      LocalDate targetDate) {
     this.user = user;
     this.todo = todo;
     this.plannedSeconds = plannedSeconds;
     this.startedAt = startedAt;
+    this.targetDate = targetDate;
     this.extendedSeconds = 0;
     this.status = TimerStatus.RUNNING;
   }
