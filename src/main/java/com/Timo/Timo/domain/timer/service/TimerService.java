@@ -16,8 +16,8 @@ import com.Timo.Timo.domain.timer.repository.TimerSessionRepository;
 import com.Timo.Timo.domain.todo.entity.Todo;
 import com.Timo.Timo.domain.todo.entity.TodoInstance;
 import com.Timo.Timo.domain.todo.exception.TodoErrorCode;
-import com.Timo.Timo.domain.todo.repository.TodoInstanceRepository;
 import com.Timo.Timo.domain.todo.repository.TodoRepository;
+import com.Timo.Timo.domain.todo.service.TodoInstanceReorderer;
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.exception.UserErrorCode;
 import com.Timo.Timo.domain.user.repository.UserRepository;
@@ -47,7 +47,7 @@ public class TimerService {
   private final TimerSessionRepository timerSessionRepository;
   private final TodoRepository todoRepository;
   private final UserRepository userRepository;
-  private final TodoInstanceRepository todoInstanceRepository;
+  private final TodoInstanceReorderer todoInstanceReorderer;
   private final AiTodoService aiTodoService;
   private final PlatformTransactionManager transactionManager;
 
@@ -92,7 +92,7 @@ public class TimerService {
         .build();
     timerSessionRepository.save(session);
 
-    TodoInstance instance = getOrCreateInstance(todo, resolveTimerDate(timerRecord));
+    TodoInstance instance = todoInstanceReorderer.materializeInstance(userId, todo, resolveTimerDate(timerRecord));
     instance.startTimer();
 
     return TimerStartResponse.from(timerRecord);
@@ -109,7 +109,7 @@ public class TimerService {
 
     LocalDateTime now = LocalDateTime.now();
 
-    TodoInstance instance = getOrCreateInstance(timerRecord.getTodo(), resolveTimerDate(timerRecord));
+    TodoInstance instance = todoInstanceReorderer.materializeInstance(userId, timerRecord.getTodo(), resolveTimerDate(timerRecord));
 
     if (action == TimerAction.PAUSE) {
       timerRecord.pause();
@@ -176,11 +176,6 @@ public class TimerService {
     return (int) totalSeconds;
   }
 
-  private TodoInstance getOrCreateInstance(Todo todo, LocalDate date) {
-    return todoInstanceRepository.findByTodo_IdAndDate(todo.getId(), date)
-        .orElseGet(() -> todoInstanceRepository.save(TodoInstance.of(todo, date, 0)));
-  }
-
   private LocalDate resolveTimerDate(TimerRecord timerRecord) {
     return timerRecord.getTimerDate();
   }
@@ -244,7 +239,7 @@ public class TimerService {
 
     timerRecord.finish(targetStatus, now, actualSeconds);
 
-    TodoInstance instance = getOrCreateInstance(timerRecord.getTodo(), resolveTimerDate(timerRecord));
+    TodoInstance instance = todoInstanceReorderer.materializeInstance(userId, timerRecord.getTodo(), resolveTimerDate(timerRecord));
     instance.stopTimer();
     instance.markCompleted();
 
