@@ -6,7 +6,6 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
@@ -81,6 +80,16 @@ public class TodoInstanceReorderer {
 			throw new CustomException(TodoErrorCode.TODO_NOT_FOUND);
 		}
 		return target;
+	}
+
+	public TodoInstance materializeInstance(Long userId, Todo rule, LocalDate date) {
+		Map<Long, TodoInstance> group = materializeDayGroup(userId, date);
+		TodoInstance instance = group.get(rule.getId());
+		if (instance != null) {
+			return instance;
+		}
+		return todoInstanceRepository.findByTodo_IdAndDate(rule.getId(), date)
+				.orElseGet(() -> todoInstanceRepository.save(TodoInstance.of(rule, date, 0)));
 	}
 
 	private Map<Long, TodoInstance> materializeDayGroup(Long userId, LocalDate date) {
