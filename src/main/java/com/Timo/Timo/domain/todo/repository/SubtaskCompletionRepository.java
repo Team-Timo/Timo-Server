@@ -18,7 +18,8 @@ public interface SubtaskCompletionRepository extends JpaRepository<SubtaskComple
 	List<SubtaskCompletion> findByTodoInstance_IdIn(Collection<Long> todoInstanceIds);
 
 	@Modifying(clearAutomatically = true)
-	@Query("delete from SubtaskCompletion sc where sc.todoInstance.todo.id = :todoId")
+	@Query("delete from SubtaskCompletion sc where sc.todoInstance.id in "
+			+ "(select ti.id from TodoInstance ti where ti.todo.id = :todoId)")
 	void deleteByTodoId(@Param("todoId") Long todoId);
 
 	@Modifying(clearAutomatically = true)
