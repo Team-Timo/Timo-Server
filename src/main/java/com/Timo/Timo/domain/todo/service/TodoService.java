@@ -4,6 +4,8 @@ import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,11 +26,13 @@ import com.Timo.Timo.domain.todo.dto.response.TodoDetailResponse;
 import com.Timo.Timo.domain.todo.dto.response.TodoReorderResponse;
 import com.Timo.Timo.domain.todo.dto.response.TodoStatusChangeResponse;
 import com.Timo.Timo.domain.todo.entity.Subtask;
+import com.Timo.Timo.domain.todo.entity.SubtaskCompletion;
 import com.Timo.Timo.domain.todo.entity.Todo;
 import com.Timo.Timo.domain.todo.entity.TodoInstance;
 import com.Timo.Timo.domain.todo.enums.RepeatType;
 import com.Timo.Timo.domain.todo.enums.Weekday;
 import com.Timo.Timo.domain.todo.exception.TodoErrorCode;
+import com.Timo.Timo.domain.todo.repository.SubtaskCompletionRepository;
 import com.Timo.Timo.domain.todo.repository.TodoInstanceRepository;
 import com.Timo.Timo.domain.todo.repository.TodoRepository;
 import com.Timo.Timo.domain.todo.vo.Duration;
@@ -46,6 +50,7 @@ public class TodoService {
 
 	private final TodoRepository todoRepository;
 	private final TodoInstanceRepository todoInstanceRepository;
+	private final SubtaskCompletionRepository subtaskCompletionRepository;
 	private final UserRepository userRepository;
 	private final TagRepository tagRepository;
 	private final TodoDateCalculator todoDateCalculator;
@@ -104,7 +109,19 @@ public class TodoService {
 				? tagRepository.findById(todo.getTagId()).orElse(null)
 				: null;
 
-		return TodoDetailResponse.of(todo, instance, date, tag);
+		Set<Long> completedSubtaskIds = resolveCompletedSubtaskIds(instance);
+
+		return TodoDetailResponse.of(todo, instance, date, tag, completedSubtaskIds);
+	}
+
+	private Set<Long> resolveCompletedSubtaskIds(TodoInstance instance) {
+		if (instance == null) {
+			return Set.of();
+		}
+		return subtaskCompletionRepository.findByTodoInstance_IdIn(List.of(instance.getId())).stream()
+				.filter(SubtaskCompletion::isCompleted)
+				.map(completion -> completion.getSubtask().getId())
+				.collect(Collectors.toSet());
 	}
 
 	@Transactional
@@ -130,7 +147,7 @@ public class TodoService {
 
 	@Transactional
 	public SubtaskStatusChangeResponse changeSubtaskCompletion(
-			Long userId, Long todoId, Long subtaskId, SubtaskStatusUpdateRequest request) {
+			Long userId, Long todoId, Long subtaskId, LocalDate date, SubtaskStatusUpdateRequest request) {
 		Todo todo = todoRepository.findByIdAndUser_Id(todoId, userId)
 				.orElseThrow(() -> new CustomException(TodoErrorCode.TODO_NOT_FOUND));
 
@@ -139,8 +156,35 @@ public class TodoService {
 				.findFirst()
 				.orElseThrow(() -> new CustomException(TodoErrorCode.SUBTASK_NOT_FOUND));
 
-		subtask.updateCompleted(request.isCompleted());
-		return SubtaskStatusChangeResponse.from(subtask);
+		requireOccurrence(todo, date);
+
+		TodoInstance instance = todoInstanceReorderer.materializeInstance(userId, todo, date);
+		SubtaskCompletion completion = subtaskCompletionRepository
+				.findByTodoInstance_IdAndSubtask_Id(instance.getId(), subtaskId)
+				.orElseGet(() -> subtaskCompletionRepository.save(
+						SubtaskCompletion.of(instance, subtask, false)));
+		completion.updateCompleted(request.isCompleted());
+
+		return new SubtaskStatusChangeResponse(subtaskId, request.isCompleted());
+	}
+
+	@Transactional
+	public void updateMemo(Long userId, Long todoId, LocalDate date, String memo) {
+		Todo todo = todoRepository.findByIdAndUser_Id(todoId, userId)
+				.orElseThrow(() -> new CustomException(TodoErrorCode.TODO_NOT_FOUND));
+
+		requireOccurrence(todo, date);
+
+		// 메모는 생성 이후 항상 날짜별로 저장한다. 대상 인스턴스를 확정한 뒤 override를 설정.
+		TodoInstance instance = todoInstanceReorderer.materializeInstance(userId, todo, date);
+		instance.updateMemo(memo);
+	}
+
+	private void requireOccurrence(Todo todo, LocalDate date) {
+		boolean instanceExists = todoInstanceRepository.findByTodo_IdAndDate(todo.getId(), date).isPresent();
+		if (!instanceExists && !todoDateCalculator.occursOn(todo, date)) {
+			throw new CustomException(TodoErrorCode.TODO_NOT_FOUND);
+		}
 	}
 
 	@Transactional
@@ -178,13 +222,24 @@ public class TodoService {
 				request.title(),
 				request.durationSeconds(),
 				request.priority(),
-				request.tagId(),
-				request.memo()
+				request.tagId()
 		);
 
 		applyScheduleChange(todo, request);
 
 		if (request.subtasks() != null) {
+			// 제거되는 하위 태스크의 날짜별 완료 레코드를 먼저 정리해 FK 위반을 방지한다.
+			Set<Long> keepIds = request.subtasks().stream()
+					.map(TodoSubtaskUpdateRequest::subtaskId)
+					.filter(id -> id != null)
+					.collect(Collectors.toSet());
+			List<Long> removedIds = todo.getSubtasks().stream()
+					.map(Subtask::getId)
+					.filter(id -> !keepIds.contains(id))
+					.toList();
+			if (!removedIds.isEmpty()) {
+				subtaskCompletionRepository.deleteBySubtaskIdIn(removedIds);
+			}
 			todo.replaceSubtasks(toSubtaskEdits(request.subtasks()));
 		}
 	}
@@ -199,6 +254,8 @@ public class TodoService {
 		}
 
 		timerService.deleteTimersByTodo(todoId);
+		// 서브태스크 완료 레코드가 인스턴스/서브태스크를 FK로 참조하므로 먼저 삭제한다.
+		subtaskCompletionRepository.deleteByTodoId(todoId);
 		todoInstanceRepository.deleteByTodoId(todoId);
 		todoRepository.delete(todo);
 	}
@@ -272,8 +329,7 @@ public class TodoService {
 		return subtasks.stream()
 				.map(subtask -> new Todo.SubtaskEdit(
 						subtask.subtaskId(),
-						subtask.content(),
-						subtask.completed()
+						subtask.content()
 				))
 				.toList();
 	}

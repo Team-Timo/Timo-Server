@@ -3,6 +3,7 @@ package com.Timo.Timo.domain.todo.dto.response;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 import com.Timo.Timo.domain.tag.entity.Tag;
 import com.Timo.Timo.domain.todo.entity.Subtask;
@@ -39,7 +40,8 @@ public record TodoDetailResponse(
 		List<SubtaskResponse> subtasks
 ) {
 
-	public static TodoDetailResponse of(Todo todo, TodoInstance instance, LocalDate date, Tag tag) {
+	public static TodoDetailResponse of(Todo todo, TodoInstance instance, LocalDate date, Tag tag,
+			Set<Long> completedSubtaskIds) {
 		return new TodoDetailResponse(
 				todo.getId(),
 				todo.getIcon() != null ? todo.getIcon().name() : null,
@@ -52,10 +54,10 @@ public record TodoDetailResponse(
 				TagResponse.from(tag),
 				RepeatResponse.from(todo),
 				instance != null ? instance.getTimerStatus() : TodoTimerStatus.STOPPED,
-				todo.getMemo(),
+				instance != null ? instance.resolveMemo() : todo.getMemo(),
 				instance != null ? instance.getSortOrder() : null,
 				todo.getSubtasks().stream()
-						.map(SubtaskResponse::from)
+						.map(subtask -> SubtaskResponse.from(subtask, completedSubtaskIds.contains(subtask.getId())))
 						.toList()
 		);
 	}
@@ -98,12 +100,12 @@ public record TodoDetailResponse(
 			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 			boolean completed
 	) {
-		public static SubtaskResponse from(Subtask subtask) {
+		public static SubtaskResponse from(Subtask subtask, boolean completed) {
 			Objects.requireNonNull(subtask, "하위 태스크는 null일 수 없습니다.");
 			return new SubtaskResponse(
 					subtask.getId(),
 					subtask.getContent(),
-					subtask.isCompleted()
+					completed
 			);
 		}
 	}

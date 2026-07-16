@@ -78,7 +78,7 @@ public interface TimerStartControllerDocs {
   ResponseEntity<BaseResponse<TimerStartResponse>> startTimer(
       @Parameter(description = "타이머를 시작할 투두 ID", example = "3")
       @PathVariable Long todoId,
-      @Parameter(description = "타이머가 상태를 반영할 대상 날짜(미지정 시 오늘). ISO 형식", example = "2026-07-20")
+      @Parameter(description = "대상 날짜(쿼리 파라미터). 미지정 시 사용자 타임존 기준 오늘", example = "2026-07-20")
       @RequestParam(required = false)
       @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
       @Parameter(hidden = true) CustomUserDetails userDetails

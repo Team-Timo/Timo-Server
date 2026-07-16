@@ -1,7 +1,9 @@
 package com.Timo.Timo.domain.todo.controller;
 
+import java.time.LocalDate;
 import java.util.Map;
 
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.Timo.Timo.domain.todo.docs.TodoControllerDocs;
 import com.Timo.Timo.domain.todo.dto.request.SubtaskStatusUpdateRequest;
 import com.Timo.Timo.domain.todo.dto.request.TodoCreateRequest;
+import com.Timo.Timo.domain.todo.dto.request.TodoMemoUpdateRequest;
 import com.Timo.Timo.domain.todo.dto.request.TodoReorderRequest;
 import com.Timo.Timo.domain.todo.dto.request.TodoStatusUpdateRequest;
 import com.Timo.Timo.domain.todo.dto.request.TodoUpdateRequest;
@@ -89,14 +92,30 @@ public class TodoController implements TodoControllerDocs {
 		@AuthenticationPrincipal CustomUserDetails userDetails,
 		@PathVariable Long todoId,
 		@PathVariable Long subtaskId,
+		@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
 		@Valid @RequestBody SubtaskStatusUpdateRequest request
 	) {
 		SubtaskStatusChangeResponse response =
-			todoService.changeSubtaskCompletion(userDetails.getUserId(), todoId, subtaskId, request);
+			todoService.changeSubtaskCompletion(userDetails.getUserId(), todoId, subtaskId, date, request);
 
 		return ResponseEntity
 			.status(TodoSuccessCode.SUBTASK_STATUS_CHANGED.getHttpStatus())
 			.body(BaseResponse.onSuccess(TodoSuccessCode.SUBTASK_STATUS_CHANGED, response));
+	}
+
+	@Override
+	@PatchMapping("/{todoId}/memo")
+	public ResponseEntity<BaseResponse<Object>> updateMemo(
+		@AuthenticationPrincipal CustomUserDetails userDetails,
+		@PathVariable Long todoId,
+		@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+		@Valid @RequestBody TodoMemoUpdateRequest request
+	) {
+		todoService.updateMemo(userDetails.getUserId(), todoId, date, request.memo());
+
+		return ResponseEntity
+			.status(TodoSuccessCode.UPDATED.getHttpStatus())
+			.body(BaseResponse.onSuccess(TodoSuccessCode.UPDATED, Map.of()));
 	}
 
 	@Override

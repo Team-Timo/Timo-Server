@@ -17,6 +17,8 @@ import com.Timo.Timo.domain.timer.entity.TimerRecord;
 import com.Timo.Timo.domain.timer.enums.TimerStatus;
 import com.Timo.Timo.domain.timer.repository.TimerRecordRepository;
 import com.Timo.Timo.domain.todo.entity.Todo;
+import com.Timo.Timo.domain.todo.entity.TodoInstance;
+import com.Timo.Timo.domain.todo.repository.TodoInstanceRepository;
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.exception.UserErrorCode;
 import com.Timo.Timo.domain.user.repository.UserRepository;
@@ -34,6 +36,7 @@ public class FocusService {
 	private final UserRepository userRepository;
 	private final HomeTodoReader homeTodoReader;
 	private final TimerRecordRepository timerRecordRepository;
+	private final TodoInstanceRepository todoInstanceRepository;
 
 	public FocusTodoResult getFocusTodo(Long userId) {
 		User user = getUser(userId);
@@ -64,7 +67,7 @@ public class FocusService {
 		String memo = loaded.rules().stream()
 				.filter(rule -> rule.getId().equals(focusTodo.todoId()))
 				.findFirst()
-				.map(Todo::getMemo)
+				.map(rule -> resolveMemo(rule, today))
 				.orElse(null);
 
 		return new FocusTodoResult(FocusSuccessCode.GET_FOCUS_TODO, FocusTodoResponse.of(today, focusTodo, memo));
@@ -85,8 +88,14 @@ public class FocusService {
 
 		return new FocusTodoResult(
 				FocusSuccessCode.GET_FOCUS_TODO,
-				FocusTodoResponse.of(timerDate, focusTodo, todo.getMemo())
+				FocusTodoResponse.of(timerDate, focusTodo, resolveMemo(todo, timerDate))
 		);
+	}
+
+	private String resolveMemo(Todo rule, LocalDate date) {
+		return todoInstanceRepository.findByTodo_IdAndDate(rule.getId(), date)
+				.map(TodoInstance::resolveMemo)
+				.orElse(rule.getMemo());
 	}
 
 	private User getUser(Long userId) {

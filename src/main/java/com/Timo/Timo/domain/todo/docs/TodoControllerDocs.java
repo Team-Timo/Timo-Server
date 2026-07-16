@@ -1,9 +1,12 @@
 package com.Timo.Timo.domain.todo.docs;
 
+import java.time.LocalDate;
+
 import org.springframework.http.ResponseEntity;
 
 import com.Timo.Timo.domain.todo.dto.request.SubtaskStatusUpdateRequest;
 import com.Timo.Timo.domain.todo.dto.request.TodoCreateRequest;
+import com.Timo.Timo.domain.todo.dto.request.TodoMemoUpdateRequest;
 import com.Timo.Timo.domain.todo.dto.request.TodoReorderRequest;
 import com.Timo.Timo.domain.todo.dto.request.TodoStatusUpdateRequest;
 import com.Timo.Timo.domain.todo.dto.request.TodoUpdateRequest;
@@ -289,10 +292,9 @@ public interface TodoControllerDocs {
 					{
 					  "title": "티모 하이와프 작업하기 v2",
 					  "priority": "VERY_HIGH",
-					  "memo": "레퍼런스 정리 먼저 → API 명세",
 					  "subtasks": [
-					    { "subtaskId": 1, "content": "타이머 명세 초안", "completed": true },
-					    { "subtaskId": null, "content": "리뷰 반영", "completed": false }
+					    { "subtaskId": 1, "content": "타이머 명세 초안" },
+					    { "subtaskId": null, "content": "리뷰 반영" }
 					  ]
 					}
 					"""
@@ -558,6 +560,33 @@ public interface TodoControllerDocs {
 		@Parameter(hidden = true) CustomUserDetails userDetails,
 		@Parameter(description = "대상 TODO ID", example = "5") Long todoId,
 		@Parameter(description = "대상 하위 태스크 ID", example = "2") Long subtaskId,
+		@Parameter(description = "완료 상태를 변경할 날짜 (ISO). 반복 TODO는 날짜별로 완료가 분리됩니다.", example = "2026-07-20")
+		LocalDate date,
 		SubtaskStatusUpdateRequest request
+	);
+
+	@Operation(
+		summary = "메모 수정 (날짜별)",
+		description = """
+				해당 날짜의 메모를 수정합니다.
+				메모는 생성 시에만 모든 날짜에 공유되고, 이후 수정은 요청한 date의 인스턴스에만 저장됩니다(다른 날짜는 규칙 메모로 폴백).
+				"""
+	)
+	@ApiResponses({
+		@ApiResponse(responseCode = "200", description = "메모 수정 성공", useReturnTypeSchema = true),
+		@ApiResponse(
+			responseCode = "404",
+			description = "존재하지 않는 TODO이거나 해당 날짜에 발생하지 않는 경우",
+			content = @Content(
+				mediaType = "application/json",
+				schema = @Schema(implementation = ErrorDto.class)
+			)
+		)
+	})
+	ResponseEntity<BaseResponse<Object>> updateMemo(
+		@Parameter(hidden = true) CustomUserDetails userDetails,
+		@Parameter(description = "대상 TODO ID", example = "5") Long todoId,
+		@Parameter(description = "메모를 저장할 날짜 (ISO)", example = "2026-07-20") LocalDate date,
+		TodoMemoUpdateRequest request
 	);
 }

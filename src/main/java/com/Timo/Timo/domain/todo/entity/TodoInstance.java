@@ -14,6 +14,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
@@ -55,6 +56,10 @@ public class TodoInstance extends BaseTimeEntity {
     @Column(name = "timer_status", nullable = false, length = 20)
     private TodoTimerStatus timerStatus = TodoTimerStatus.STOPPED;
 
+    @Lob
+    @Column(name = "memo")
+    private String memo;
+
     public static TodoInstance of(Todo todo, LocalDate date, int sortOrder) {
         TodoInstance instance = new TodoInstance();
         instance.todo = todo;
@@ -91,5 +96,13 @@ public class TodoInstance extends BaseTimeEntity {
 
     public void stopTimer() {
         this.timerStatus = TodoTimerStatus.STOPPED;
+    }
+
+    public void updateMemo(String memo) {
+        this.memo = memo;
+    }
+
+    public String resolveMemo() {
+        return memo != null ? memo : todo.getMemo();
     }
 }
