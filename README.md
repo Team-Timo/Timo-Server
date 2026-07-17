@@ -1,25 +1,60 @@
 ## ⏰ Timo ️
 <img width="1440" height="929" alt="TimoLanding" src="https://github.com/user-attachments/assets/752a48b5-8c37-4891-ae48-954af645c243" />
 
+
 ## ⚙️ Features
 <img width="1920" height="1080" alt="Timo-Flow1" src="https://github.com/user-attachments/assets/d68e92f8-2ad2-4fe7-8cab-1c33ccbc69a1" />
+
+**📝 투두와 시간을 입력해 타임박스 생성**
+
+해야 할 일과 예상 소요 시간을 입력하면 하루 계획이 타임박스 형태로 자동 생성됩니다.
+
 <img width="1920" height="1080" alt="Timo-Flow2" src="https://github.com/user-attachments/assets/9f0133dd-5f52-4eda-9a24-bcc7df438adb" />
+
+**⏱️ 타이머를 실행해 계획 수행**
+
+각 타임박스를 실행하면 설정한 시간만큼 타이머가 시작되고 실제 수행 시간이 측정됩니다.
+
 <img width="1920" height="1080" alt="Timo-Flow3" src="https://github.com/user-attachments/assets/25595452-4623-4a05-9931-180493708107" />
+
+**📊 타임라인을 통해서 기록**
+
+타이머로 수행한 시간만큼 타임라인에 실시간으로 기록되어 하루 동안 무엇을 했는지 한눈에 파악할 수 있습니다.
+
 <img width="1920" height="1080" alt="Timo-Flow4" src="https://github.com/user-attachments/assets/aec2d817-14e1-4ddc-acbc-f20681de3429" />
+
+**🤖 AI 피드백**
+
+계획한 소요 시간과 실제 소요 시간을 비교해 AI가 사용자에게 맞는 시간 추천과 피드백을 제공합니다.
+
 <img width="1920" height="1080" alt="Timo-Flow5" src="https://github.com/user-attachments/assets/0e639bef-dafb-4fcf-bd12-fefa69ffb6c8" />
+
+**▶️ 완료하면 다음 타임박스를 시작**
+
+하나의 투두를 완료하면 이어서 다음 타임박스로 자연스럽게 넘어가 계획한 하루를 끊김 없이 수행할 수 있습니다.
+
 <img width="1920" height="1080" alt="Timo-Flow6" src="https://github.com/user-attachments/assets/00a33d33-4d4b-4023-860d-58b05c04c8a2" />
+
+**📈 통계**
+
+하루 동안 계획한 시간과 실제 수행 시간의 차이를 캘린더 뷰에서 한눈에 확인할 수 있습니다.
+
 <img width="1920" height="1080" alt="Timo-Flow7" src="https://github.com/user-attachments/assets/97826a74-974f-478b-80ec-120d08136a17" />
+
+**🎯 집중 모드**
+
+하나의 투두에만 집중해서 수행할 수 있는 몰입 전용 화면을 제공합니다.
 
 #### 할 일을 시간 단위로 관리하는 타임박싱 투두
 
-Timo는 작업을 실행 가능한 시간 블록으로 변환해, 
+Timo는 작업을 실행 가능한 시간 블록으로 변환해 
 계획한 일을 실제로 완료할 수 있도록 돕는 타임박스 기반 할 일 관리 서비스입니다.
 
-기존의 투두 서비스와 달리, Timo는 각 작업을 추가할 때 예상 소요 시간을 입력하도록 하며,
+기존의 투두 서비스와 달리, Timo는 각 작업을 추가할 때 예상 소요 시간을 입력하도록 하며
 이를 바탕으로 하루 일정을 시간 블록 중심으로 구성합니다.
 
-또한 사용자의 작업 및 시간 사용 패턴을 지속적으로 학습하여, AI 기반 소요 시간 추천을 제공합니다. 
-이를 통해 과도한 계획을 줄이고, 보다 현실적이고 실행 가능한 일정을 세울 수 있도록 지원합니다.
+또한 사용자의 작업 및 시간 사용 패턴을 지속적으로 학습하여 AI 기반 소요 시간 추천을 제공합니다. 
+이를 통해 과도한 계획을 줄이고 보다 현실적이고 실행 가능한 일정을 세울 수 있도록 지원합니다.
 
 &nbsp;
 
@@ -101,14 +136,15 @@ Timo는 작업을 실행 가능한 시간 블록으로 변환해,
 │   ├──📂user
 │   └── ...
 └──📂global
-├──📂auth                 # 인증/인가 공통 로직
-├──📂common               # 공통 베이스 클래스 (BaseTimeEntity 등)
-├──📂config               # Swagger, Security 등 설정
-├──📂exception            # 공통 예외 처리
-├──📂jwt                  # JWT 유틸 (발급/검증)
-├──📂logging              # 요청/응답 및 예외 로깅
-└──📂response             # 공통 응답 포맷 (BaseResponse)
+    ├──📂auth                 # 인증/인가 공통 로직
+    ├──📂common               # 공통 베이스 클래스 (BaseTimeEntity 등)
+    ├──📂config               # Swagger, Security 등 설정
+    ├──📂exception            # 공통 예외 처리
+    ├──📂jwt                  # JWT 유틸 (발급/검증)
+    ├──📂logging              # 요청/응답 및 예외 로깅
+    └──📂response             # 공통 응답 포맷 (BaseResponse)
 ```
+
 &nbsp;
 
 ## 📋 Convention
