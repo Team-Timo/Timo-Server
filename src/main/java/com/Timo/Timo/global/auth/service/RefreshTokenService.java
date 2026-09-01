@@ -4,7 +4,7 @@ import com.Timo.Timo.global.jwt.provider.JwtTokenProvider;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +21,8 @@ public class RefreshTokenService {
   private final JwtTokenProvider jwtTokenProvider;
 
   private static final String KEY_PREFIX = "refresh:";
+  private static final String ROTATED_PREFIX = "refresh:rotated:";
+  private static final long ROTATION_GRACE_SECONDS = 5;
 
   public String saveRefreshToken(String userId, String refreshToken){
     String sessionId = UUID.randomUUID().toString();
@@ -62,5 +64,25 @@ public class RefreshTokenService {
 
   public boolean isRefreshTokenValid(String userId, String sessionId, String refreshToken) {
     return Objects.equals(refreshToken, getRefreshToken(userId, sessionId));
+  }
+
+  public String rotateRefreshToken(String userId, String oldSessionId, String newRefreshToken) {
+    String newSessionId = saveRefreshToken(userId, newRefreshToken);
+
+    redisTemplate.opsForValue().set(
+        ROTATED_PREFIX + userId + ":" + oldSessionId,
+        newSessionId,
+        ROTATION_GRACE_SECONDS,
+        TimeUnit.SECONDS
+    );
+
+    deleteRefreshToken(userId, oldSessionId);
+    return newSessionId;
+  }
+
+  public Optional<String> findRotatedSessionId(String userId, String oldSessionId) {
+    return Optional.ofNullable(
+        redisTemplate.opsForValue().get(ROTATED_PREFIX + userId + ":" + oldSessionId)
+    );
   }
 }
