@@ -3,6 +3,7 @@ package com.Timo.Timo.domain.timer.repository;
 import com.Timo.Timo.domain.timer.entity.TimerRecord;
 import com.Timo.Timo.domain.timer.enums.TimerStatus;
 import jakarta.persistence.LockModeType;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -17,6 +18,9 @@ public interface TimerRecordRepository extends JpaRepository<TimerRecord, Long> 
   Optional<TimerRecord> findByUserIdAndStatusIn(Long userId, List<TimerStatus> statuses);
 
   boolean existsByTodo_IdAndStatusIn(Long todoId, List<TimerStatus> statuses);
+
+  boolean existsByTodo_IdAndTargetDateAndStatusIn(
+      Long todoId, LocalDate targetDate, List<TimerStatus> statuses);
 
   @Modifying(clearAutomatically = true)
   @Query("delete from TimerRecord r where r.todo.id = :todoId")
