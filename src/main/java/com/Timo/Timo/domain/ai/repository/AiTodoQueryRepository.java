@@ -20,7 +20,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AiTodoQueryRepository {
 
-	private static final int CANDIDATE_WINDOW = 200;
+	private static final int CANDIDATE_WINDOW = 30;
 	private static final int UNMATCHED_PRIORITY = 3;
 
 	private final EntityManager entityManager;
