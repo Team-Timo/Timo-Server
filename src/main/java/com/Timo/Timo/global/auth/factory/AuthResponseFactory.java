@@ -33,11 +33,21 @@ public class AuthResponseFactory {
         .accessToken(result.getAccessToken())
         .build();
 
-    return ResponseEntity.ok()
+    ResponseEntity.BodyBuilder builder = ResponseEntity.ok()
         .header(HttpHeaders.SET_COOKIE, refreshTokenCookie(result.getRefreshToken()))
         .header(HttpHeaders.SET_COOKIE, sessionIdCookie(result.getSessionId()))
-        .header("Cache-Control", "no-store")
-        .body(BaseResponse.onSuccess(AuthSuccessCode.REISSUE_SUCCESS, body));
+        .header("Cache-Control", "no-store");
+
+    addLegacyCookieCleanup(builder);
+
+    return builder.body(BaseResponse.onSuccess(AuthSuccessCode.REISSUE_SUCCESS, body));
+  }
+
+  private void addLegacyCookieCleanup(ResponseEntity.BodyBuilder builder) {
+    if (cookieSecure) {
+      builder.header(HttpHeaders.SET_COOKIE, CookieUtil.expireLegacyCookie("refreshToken").toString());
+      builder.header(HttpHeaders.SET_COOKIE, CookieUtil.expireLegacyCookie("sessionId").toString());
+    }
   }
 
   public ResponseEntity<BaseResponse<Void>> logoutResponse() {
