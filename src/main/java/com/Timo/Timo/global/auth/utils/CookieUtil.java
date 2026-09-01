@@ -34,4 +34,14 @@ public class CookieUtil {
 
     return builder.build();
   }
+
+  public static ResponseCookie expireLegacyCookie(String name) {
+    return ResponseCookie.from(name, "")
+        .httpOnly(true)
+        .secure(true)
+        .path("/api/v1/auth")
+        .maxAge(0)
+        .sameSite("None")
+        .build();
+  }
 }
