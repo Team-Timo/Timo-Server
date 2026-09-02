@@ -34,6 +34,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -206,6 +207,7 @@ public class TimerService {
 
   private TimerFinishResponse finishTimer(Long userId, Long timerId, TimerStatus targetStatus) {
     TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
+    transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     FinishedTimer finishedTimer = transactionTemplate.execute(status ->
         finishTimerInTransaction(userId, timerId, targetStatus)
     );
