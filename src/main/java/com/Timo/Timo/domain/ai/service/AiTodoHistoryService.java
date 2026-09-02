@@ -45,14 +45,7 @@ public class AiTodoHistoryService {
 				userZoneId,
 				limit
 			).thenApply(histories -> {
-				aiHistoryCacheService.cacheSimilarTitleHistories(
-					userId,
-					title,
-					toExclusive,
-					userZoneId,
-					limit,
-					histories
-				);
+				aiHistoryCacheService.cacheHistories(similarCacheResult.key(), histories);
 				return histories;
 				});
 
@@ -77,14 +70,7 @@ public class AiTodoHistoryService {
 					userZoneId,
 					limit
 				).thenApply(histories -> {
-					aiHistoryCacheService.cacheRecentTagHistories(
-						userId,
-						tagId,
-						toExclusive,
-						userZoneId,
-						limit,
-						histories
-					);
+					aiHistoryCacheService.cacheHistories(tagCacheResult.key(), histories);
 					return histories;
 					});
 		}

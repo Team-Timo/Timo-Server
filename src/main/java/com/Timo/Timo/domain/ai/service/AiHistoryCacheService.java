@@ -40,17 +40,6 @@ public class AiHistoryCacheService {
     return getHistories(buildSimilarKey(userId, title, toExclusive, userZoneId, limit));
   }
 
-  public void cacheSimilarTitleHistories(
-      Long userId,
-      String title,
-      LocalDateTime toExclusive,
-      ZoneId userZoneId,
-      int limit,
-      List<TodoDurationHistory> histories
-  ) {
-    cacheHistories(buildSimilarKey(userId, title, toExclusive, userZoneId, limit), histories);
-  }
-
   public CacheLookupResult getRecentTagHistories(
       Long userId,
       Long tagId,
@@ -61,37 +50,7 @@ public class AiHistoryCacheService {
     return getHistories(buildTagKey(userId, tagId, toExclusive, userZoneId, limit));
   }
 
-  public void cacheRecentTagHistories(
-      Long userId,
-      Long tagId,
-      LocalDateTime toExclusive,
-      ZoneId userZoneId,
-      int limit,
-      List<TodoDurationHistory> histories
-  ) {
-    cacheHistories(buildTagKey(userId, tagId, toExclusive, userZoneId, limit), histories);
-  }
-
-  public void bumpUserHistoryVersion(Long userId) {
-    redisTemplate.opsForValue().increment(HISTORY_VERSION_KEY + userId);
-  }
-
-  private CacheLookupResult getHistories(String key) {
-    String value = redisTemplate.opsForValue().get(key);
-    if (value == null || value.isBlank()) {
-      return CacheLookupResult.miss();
-    }
-
-    try {
-      return CacheLookupResult.hit(objectMapper.readValue(value, HISTORY_LIST_TYPE));
-    } catch (Exception exception) {
-      log.warn("Failed to deserialize AI history cache. key={}", key, exception);
-      redisTemplate.delete(key);
-      return CacheLookupResult.miss();
-    }
-  }
-
-  private void cacheHistories(String key, List<TodoDurationHistory> histories) {
+  public void cacheHistories(String key, List<TodoDurationHistory> histories) {
     try {
       redisTemplate.opsForValue().set(
           key,
@@ -100,6 +59,36 @@ public class AiHistoryCacheService {
       );
     } catch (Exception exception) {
       log.warn("Failed to serialize AI history cache. key={}", key, exception);
+    }
+  }
+
+  public void bumpUserHistoryVersion(Long userId) {
+    try {
+      redisTemplate.opsForValue().increment(HISTORY_VERSION_KEY + userId);
+    } catch (Exception exception) {
+      log.warn("Failed to bump AI history cache version. userId={}", userId, exception);
+    }
+  }
+
+  private CacheLookupResult getHistories(String key) {
+    String value;
+    try {
+      value = redisTemplate.opsForValue().get(key);
+    } catch (Exception exception) {
+      log.warn("Failed to read AI history cache, treating as miss. key={}", key, exception);
+      return CacheLookupResult.miss(key);
+    }
+
+    if (value == null || value.isBlank()) {
+      return CacheLookupResult.miss(key);
+    }
+
+    try {
+      return CacheLookupResult.hit(objectMapper.readValue(value, HISTORY_LIST_TYPE), key);
+    } catch (Exception exception) {
+      log.warn("Failed to deserialize AI history cache. key={}", key, exception);
+      redisTemplate.delete(key);
+      return CacheLookupResult.miss(key);
     }
   }
 
@@ -137,21 +126,26 @@ public class AiHistoryCacheService {
   }
 
   private long getUserHistoryVersion(Long userId) {
-    String value = redisTemplate.opsForValue().get(HISTORY_VERSION_KEY + userId);
-    if (value == null || value.isBlank()) {
+    try {
+      String value = redisTemplate.opsForValue().get(HISTORY_VERSION_KEY + userId);
+      if (value == null || value.isBlank()) {
+        return 0L;
+      }
+      return Long.parseLong(value);
+    } catch (Exception exception) {
+      log.warn("Failed to read AI history cache version, defaulting to 0. userId={}", userId, exception);
       return 0L;
     }
-    return Long.parseLong(value);
   }
 
-  public record CacheLookupResult(boolean hit, List<TodoDurationHistory> histories) {
+  public record CacheLookupResult(boolean hit, List<TodoDurationHistory> histories, String key) {
 
-    private static CacheLookupResult hit(List<TodoDurationHistory> histories) {
-      return new CacheLookupResult(true, histories);
+    private static CacheLookupResult hit(List<TodoDurationHistory> histories, String key) {
+      return new CacheLookupResult(true, histories, key);
     }
 
-    private static CacheLookupResult miss() {
-      return new CacheLookupResult(false, List.of());
+    private static CacheLookupResult miss(String key) {
+      return new CacheLookupResult(false, List.of(), key);
     }
   }
 }
