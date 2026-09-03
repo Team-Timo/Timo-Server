@@ -184,6 +184,10 @@ public class TimerService {
     return timerRecordRepository.existsByTodo_IdAndStatusIn(todoId, ACTIVE_STATUS);
   }
 
+  public boolean hasActiveTimerOn(Long todoId, LocalDate date) {
+    return timerRecordRepository.existsByTodo_IdAndTargetDateAndStatusIn(todoId, date, ACTIVE_STATUS);
+  }
+
   @Transactional
   public void deleteTimersByTodo(Long todoId) {
     timerSessionRepository.deleteByTodoId(todoId);
