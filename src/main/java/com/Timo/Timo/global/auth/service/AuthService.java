@@ -1,6 +1,5 @@
 package com.Timo.Timo.global.auth.service;
 
-import com.Timo.Timo.domain.calendar.client.GoogleOAuthClient;
 import com.Timo.Timo.domain.calendar.entity.CalendarRevocationOutbox;
 import com.Timo.Timo.domain.calendar.repository.CalendarConnectionRepository;
 import com.Timo.Timo.domain.calendar.repository.CalendarRevocationOutboxRepository;
@@ -76,22 +75,33 @@ public class AuthService {
     }
 
     Long userId = jwtTokenProvider.getUserId(refreshToken);
+    String userIdKey = String.valueOf(userId);
 
     if (!userRepository.existsById(userId)) {
       throw new CustomException(UserErrorCode.USER_NOT_FOUND);
     }
 
-    if (!refreshTokenService.isRefreshTokenValid(String.valueOf(userId), sessionId, refreshToken)){
+    if (refreshTokenService.isRefreshTokenValid(userIdKey, sessionId, refreshToken)) {
+      String newAccessToken = jwtTokenProvider.generateAccessToken(userId);
+      String newRefreshToken = jwtTokenProvider.generateRefreshToken(userId);
+      String newSessionId = refreshTokenService.rotateRefreshToken(userIdKey, sessionId, newRefreshToken);
+
+      return new ReissueResult(newAccessToken, newRefreshToken, newSessionId);
+    }
+
+    return refreshTokenService.findRotatedSessionId(userIdKey, sessionId)
+        .map(newSessionId -> reissueFromAlreadyRotatedSession(userId, userIdKey, newSessionId))
+        .orElseThrow(() -> new CustomException(AuthErrorCode.INVALID_REFRESH_TOKEN));
+  }
+
+  private ReissueResult reissueFromAlreadyRotatedSession(Long userId, String userIdKey, String newSessionId) {
+    String currentRefreshToken = refreshTokenService.getRefreshToken(userIdKey, newSessionId);
+    if (currentRefreshToken == null) {
       throw new CustomException(AuthErrorCode.INVALID_REFRESH_TOKEN);
     }
 
-    refreshTokenService.deleteRefreshToken(String.valueOf(userId), sessionId);
-
-    String newAccessToken  = jwtTokenProvider.generateAccessToken(userId);
-    String newRefreshToken = jwtTokenProvider.generateRefreshToken(userId);
-    String newSessionId    = refreshTokenService.saveRefreshToken(String.valueOf(userId), newRefreshToken);
-
-    return new ReissueResult(newAccessToken, newRefreshToken, newSessionId);
+    String newAccessToken = jwtTokenProvider.generateAccessToken(userId);
+    return new ReissueResult(newAccessToken, currentRefreshToken, newSessionId);
   }
 
   public void logout(String accessToken, Long userId, String sessionId) {

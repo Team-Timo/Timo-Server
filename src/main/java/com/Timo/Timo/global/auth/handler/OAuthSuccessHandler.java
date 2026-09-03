@@ -58,6 +58,11 @@ public class OAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
         CookieUtil.createCookie("sessionId", sessionId,
             jwtTokenProvider.getRefreshTokenExpiry(), cookieSecure).toString());
 
+    if (cookieSecure) {
+      response.addHeader(HttpHeaders.SET_COOKIE, CookieUtil.expireLegacyCookie("refreshToken").toString());
+      response.addHeader(HttpHeaders.SET_COOKIE, CookieUtil.expireLegacyCookie("sessionId").toString());
+    }
+
     String code = authCodeService.generateAndSave(
         String.valueOf(userId),
         onboardingCompleted
