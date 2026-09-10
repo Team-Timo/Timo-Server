@@ -1,7 +1,11 @@
 package com.Timo.Timo.global.auth.service;
 
 import com.Timo.Timo.global.jwt.provider.JwtTokenProvider;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -35,7 +39,7 @@ public class RefreshTokenService {
         return -1
       end
       redis.call('SET', KEYS[3], ARGV[2], 'EX', ARGV[4])
-      redis.call('SET', KEYS[2], ARGV[3], 'EX', ARGV[5])
+      redis.call('SET', KEYS[2], ARGV[6] .. ':' .. ARGV[3], 'EX', ARGV[5])
       redis.call('DEL', KEYS[1])
       return 1
       """;
@@ -102,7 +106,8 @@ public class RefreshTokenService {
         newRefreshToken,
         newSessionId,
         String.valueOf(jwtTokenProvider.getRefreshTokenExpiry()),
-        String.valueOf(ROTATION_GRACE_SECONDS)
+        String.valueOf(ROTATION_GRACE_SECONDS),
+        sha256Hex(expectedRefreshToken)
     );
 
     if (result != null && result == 1L) {
@@ -111,9 +116,39 @@ public class RefreshTokenService {
     return Optional.empty();
   }
 
-  public Optional<String> findRotatedSessionId(String userId, String oldSessionId) {
-    return Optional.ofNullable(
-        redisTemplate.opsForValue().get(ROTATED_PREFIX + userId + ":" + oldSessionId)
+  public Optional<String> findRotatedSessionId(String userId, String oldSessionId, String refreshToken) {
+    String stored = redisTemplate.opsForValue().get(ROTATED_PREFIX + userId + ":" + oldSessionId);
+    if (stored == null) {
+      return Optional.empty();
+    }
+
+    int separatorIndex = stored.indexOf(':');
+    if (separatorIndex < 0) {
+      return Optional.empty();
+    }
+
+    String storedDigest = stored.substring(0, separatorIndex);
+    String newSessionId = stored.substring(separatorIndex + 1);
+
+    boolean digestMatches = MessageDigest.isEqual(
+        storedDigest.getBytes(StandardCharsets.UTF_8),
+        sha256Hex(refreshToken).getBytes(StandardCharsets.UTF_8)
     );
+
+    if (!digestMatches) {
+      return Optional.empty();
+    }
+
+    return Optional.of(newSessionId);
+  }
+
+  private static String sha256Hex(String value) {
+    try {
+      MessageDigest digest = MessageDigest.getInstance("SHA-256");
+      byte[] hash = digest.digest(value.getBytes(StandardCharsets.UTF_8));
+      return HexFormat.of().formatHex(hash);
+    } catch (NoSuchAlgorithmException e) {
+      throw new IllegalStateException("SHA-256 알고리즘을 사용할 수 없습니다.", e);
+    }
   }
 }

@@ -92,7 +92,7 @@ public class AuthService {
       return new ReissueResult(newAccessToken, newRefreshToken, rotatedSessionId.get());
     }
 
-    return refreshTokenService.findRotatedSessionId(userIdKey, sessionId)
+    return refreshTokenService.findRotatedSessionId(userIdKey, sessionId, refreshToken)
         .map(newSessionId -> reissueFromAlreadyRotatedSession(userId, userIdKey, newSessionId))
         .orElseThrow(() -> new CustomException(AuthErrorCode.INVALID_REFRESH_TOKEN));
   }
