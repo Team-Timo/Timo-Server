@@ -12,6 +12,7 @@ import com.Timo.Timo.global.auth.exception.AuthErrorCode;
 import com.Timo.Timo.global.exception.CustomException;
 import com.Timo.Timo.global.exception.code.ErrorCode;
 import com.Timo.Timo.global.jwt.provider.JwtTokenProvider;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -81,12 +82,14 @@ public class AuthService {
       throw new CustomException(UserErrorCode.USER_NOT_FOUND);
     }
 
-    if (refreshTokenService.isRefreshTokenValid(userIdKey, sessionId, refreshToken)) {
-      String newAccessToken = jwtTokenProvider.generateAccessToken(userId);
-      String newRefreshToken = jwtTokenProvider.generateRefreshToken(userId);
-      String newSessionId = refreshTokenService.rotateRefreshToken(userIdKey, sessionId, newRefreshToken);
+    String newAccessToken = jwtTokenProvider.generateAccessToken(userId);
+    String newRefreshToken = jwtTokenProvider.generateRefreshToken(userId);
 
-      return new ReissueResult(newAccessToken, newRefreshToken, newSessionId);
+    Optional<String> rotatedSessionId =
+        refreshTokenService.rotateIfValid(userIdKey, sessionId, refreshToken, newRefreshToken);
+
+    if (rotatedSessionId.isPresent()) {
+      return new ReissueResult(newAccessToken, newRefreshToken, rotatedSessionId.get());
     }
 
     return refreshTokenService.findRotatedSessionId(userIdKey, sessionId)

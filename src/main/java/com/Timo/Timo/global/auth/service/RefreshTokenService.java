@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ScanOptions;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
+import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -23,6 +25,22 @@ public class RefreshTokenService {
   private static final String KEY_PREFIX = "refresh:";
   private static final String ROTATED_PREFIX = "refresh:rotated:";
   private static final long ROTATION_GRACE_SECONDS = 5;
+
+  private static final String ROTATE_SCRIPT = """
+      local current = redis.call('GET', KEYS[1])
+      if current == false then
+        return 0
+      end
+      if current ~= ARGV[1] then
+        return -1
+      end
+      redis.call('SET', KEYS[3], ARGV[2], 'EX', ARGV[4])
+      redis.call('SET', KEYS[2], ARGV[3], 'EX', ARGV[5])
+      redis.call('DEL', KEYS[1])
+      return 1
+      """;
+
+  private final RedisScript<Long> rotateScript = new DefaultRedisScript<>(ROTATE_SCRIPT, Long.class);
 
   public String saveRefreshToken(String userId, String refreshToken){
     String sessionId = UUID.randomUUID().toString();
@@ -66,18 +84,31 @@ public class RefreshTokenService {
     return Objects.equals(refreshToken, getRefreshToken(userId, sessionId));
   }
 
-  public String rotateRefreshToken(String userId, String oldSessionId, String newRefreshToken) {
-    String newSessionId = saveRefreshToken(userId, newRefreshToken);
+  public Optional<String> rotateIfValid(
+      String userId, String oldSessionId, String expectedRefreshToken, String newRefreshToken
+  ) {
+    String newSessionId = UUID.randomUUID().toString();
 
-    redisTemplate.opsForValue().set(
+    List<String> keys = List.of(
+        KEY_PREFIX + userId + ":" + oldSessionId,
         ROTATED_PREFIX + userId + ":" + oldSessionId,
-        newSessionId,
-        ROTATION_GRACE_SECONDS,
-        TimeUnit.SECONDS
+        KEY_PREFIX + userId + ":" + newSessionId
     );
 
-    deleteRefreshToken(userId, oldSessionId);
-    return newSessionId;
+    Long result = redisTemplate.execute(
+        rotateScript,
+        keys,
+        expectedRefreshToken,
+        newRefreshToken,
+        newSessionId,
+        String.valueOf(jwtTokenProvider.getRefreshTokenExpiry()),
+        String.valueOf(ROTATION_GRACE_SECONDS)
+    );
+
+    if (result != null && result == 1L) {
+      return Optional.of(newSessionId);
+    }
+    return Optional.empty();
   }
 
   public Optional<String> findRotatedSessionId(String userId, String oldSessionId) {
