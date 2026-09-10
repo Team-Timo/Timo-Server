@@ -1,5 +1,6 @@
 package com.Timo.Timo.global.config;
 
+import com.Timo.Timo.global.auth.filter.LegacyCookieCleanupFilter;
 import com.Timo.Timo.global.auth.filter.OriginValidationFilter;
 import com.Timo.Timo.global.auth.handler.JwtAuthenticationEntryPoint;
 import com.Timo.Timo.global.auth.handler.OAuthFailureHandler;
@@ -34,6 +35,7 @@ public class SecurityConfig {
   private final CorsConfigurationSource corsConfigurationSource;
   private final OAuthOriginCaptureFilter oAuthOriginCaptureFilter;
   private final OriginValidationFilter originValidationFilter;
+  private final LegacyCookieCleanupFilter legacyCookieCleanupFilter;
 
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -72,7 +74,8 @@ public class SecurityConfig {
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
         .addFilterBefore(mdcLoggingFilter(), JwtAuthenticationFilter.class)
         .addFilterBefore(oAuthOriginCaptureFilter, OAuth2AuthorizationRequestRedirectFilter.class)
-        .addFilterBefore(originValidationFilter, JwtAuthenticationFilter.class);
+        .addFilterBefore(originValidationFilter, JwtAuthenticationFilter.class)
+        .addFilterBefore(legacyCookieCleanupFilter, JwtAuthenticationFilter.class);
 
     return http.build();
   }
@@ -97,6 +100,16 @@ public class SecurityConfig {
   ) {
     FilterRegistrationBean<OriginValidationFilter> registrationBean =
         new FilterRegistrationBean<>(originValidationFilter);
+    registrationBean.setEnabled(false);
+    return registrationBean;
+  }
+
+  @Bean
+  public FilterRegistrationBean<LegacyCookieCleanupFilter> legacyCookieCleanupFilterRegistration(
+      LegacyCookieCleanupFilter legacyCookieCleanupFilter
+  ) {
+    FilterRegistrationBean<LegacyCookieCleanupFilter> registrationBean =
+        new FilterRegistrationBean<>(legacyCookieCleanupFilter);
     registrationBean.setEnabled(false);
     return registrationBean;
   }
