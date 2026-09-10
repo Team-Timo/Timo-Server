@@ -61,8 +61,30 @@ public class RefreshTokenService {
     return redisTemplate.opsForValue().get(KEY_PREFIX + userId + ":" + sessionId);
   }
 
+  private static final String DELETE_SCRIPT = """
+      local deleted = redis.call('DEL', KEYS[1])
+      if deleted == 0 then
+        local pointer = redis.call('GET', KEYS[2])
+        if pointer then
+          local sep = string.find(pointer, ':')
+          if sep then
+            local newSessionId = string.sub(pointer, sep + 1)
+            redis.call('DEL', ARGV[1] .. ARGV[2] .. ':' .. newSessionId)
+          end
+        end
+      end
+      redis.call('DEL', KEYS[2])
+      return deleted
+      """;
+
+  private final RedisScript<Long> deleteScript = new DefaultRedisScript<>(DELETE_SCRIPT, Long.class);
+
   public void deleteRefreshToken(String userId, String sessionId) {
-    redisTemplate.delete(KEY_PREFIX + userId + ":" + sessionId);
+    List<String> keys = List.of(
+        KEY_PREFIX + userId + ":" + sessionId,
+        ROTATED_PREFIX + userId + ":" + sessionId
+    );
+    redisTemplate.execute(deleteScript, keys, KEY_PREFIX, userId);
   }
 
   public void deleteAllRefreshTokens(String userId) {
