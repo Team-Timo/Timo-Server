@@ -28,7 +28,9 @@ public class LegacyCookieCleanupFilter extends OncePerRequestFilter {
   protected void doFilterInternal(
       HttpServletRequest request, HttpServletResponse response, FilterChain filterChain
   ) throws ServletException, IOException {
-    if (cookieSecure && TARGET_PATHS.contains(request.getRequestURI())) {
+    String path = request.getRequestURI().substring(request.getContextPath().length());
+
+    if (cookieSecure && TARGET_PATHS.contains(path)) {
       response.addHeader(HttpHeaders.SET_COOKIE, CookieUtil.expireLegacyCookie("refreshToken").toString());
       response.addHeader(HttpHeaders.SET_COOKIE, CookieUtil.expireLegacyCookie("sessionId").toString());
     }

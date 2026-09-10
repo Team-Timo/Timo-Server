@@ -26,7 +26,7 @@ public class OriginValidationFilter extends OncePerRequestFilter {
   protected void doFilterInternal(
       HttpServletRequest request, HttpServletResponse response, FilterChain filterChain
   ) throws ServletException, IOException {
-    String path = request.getRequestURI();
+    String path = request.getRequestURI().substring(request.getContextPath().length());
 
     if (PROTECTED_PATHS.stream().anyMatch(path::equals)) {
       String origin = request.getHeader("Origin");
