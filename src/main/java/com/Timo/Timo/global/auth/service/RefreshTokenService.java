@@ -3,14 +3,14 @@ package com.Timo.Timo.global.auth.service;
 import com.Timo.Timo.global.jwt.provider.JwtTokenProvider;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ScanOptions;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
+import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -22,6 +22,17 @@ public class RefreshTokenService {
 
   private static final String KEY_PREFIX = "refresh:";
 
+  private static final RedisScript<Long> COMPARE_AND_DELETE_SCRIPT = new DefaultRedisScript<>(
+      "local stored = redis.call('GET', KEYS[1]) "
+          + "if stored == ARGV[1] then "
+          + "  redis.call('DEL', KEYS[1]) "
+          + "  return 1 "
+          + "else "
+          + "  return 0 "
+          + "end",
+      Long.class
+  );
+
   public String saveRefreshToken(String userId, String refreshToken){
     String sessionId = UUID.randomUUID().toString();
     redisTemplate.opsForValue().set(
@@ -31,10 +42,6 @@ public class RefreshTokenService {
         TimeUnit.SECONDS
     );
     return sessionId;
-  }
-
-  public String getRefreshToken(String userId, String sessionId) {
-    return redisTemplate.opsForValue().get(KEY_PREFIX + userId + ":" + sessionId);
   }
 
   public void deleteRefreshToken(String userId, String sessionId) {
@@ -60,7 +67,12 @@ public class RefreshTokenService {
     }
   }
 
-  public boolean isRefreshTokenValid(String userId, String sessionId, String refreshToken) {
-    return Objects.equals(refreshToken, getRefreshToken(userId, sessionId));
+  public boolean validateAndConsumeRefreshToken(String userId, String sessionId, String refreshToken) {
+    Long result = redisTemplate.execute(
+        COMPARE_AND_DELETE_SCRIPT,
+        List.of(KEY_PREFIX + userId + ":" + sessionId),
+        refreshToken
+    );
+    return Long.valueOf(1L).equals(result);
   }
 }
