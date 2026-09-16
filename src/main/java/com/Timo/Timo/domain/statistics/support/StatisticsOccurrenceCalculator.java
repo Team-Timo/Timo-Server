@@ -41,16 +41,24 @@ public class StatisticsOccurrenceCalculator {
 			.toList();
 	}
 
+	public List<Todo> findRulesByIds(List<Long> todoIds) {
+		if (todoIds.isEmpty()) {
+			return List.of();
+		}
+		return todoRepository.findAllById(todoIds);
+	}
+
 	private DailyOccurrence summarizeDate(List<Todo> rules, Map<InstanceKey, TodoInstance> instancesByKey, LocalDate date) {
 		int totalCount = 0;
 		int completedCount = 0;
 
 		for (Todo rule : rules) {
-			if (!todoDateCalculator.occursOn(rule, date)) {
+			TodoInstance instance = instancesByKey.get(new InstanceKey(rule.getId(), date));
+			boolean occursByCurrentRule = todoDateCalculator.occursOn(rule, date);
+			if (!occursByCurrentRule && instance == null) {
 				continue;
 			}
 			totalCount++;
-			TodoInstance instance = instancesByKey.get(new InstanceKey(rule.getId(), date));
 			if (instance != null && instance.isCompleted()) {
 				completedCount++;
 			}
