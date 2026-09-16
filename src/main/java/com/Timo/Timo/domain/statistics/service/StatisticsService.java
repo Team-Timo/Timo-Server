@@ -6,10 +6,12 @@ import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -138,8 +140,9 @@ public class StatisticsService {
 			.collect(Collectors.toMap(TimerDailyTodoStats::getTodoId, TimerDailyTodoStats::getActualSeconds));
 
 		List<Todo> occurringTodos = statisticsOccurrenceCalculator.findOccurringRules(userId, date);
-		Map<Long, String> tagNamesById = findTagNames(occurringTodos);
-		List<DailyTodoResponse> todos = occurringTodos.stream()
+		List<Todo> dailyTodos = mergeWithRecordedTodos(occurringTodos, actualSecondsByTodoId.keySet());
+		Map<Long, String> tagNamesById = findTagNames(dailyTodos);
+		List<DailyTodoResponse> todos = dailyTodos.stream()
 			.map(todo -> toDailyTodoResponse(todo, actualSecondsByTodoId, tagNamesById))
 			.toList();
 
@@ -166,6 +169,20 @@ public class StatisticsService {
 				.toLocalDate())
 			.distinct()
 			.count();
+	}
+
+	private List<Todo> mergeWithRecordedTodos(List<Todo> occurringTodos, Set<Long> recordedTodoIds) {
+		Set<Long> occurringTodoIds = occurringTodos.stream().map(Todo::getId).collect(Collectors.toSet());
+		List<Long> missingTodoIds = recordedTodoIds.stream()
+			.filter(todoId -> !occurringTodoIds.contains(todoId))
+			.toList();
+		if (missingTodoIds.isEmpty()) {
+			return occurringTodos;
+		}
+
+		List<Todo> mergedTodos = new ArrayList<>(occurringTodos);
+		mergedTodos.addAll(statisticsOccurrenceCalculator.findRulesByIds(missingTodoIds));
+		return mergedTodos;
 	}
 
 	private int calculateCompletionRate(DailyOccurrence occurrence) {
