@@ -36,7 +36,7 @@ public class RefreshTokenService {
   public String saveRefreshToken(String userId, String refreshToken){
     String sessionId = UUID.randomUUID().toString();
     redisTemplate.opsForValue().set(
-        KEY_PREFIX + userId + ":" + sessionId,
+        buildKey(userId, sessionId),
         refreshToken,
         jwtTokenProvider.getRefreshTokenExpiry(),
         TimeUnit.SECONDS
@@ -45,7 +45,7 @@ public class RefreshTokenService {
   }
 
   public void deleteRefreshToken(String userId, String sessionId) {
-    redisTemplate.delete(KEY_PREFIX + userId + ":" + sessionId);
+    redisTemplate.delete(buildKey(userId, sessionId));
   }
 
   public void deleteAllRefreshTokens(String userId) {
@@ -70,9 +70,13 @@ public class RefreshTokenService {
   public boolean validateAndConsumeRefreshToken(String userId, String sessionId, String refreshToken) {
     Long result = redisTemplate.execute(
         COMPARE_AND_DELETE_SCRIPT,
-        List.of(KEY_PREFIX + userId + ":" + sessionId),
+        List.of(buildKey(userId, sessionId)),
         refreshToken
     );
     return Long.valueOf(1L).equals(result);
+  }
+
+  private String buildKey(String userId, String sessionId) {
+    return KEY_PREFIX + userId + ":" + sessionId;
   }
 }
