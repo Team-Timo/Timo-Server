@@ -1,8 +1,10 @@
 package com.Timo.Timo.domain.statistics.support;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -35,17 +37,22 @@ public class StatisticsOccurrenceCalculator {
 			));
 	}
 
-	public List<Todo> findOccurringRules(Long userId, LocalDate date) {
-		return todoRepository.findRulesInRange(userId, date, date).stream()
+	public List<Todo> findDailyTodos(Long userId, LocalDate date, Set<Long> recordedTodoIds) {
+		List<Todo> occurringTodos = todoRepository.findRulesInRange(userId, date, date).stream()
 			.filter(rule -> todoDateCalculator.occursOn(rule, date))
 			.toList();
-	}
 
-	public List<Todo> findRulesByIds(List<Long> todoIds) {
-		if (todoIds.isEmpty()) {
-			return List.of();
+		Set<Long> occurringTodoIds = occurringTodos.stream().map(Todo::getId).collect(Collectors.toSet());
+		List<Long> missingTodoIds = recordedTodoIds.stream()
+			.filter(todoId -> !occurringTodoIds.contains(todoId))
+			.toList();
+		if (missingTodoIds.isEmpty()) {
+			return occurringTodos;
 		}
-		return todoRepository.findAllById(todoIds);
+
+		List<Todo> dailyTodos = new ArrayList<>(occurringTodos);
+		dailyTodos.addAll(todoRepository.findAllById(missingTodoIds));
+		return dailyTodos;
 	}
 
 	private DailyOccurrence summarizeDate(List<Todo> rules, Map<InstanceKey, TodoInstance> instancesByKey, LocalDate date) {
