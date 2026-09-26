@@ -1,6 +1,5 @@
 package com.Timo.Timo.global.auth.service;
 
-import com.Timo.Timo.domain.calendar.client.GoogleOAuthClient;
 import com.Timo.Timo.domain.calendar.entity.CalendarRevocationOutbox;
 import com.Timo.Timo.domain.calendar.repository.CalendarConnectionRepository;
 import com.Timo.Timo.domain.calendar.repository.CalendarRevocationOutboxRepository;
@@ -81,11 +80,9 @@ public class AuthService {
       throw new CustomException(UserErrorCode.USER_NOT_FOUND);
     }
 
-    if (!refreshTokenService.isRefreshTokenValid(String.valueOf(userId), sessionId, refreshToken)){
+    if (!refreshTokenService.validateAndConsumeRefreshToken(String.valueOf(userId), sessionId, refreshToken)) {
       throw new CustomException(AuthErrorCode.INVALID_REFRESH_TOKEN);
     }
-
-    refreshTokenService.deleteRefreshToken(String.valueOf(userId), sessionId);
 
     String newAccessToken  = jwtTokenProvider.generateAccessToken(userId);
     String newRefreshToken = jwtTokenProvider.generateRefreshToken(userId);
