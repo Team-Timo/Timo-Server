@@ -3,12 +3,12 @@ package com.Timo.Timo.domain.ai.service;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.Timo.Timo.domain.ai.dto.TodoDurationHistory;
-import com.Timo.Timo.domain.ai.repository.AiTodoQueryRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -16,7 +16,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AiTodoHistoryService {
 
-	private final AiTodoQueryRepository aiTodoQueryRepository;
+	private final AiHistoryAsyncQueryService aiHistoryAsyncQueryService;
+	private final AiHistoryCacheService aiHistoryCacheService;
 
 	@Transactional(readOnly = true)
 	public AiTodoHistories findHistories(
@@ -27,24 +28,59 @@ public class AiTodoHistoryService {
 		ZoneId userZoneId,
 		int limit
 	) {
-		List<TodoDurationHistory> similarTitleHistories =
-			aiTodoQueryRepository.findActualDurationHistoriesBySimilarTitle(
+		AiHistoryCacheService.CacheLookupResult similarCacheResult =
+			aiHistoryCacheService.getSimilarTitleHistories(
 				userId,
 				title,
 				toExclusive,
 				userZoneId,
 				limit
 			);
-		List<TodoDurationHistory> recentTagHistories = tagId == null
-			? List.of()
-			: aiTodoQueryRepository.findActualDurationHistoriesByTagId(
+		CompletableFuture<List<TodoDurationHistory>> similarTitleFuture = similarCacheResult.hit()
+			? CompletableFuture.completedFuture(similarCacheResult.histories())
+			: aiHistoryAsyncQueryService.findSimilarTitleHistories(
 				userId,
-				tagId,
+				title,
 				toExclusive,
 				userZoneId,
 				limit
-			);
+			).thenApply(histories -> {
+				aiHistoryCacheService.cacheHistories(similarCacheResult.key(), histories);
+				return histories;
+				});
 
-		return new AiTodoHistories(similarTitleHistories, recentTagHistories);
+		CompletableFuture<List<TodoDurationHistory>> recentTagFuture;
+		if (tagId == null) {
+			recentTagFuture = CompletableFuture.completedFuture(List.of());
+		} else {
+			AiHistoryCacheService.CacheLookupResult tagCacheResult =
+				aiHistoryCacheService.getRecentTagHistories(
+					userId,
+					tagId,
+					toExclusive,
+					userZoneId,
+					limit
+				);
+			recentTagFuture = tagCacheResult.hit()
+				? CompletableFuture.completedFuture(tagCacheResult.histories())
+				: aiHistoryAsyncQueryService.findRecentTagHistories(
+					userId,
+					tagId,
+					toExclusive,
+					userZoneId,
+					limit
+				).thenApply(histories -> {
+					aiHistoryCacheService.cacheHistories(tagCacheResult.key(), histories);
+					return histories;
+					});
+		}
+
+		List<TodoDurationHistory> similarTitleHistories = similarTitleFuture.join();
+		List<TodoDurationHistory> recentTagHistories = recentTagFuture.join();
+
+		return new AiTodoHistories(
+			similarTitleHistories,
+			recentTagHistories
+		);
 	}
 }

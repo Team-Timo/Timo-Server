@@ -4,12 +4,14 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.util.Comparator;
 import java.util.List;
 
 import org.springframework.stereotype.Repository;
 
 import com.Timo.Timo.domain.ai.dto.TodoDurationHistory;
 import com.Timo.Timo.domain.ai.dto.TodoFeedbackSource;
+import com.Timo.Timo.domain.timer.entity.TimerRecord;
 
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +19,9 @@ import lombok.RequiredArgsConstructor;
 @Repository
 @RequiredArgsConstructor
 public class AiTodoQueryRepository {
+
+	private static final int CANDIDATE_WINDOW = 30;
+	private static final int UNMATCHED_PRIORITY = 3;
 
 	private final EntityManager entityManager;
 
@@ -59,39 +64,53 @@ public class AiTodoQueryRepository {
 		ZoneId userZoneId,
 		int limit
 	) {
-		List<TodoDurationHistoryRow> rows = entityManager.createQuery("""
-				select new com.Timo.Timo.domain.ai.repository.TodoDurationHistoryRow(
-					t.title,
-					tr.actualSeconds,
-					coalesce(tr.endedAt, tr.startedAt)
-				)
+		List<TimerRecord> candidates = entityManager.createQuery("""
+				select tr
 				from TimerRecord tr
-				join tr.todo t
-				where t.user.id = :userId
-					and tr.user.id = :userId
+				join fetch tr.todo t
+				where tr.user.id = :userId
 					and tr.actualSeconds is not null
-					and coalesce(tr.endedAt, tr.startedAt) < :toExclusive
-					and (
-						lower(t.title) like lower(concat('%', :title, '%'))
-						or lower(:title) like lower(concat('%', t.title, '%'))
-					)
-				order by
-					case
-						when lower(t.title) = lower(:title) then 0
-						when lower(t.title) like lower(concat('%', :title, '%')) then 1
-						when lower(:title) like lower(concat('%', t.title, '%')) then 2
-						else 3
-					end,
-					coalesce(tr.endedAt, tr.startedAt) desc,
-					tr.id desc
-				""", TodoDurationHistoryRow.class)
+					and tr.endedAt < :toExclusive
+				order by tr.endedAt desc, tr.id desc
+				""", TimerRecord.class)
 			.setParameter("userId", userId)
-			.setParameter("title", title)
 			.setParameter("toExclusive", toExclusive)
-			.setMaxResults(limit)
+			.setMaxResults(CANDIDATE_WINDOW)
 			.getResultList();
 
-		return toHistories(rows, userZoneId);
+		String normalizedSearchTitle = normalize(title);
+
+		return candidates.stream()
+			.map(record -> new ScoredCandidate(
+				record,
+				matchPriority(normalize(record.getTodo().getTitle()), normalizedSearchTitle)
+			))
+			.filter(scored -> scored.priority() < UNMATCHED_PRIORITY)
+			.sorted(Comparator.comparingInt(ScoredCandidate::priority)
+				.thenComparing(scored -> scored.record().getEndedAt(), Comparator.reverseOrder()))
+			.limit(limit)
+			.map(scored -> toHistory(scored.record(), userZoneId))
+			.toList();
+	}
+
+	private int matchPriority(String candidateTitle, String searchTitle) {
+		if (candidateTitle.equals(searchTitle)) {
+			return 0;
+		}
+		if (candidateTitle.contains(searchTitle)) {
+			return 1;
+		}
+		if (searchTitle.contains(candidateTitle)) {
+			return 2;
+		}
+		return UNMATCHED_PRIORITY;
+	}
+
+	private String normalize(String value) {
+		return value == null ? "" : value.trim().toLowerCase();
+	}
+
+	private record ScoredCandidate(TimerRecord record, int priority) {
 	}
 
 	public List<TodoDurationHistory> findActualDurationHistoriesByTagId(
@@ -150,6 +169,14 @@ public class AiTodoQueryRepository {
 				toUserLocalDate(row.recordedAt(), userZoneId)
 			))
 			.toList();
+	}
+
+	private TodoDurationHistory toHistory(TimerRecord record, ZoneId userZoneId) {
+		return new TodoDurationHistory(
+			record.getTodo().getTitle(),
+			record.getActualSeconds(),
+			toUserLocalDate(record.getEndedAt(), userZoneId)
+		);
 	}
 
 	private LocalDate toUserLocalDate(LocalDateTime utcDateTime, ZoneId userZoneId) {

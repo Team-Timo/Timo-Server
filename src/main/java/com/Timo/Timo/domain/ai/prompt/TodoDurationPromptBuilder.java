@@ -25,9 +25,14 @@ public class TodoDurationPromptBuilder {
 			- 비슷한 투두명 기록과 태그 기록이 모두 있으면 둘을 함께 보고, 비슷한 투두명 기록을 조금 더 중요하게 봐.
 			- 기록이 아예 없으면 현재 투두명만 기준으로 일반적인 예상 소요 시간을 판단해.
 
+			기록 신뢰도 판단 기준:
+			- 각 기록 그룹 앞의 요약(count/avgMinutes/minMinutes/maxMinutes)은 이미 정확히 계산된 값이니 그대로 신뢰하고, 직접 다시 계산하지 마.
+			- count가 1이면 그 값 하나에 과도하게 의존하지 말고 일반적인 감각과 함께 보수적으로 조정해.
+			- count가 3 이상이면 avgMinutes를 중심으로 판단하되, minMinutes~maxMinutes 범위를 크게 벗어난 추천은 피해.
+
 			규칙:
 			- 응답은 반드시 JSON 객체 하나만 반환해.
-			- recommendedMinutes는 분 단위 정수로 반환해.
+			- recommendedMinutes는 1 이상의 분 단위 정수로 반환해.
 			- 실제 기록에 없는 패턴은 만들지 마.
 
 			반환해야 할 응답 JSON 형식:
@@ -56,9 +61,26 @@ public class TodoDurationPromptBuilder {
 
 	private String formatHistories(List<TodoDurationHistory> histories) {
 		if (histories == null || histories.isEmpty()) {
-			return "[]";
+			return "요약: {\"count\":0}\n기록: []";
 		}
 
+		return "요약: %s\n기록: %s".formatted(summarize(histories), listHistories(histories));
+	}
+
+	private String summarize(List<TodoDurationHistory> histories) {
+		List<Integer> minutes = histories.stream()
+			.map(history -> toMinutes(history.actualSeconds()))
+			.toList();
+		int count = minutes.size();
+		int avg = Math.round(minutes.stream().mapToInt(Integer::intValue).sum() / (float) count);
+		int min = minutes.stream().mapToInt(Integer::intValue).min().orElse(0);
+		int max = minutes.stream().mapToInt(Integer::intValue).max().orElse(0);
+
+		return """
+			{"count":%d,"avgMinutes":%d,"minMinutes":%d,"maxMinutes":%d}""".formatted(count, avg, min, max);
+	}
+
+	private String listHistories(List<TodoDurationHistory> histories) {
 		return histories.stream()
 			.map(history -> """
 				{"title":"%s","date":"%s","actualMinutes":%d}

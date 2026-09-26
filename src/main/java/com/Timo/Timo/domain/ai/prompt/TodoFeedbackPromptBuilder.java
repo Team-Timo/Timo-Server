@@ -27,8 +27,11 @@ public class TodoFeedbackPromptBuilder {
 			- 1순위: 비슷한 투두명 실제 소요시간 기록
 			- 2순위: 같은 태그의 최근 실제 소요시간 기록
 			- 3순위: 기록이 없으면 이번 태스크의 연장 또는 조기 종료 여부
+			- 각 기록 그룹 앞의 요약(count/avgMinutes/minMinutes/maxMinutes)은 이미 정확히 계산된 값이니 그대로 신뢰하고, 직접 다시 계산하지 마.
+			- count가 1이면 그 값 하나만으로 단정하지 말고 "아직 데이터가 적다"는 뉘앙스 없이 조심스럽게만 반영해.
 			3. 다음 행동 추천
 			- 다음에 예상 시간을 어떻게 잡으면 좋을지 제안해.
+			- count가 3 이상인 그룹이 있으면 그 avgMinutes를 다음 예상 시간 제안의 기준으로 우선 사용해.
 
 			규칙:
 			- 응답은 반드시 JSON 객체 하나만 반환해.
@@ -36,7 +39,7 @@ public class TodoFeedbackPromptBuilder {
 			- feedback은 현재 결과 관찰, 패턴 해석, 다음 행동 추천을 압축해서 포함해.
 			- 실제 기록에 없는 패턴은 만들지 마.
 			- 기록이 부족하면 부족하다고 길게 말하지 말고, 이번 결과 기준으로만 제안해.
-			- 다음 예상 시간은 분 단위로 제안해.
+			- 다음 예상 시간은 1 이상의 분 단위 정수로 제안해.
 
 			반환해야 할 응답 JSON 형식:
 			{
@@ -70,9 +73,26 @@ public class TodoFeedbackPromptBuilder {
 
 	private String formatHistories(List<TodoDurationHistory> histories) {
 		if (histories == null || histories.isEmpty()) {
-			return "[]";
+			return "요약: {\"count\":0}\n기록: []";
 		}
 
+		return "요약: %s\n기록: %s".formatted(summarize(histories), listHistories(histories));
+	}
+
+	private String summarize(List<TodoDurationHistory> histories) {
+		List<Integer> minutes = histories.stream()
+			.map(history -> toMinutes(history.actualSeconds()))
+			.toList();
+		int count = minutes.size();
+		int avg = Math.round(minutes.stream().mapToInt(Integer::intValue).sum() / (float) count);
+		int min = minutes.stream().mapToInt(Integer::intValue).min().orElse(0);
+		int max = minutes.stream().mapToInt(Integer::intValue).max().orElse(0);
+
+		return """
+			{"count":%d,"avgMinutes":%d,"minMinutes":%d,"maxMinutes":%d}""".formatted(count, avg, min, max);
+	}
+
+	private String listHistories(List<TodoDurationHistory> histories) {
 		return histories.stream()
 			.map(history -> """
 				{"title":"%s","date":"%s","actualMinutes":%d}

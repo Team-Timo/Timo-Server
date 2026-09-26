@@ -64,12 +64,6 @@ public class AiTodoService {
 		);
 		rateLimiter.validate(userId, estimateTokenCost(prompt));
 
-		log.info(
-			"AI duration recommendation histories loaded. similarTitle={}, recentTag={}",
-			histories.similarTitleHistories().size(),
-			histories.recentTagHistories().size()
-		);
-
 		String geminiJson = geminiService.generateJson(prompt);
 		GeminiDurationRecommendation recommendation = parseRecommendation(geminiJson);
 		return validate(recommendation);
@@ -98,12 +92,6 @@ public class AiTodoService {
 			histories.recentTagHistories()
 		);
 		rateLimiter.validate(userId, estimateTokenCost(prompt));
-
-		log.info(
-			"AI todo feedback histories loaded. similarTitle={}, recentTag={}",
-			histories.similarTitleHistories().size(),
-			histories.recentTagHistories().size()
-		);
 
 		String geminiJson = geminiService.generateJson(prompt);
 		GeminiTodoFeedback feedback = parseFeedback(geminiJson);
