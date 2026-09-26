@@ -60,7 +60,7 @@ public record TodayResponse(
 			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 			boolean isRepeated,
 			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
-			boolean hasSubtask,
+			boolean hasMemo,
 			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 			TodoTimerStatus timerStatus,
 			Integer sortOrder,
@@ -78,7 +78,7 @@ public record TodayResponse(
 					todo.priority(),
 					todo.tag(),
 					todo.isRepeated(),
-					todo.hasSubtask(),
+					todo.hasMemo(),
 					todo.timerStatus(),
 					todo.sortOrder(),
 					todo.subtasks()

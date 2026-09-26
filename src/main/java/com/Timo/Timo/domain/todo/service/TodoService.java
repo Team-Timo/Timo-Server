@@ -137,7 +137,7 @@ public class TodoService {
       throw new CustomException(TodoErrorCode.TODO_NOT_FOUND);
     }
 
-    if (timerService.hasActiveTimer(todoId)) {
+    if (timerService.hasActiveTimerOn(todoId, date)) {
       throw new CustomException(TodoErrorCode.TIMER_RUNNING);
     }
 
