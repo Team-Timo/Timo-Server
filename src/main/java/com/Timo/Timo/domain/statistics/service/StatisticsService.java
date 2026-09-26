@@ -6,10 +6,10 @@ import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -23,17 +23,14 @@ import com.Timo.Timo.domain.statistics.dto.response.StatisticsDailyResponse.Dail
 import com.Timo.Timo.domain.statistics.dto.response.StatisticsDailyResponse.TagResponse;
 import com.Timo.Timo.domain.statistics.dto.response.StatisticsSummaryResponse;
 import com.Timo.Timo.domain.statistics.support.StatisticsDateParser;
+import com.Timo.Timo.domain.statistics.support.StatisticsOccurrenceCalculator;
+import com.Timo.Timo.domain.statistics.support.StatisticsOccurrenceCalculator.DailyOccurrence;
 import com.Timo.Timo.domain.tag.entity.Tag;
 import com.Timo.Timo.domain.tag.repository.TagRepository;
 import com.Timo.Timo.domain.timer.repository.TimerDailyTodoStats;
 import com.Timo.Timo.domain.timer.repository.TimerMonthlyRecordStats;
 import com.Timo.Timo.domain.timer.repository.TimerRecordRepository;
 import com.Timo.Timo.domain.todo.entity.Todo;
-import com.Timo.Timo.domain.todo.entity.TodoInstance;
-import com.Timo.Timo.domain.todo.repository.TodoDailyCompletionStats;
-import com.Timo.Timo.domain.todo.repository.TodoInstanceRepository;
-import com.Timo.Timo.domain.todo.repository.TodoMonthlySummaryStats;
-import com.Timo.Timo.domain.todo.repository.TodoRepository;
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.exception.UserErrorCode;
 import com.Timo.Timo.domain.user.repository.UserRepository;
@@ -49,11 +46,10 @@ public class StatisticsService {
 	private static final DateTimeFormatter YEAR_MONTH_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM");
 	private static final int SECONDS_PER_MINUTE = 60;
 
-	private final TodoRepository todoRepository;
-	private final TodoInstanceRepository todoInstanceRepository;
 	private final TimerRecordRepository timerRecordRepository;
 	private final TagRepository tagRepository;
 	private final StatisticsDateParser statisticsDateParser;
+	private final StatisticsOccurrenceCalculator statisticsOccurrenceCalculator;
 	private final UserRepository userRepository;
 
 	public StatisticsCalendarResponse getCalendar(Long userId, String yearMonthValue) {
@@ -63,12 +59,11 @@ public class StatisticsService {
 		LocalDate startDate = yearMonth.atDay(1);
 		LocalDate endDate = yearMonth.atEndOfMonth();
 
-		Map<LocalDate, TodoDailyCompletionStats> dailyStats = todoRepository.findDailyCompletionStats(
-				userId,
-				startDate,
-				endDate
-			).stream()
-			.collect(Collectors.toMap(TodoDailyCompletionStats::getDate, Function.identity()));
+		Map<LocalDate, DailyOccurrence> dailyStats = statisticsOccurrenceCalculator.calculateDailyOccurrences(
+			userId,
+			startDate,
+			endDate
+		);
 
 		List<DayCompletionResponse> days = IntStream.rangeClosed(1, yearMonth.lengthOfMonth())
 			.mapToObj(day -> {
@@ -88,6 +83,7 @@ public class StatisticsService {
 		ZoneId userZone = getUserZone(userId);
 		YearMonth yearMonth = statisticsDateParser.parseYearMonth(yearMonthValue);
 		LocalDate startDate = yearMonth.atDay(1);
+		LocalDate endDate = yearMonth.atEndOfMonth();
 		LocalDate nextMonthStartDate = yearMonth.plusMonths(1).atDay(1);
 		LocalDateTime fromInclusive = toUtcStartOfDay(startDate, userZone);
 		LocalDateTime toExclusive = toUtcStartOfDay(nextMonthStartDate, userZone);
@@ -97,21 +93,18 @@ public class StatisticsService {
 			fromInclusive,
 			toExclusive
 		);
-		TodoMonthlySummaryStats todoStats = todoRepository.findMonthlySummaryStats(
-			userId,
-			fromInclusive,
-			toExclusive
-		);
+		Collection<DailyOccurrence> dailyOccurrences = statisticsOccurrenceCalculator
+			.calculateDailyOccurrences(userId, startDate, endDate)
+			.values();
 
 		long totalRecordSeconds = timerStats.getTotalRecordSeconds();
 		long timerRecordedDayCount = countDistinctUserDates(
 			timerRecordRepository.findMonthlyRecordedAtTimes(userId, fromInclusive, toExclusive),
 			userZone
 		);
-		int activeDayCount = countDistinctUserDates(
-			todoRepository.findMonthlyTodoCreatedAtTimes(userId, fromInclusive, toExclusive),
-			userZone
-		);
+		int activeDayCount = (int)dailyOccurrences.stream().filter(day -> day.totalCount() > 0).count();
+		int totalTodoCount = dailyOccurrences.stream().mapToInt(DailyOccurrence::totalCount).sum();
+		int completedTodoCount = dailyOccurrences.stream().mapToInt(DailyOccurrence::completedCount).sum();
 		long averageRecordedMinutes = timerRecordedDayCount == 0
 			? 0L
 			: totalRecordSeconds / timerRecordedDayCount / SECONDS_PER_MINUTE;
@@ -120,8 +113,8 @@ public class StatisticsService {
 			totalRecordSeconds / SECONDS_PER_MINUTE,
 			activeDayCount,
 			averageRecordedMinutes,
-			toInteger(todoStats.getCompletedTodoCount()),
-			toInteger(todoStats.getTotalTodoCount())
+			completedTodoCount,
+			totalTodoCount
 		);
 	}
 
@@ -144,10 +137,12 @@ public class StatisticsService {
 			).stream()
 			.collect(Collectors.toMap(TimerDailyTodoStats::getTodoId, TimerDailyTodoStats::getActualSeconds));
 
-		List<TodoInstance> instances = todoInstanceRepository.findDailyInstances(userId, date);
-		Map<Long, String> tagNamesById = findTagNames(instances);
-		List<DailyTodoResponse> todos = instances.stream()
-			.map(instance -> toDailyTodoResponse(instance, actualSecondsByTodoId, tagNamesById))
+		List<Todo> dailyTodos = statisticsOccurrenceCalculator.findDailyTodos(
+			userId, date, actualSecondsByTodoId.keySet()
+		);
+		Map<Long, String> tagNamesById = findTagNames(dailyTodos);
+		List<DailyTodoResponse> todos = dailyTodos.stream()
+			.map(todo -> toDailyTodoResponse(todo, actualSecondsByTodoId, tagNamesById))
 			.toList();
 
 		return new StatisticsDailyResponse(date, toMinutes(totalRecordSeconds), todos);
@@ -175,21 +170,19 @@ public class StatisticsService {
 			.count();
 	}
 
-	private int calculateCompletionRate(TodoDailyCompletionStats stats) {
-		if (stats == null || stats.getTotalCount() == null || stats.getTotalCount() == 0) {
+	private int calculateCompletionRate(DailyOccurrence occurrence) {
+		if (occurrence == null || occurrence.totalCount() == 0) {
 			return 0;
 		}
 
-		long completedCount = stats.getCompletedCount() == null ? 0 : stats.getCompletedCount();
-		return (int)Math.round(completedCount * 100.0 / stats.getTotalCount());
+		return (int)Math.round(occurrence.completedCount() * 100.0 / occurrence.totalCount());
 	}
 
 	private DailyTodoResponse toDailyTodoResponse(
-		TodoInstance instance,
+		Todo todo,
 		Map<Long, Long> actualSecondsByTodoId,
 		Map<Long, String> tagNamesById
 	) {
-		Todo todo = instance.getTodo();
 		return new DailyTodoResponse(
 			todo.getId(),
 			todo.getTitle(),
@@ -199,9 +192,8 @@ public class StatisticsService {
 		);
 	}
 
-	private Map<Long, String> findTagNames(List<TodoInstance> instances) {
-		List<Long> tagIds = instances.stream()
-			.map(TodoInstance::getTodo)
+	private Map<Long, String> findTagNames(List<Todo> todos) {
+		List<Long> tagIds = todos.stream()
 			.map(Todo::getTagId)
 			.filter(Objects::nonNull)
 			.distinct()
@@ -220,12 +212,5 @@ public class StatisticsService {
 
 	private long toMinutes(long seconds) {
 		return seconds / SECONDS_PER_MINUTE;
-	}
-
-	private int toInteger(Long value) {
-		if (value == null) {
-			return 0;
-		}
-		return value.intValue();
 	}
 }
