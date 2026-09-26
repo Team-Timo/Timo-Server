@@ -30,12 +30,17 @@ public class HomeTodoMapper {
 				todo.getDurationSeconds(),
 				todo.getPriority() != null ? todo.getPriority().name() : null,
 				mapTag(context.tag()),
-				!todo.getSubtasks().isEmpty(),
+				hasMemo(todo, instance),
 				todo.getRepeatType() != RepeatType.NONE,
 				resolveTimerStatus(instance),
 				instance != null ? instance.getSortOrder() : context.defaultSortOrder(),
 				mapSubtasks(todo.getSubtasks(), context.completedSubtaskIds())
 		);
+	}
+
+	private boolean hasMemo(Todo todo, TodoInstance instance) {
+		String memo = instance != null ? instance.resolveMemo() : todo.getMemo();
+		return memo != null && !memo.isBlank();
 	}
 
 	private TagResponse mapTag(Tag tag) {
