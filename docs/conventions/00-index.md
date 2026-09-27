@@ -14,5 +14,3 @@
 | [automation.md](../automation.md) | 요청별 실행 단계·중단 조건·CI와 사람의 판단 지점 | 반복 작업 자동화 설계·점검 |
 
 예: 새로운 할 일 API는 `architecture.md`와 `coding-style.md`를 읽고, 새 컬럼이 있으면 `persistence.md`, 새 오류 코드가 있으면 `error-handling.md`만 추가로 읽는다.
-
-문서 분리 방식은 [DONGCHIMI-SERVER의 CLAUDE.md](https://github.com/TEAM-DONGCHIMI/DONGCHIMI-SERVER/blob/3c51fa59176bca53d40722deed1c712de1042eb9/CLAUDE.md)와 [컨벤션 인덱스](https://github.com/TEAM-DONGCHIMI/DONGCHIMI-SERVER/blob/3c51fa59176bca53d40722deed1c712de1042eb9/docs/conventions/00-index.md)를 참고했다. Kotlin 멀티모듈·Implement Layer·Flyway 규칙은 티모의 현재 구조와 달라 그대로 적용하지 않았다.
