@@ -32,7 +32,7 @@
 - PR 생성은 별도의 “PR 만들어줘” 명령에서만 한다. 이 단계에서 미커밋 변경을 커밋하거나 미푸시 커밋을 푸시하지 않는다. 먼저 “푸시해줘”로 원격 반영을 마친 브랜치만 제출한다.
 - 본문은 [PR 템플릿](../../.github/PULL_REQUEST_TEMPLATE)에 따라 실제 변경·검증·위험·미완료 작업·리뷰 요청을 적는다. 같은 head 브랜치의 열린 PR이 있으면 재사용한다. 구현과 로컬 검증이 끝난 제출 요청은 리뷰 가능한 PR로 만들고, 미완료 작업을 공유하거나 사용자가 Draft를 요청했을 때만 Draft로 만든다. 현재 `.coderabbit.yaml`은 Draft 자동 리뷰를 끄고 있으므로 Draft에서 리뷰를 기대하지 않는다.
 - `closes #번호`의 자동 이슈 종료는 PR 대상이 GitHub 기본 브랜치인 경우에만 기대한다. PR 작성 시 기본 브랜치를 확인한다.
-- `develop`·`deploy` 대상 PR의 Java 17 Gradle 빌드 확인은 [PR checks](../../.github/workflows/pr-check.yml)가 수행한다. CI 성공과 사람 2명의 코드 리뷰 완료 후 머지한다. GitHub Ruleset에서 필수 리뷰·상태 검사를 설정해야 실제로 강제된다.
+- `develop`·`deploy` 대상 PR의 Java 17 Gradle 빌드 확인은 [PR checks](../../.github/workflows/pr-check.yml)가 수행한다. CI 성공과 사람 2명의 코드 리뷰 완료 후 머지한다.
 - 리뷰에서는 존댓말을 사용하고, 받은 리뷰를 확인했으면 반응을 남긴다. CodeRabbit 의견은 참고하되 사람의 판단을 대체하지 않는다. 서버 톡방 공지는 담당자가 하고, 에이전트는 명시적 전송 요청 없이 메시지를 보내지 않는다.
 
 실행 절차: [timo-issue](../../.agents/skills/git/timo-issue/SKILL.md) · [timo-commit](../../.agents/skills/git/timo-commit/SKILL.md) · [timo-push](../../.agents/skills/git/timo-push/SKILL.md) · [timo-pr](../../.agents/skills/git/timo-pr/SKILL.md).
