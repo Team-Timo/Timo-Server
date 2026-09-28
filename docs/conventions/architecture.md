@@ -4,7 +4,7 @@
 
 ## 현재 구조
 
-- 하나의 Gradle 모듈이며 Java 소스는 `src/main/java/com/Timo/Timo/`에 있다. 참고 저장소의 Kotlin `core/api/infrastructure` 멀티모듈을 가정하지 않는다.
+- 하나의 Gradle 모듈이며 Java 소스는 `src/main/java/com/Timo/Timo/`에 있다. 새 기능을 위해 별도 모듈을 임의로 만들지 않고, 모듈 분리는 별도 구조 변경 작업으로 다룬다.
 - `domain/{기능}/`: 할 일·타이머·태그·캘린더 등 기능별 Controller, Service, Repository, Entity, DTO, 예외를 함께 둔다.
 - `global/`: 공통 인증·JWT, 설정, 응답, 예외, 로깅 등 여러 도메인이 공유하는 기능을 둔다. 한 도메인에서만 쓰는 코드는 해당 도메인에 둔다.
 - `TimoApplication.java`가 Spring Boot 진입점이다. 의존성은 루트 `build.gradle`에서 관리한다.

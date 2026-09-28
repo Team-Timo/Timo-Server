@@ -14,6 +14,6 @@ Entity·Repository·트랜잭션 또는 테이블·컬럼을 바꿀 때 읽는�
 
 1. 기존 데이터·NULL 값·기본값과 이전 애플리케이션 버전의 호환성을 확인한다. 테이블·컬럼 삭제나 타입 변경은 운영 데이터 영향과 복구 방법까지 검토한다.
 2. Entity 매핑뿐 아니라 배포 순서, 필요한 데이터 보정, 관련 조회·응답 변경을 함께 검토한다. 조회에 필요한 인덱스와 잠금 영향도 확인한다.
-3. 현재 `application.yml`과 `application-prod.yml`에는 `spring.jpa.hibernate.ddl-auto: update`가 있고, 프로젝트에 Flyway 의존성·마이그레이션 디렉터리는 없다. 참고 저장소의 `V{버전}__...sql` 파일이나 `ddl-auto: validate`를 현재의 의무 규칙으로 적지 않는다. 운영 마이그레이션 체계 전환은 별도 설계·배포 작업으로 다룬다.
+3. 현재 `application.yml`과 `application-prod.yml`에는 `spring.jpa.hibernate.ddl-auto: update`가 있고, 프로젝트에 Flyway 의존성·마이그레이션 디렉터리는 없다. 일반적인 Entity 변경에서 마이그레이션 파일 생성이나 `ddl-auto: validate` 전환을 요구하지 않으며, 운영 마이그레이션 체계 도입은 별도 설계·배포 작업으로 다룬다.
 
 참고 구현: `domain/todo/entity/Todo.java`, `domain/todo/repository/TodoRepository.java`, `global/common/BaseTimeEntity.java`.
