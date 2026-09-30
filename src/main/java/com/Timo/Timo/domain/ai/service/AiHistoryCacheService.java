@@ -1,8 +1,10 @@
 package com.Timo.Timo.domain.ai.service;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Base64;
 import java.util.List;
 
 import org.springframework.data.redis.core.RedisTemplate;
@@ -103,10 +105,15 @@ public class AiHistoryCacheService {
     return SIMILAR_KEY_PREFIX
         + userId
         + ":v" + getUserHistoryVersion(userId)
-        + ":" + normalizedTitle.hashCode()
+        + ":" + encodeTitle(normalizedTitle)
         + ":" + toExclusive
         + ":" + userZoneId.getId()
         + ":" + limit;
+  }
+
+  private String encodeTitle(String normalizedTitle) {
+    return Base64.getUrlEncoder().withoutPadding()
+        .encodeToString(normalizedTitle.getBytes(StandardCharsets.UTF_8));
   }
 
   private String buildTagKey(
