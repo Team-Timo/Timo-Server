@@ -84,7 +84,11 @@ public class TodoFeedbackPromptBuilder {
 			.map(history -> toMinutes(history.actualSeconds()))
 			.toList();
 		int count = minutes.size();
-		int avg = Math.round(minutes.stream().mapToInt(Integer::intValue).sum() / (float) count);
+		double avgSeconds = histories.stream()
+			.mapToInt(TodoDurationHistory::actualSeconds)
+			.average()
+			.orElse(0);
+		int avg = Math.max(1, (int)Math.round(avgSeconds / 60.0));
 		int min = minutes.stream().mapToInt(Integer::intValue).min().orElse(0);
 		int max = minutes.stream().mapToInt(Integer::intValue).max().orElse(0);
 
