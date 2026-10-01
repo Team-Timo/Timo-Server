@@ -15,6 +15,8 @@ import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
 @Table(
@@ -35,10 +37,12 @@ public class SubtaskCompletion extends BaseTimeEntity {
 
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
 	@JoinColumn(name = "todo_instance_id", nullable = false)
+	@OnDelete(action = OnDeleteAction.CASCADE)
 	private TodoInstance todoInstance;
 
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
 	@JoinColumn(name = "subtask_id", nullable = false)
+	@OnDelete(action = OnDeleteAction.CASCADE)
 	private Subtask subtask;
 
 	@Column(name = "completed", nullable = false)
