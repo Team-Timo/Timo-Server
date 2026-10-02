@@ -77,7 +77,7 @@ public class CalendarService {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
-    GoogleTokenResponse tokenResponse = googleOAuthClient.exchangeToken(request.authorizationCode());
+    GoogleTokenResponse tokenResponse = googleOAuthClient.exchangeToken(request.authorizationCode(), redirectUri);
     GoogleUserInfoResponse userInfo = googleOAuthClient.fetchUserInfo(tokenResponse.accessToken());
     validateSameAccount(user, userInfo);
 
