@@ -51,7 +51,11 @@ public class CalendarService {
 
   public String buildAuthorizationUrl(Long userId) {
     String state = UUID.randomUUID().toString();
-    redisTemplate.opsForValue().set(CalendarStateValidator.STATE_KEY_PREFIX + state, String.valueOf(userId), STATE_TTL);
+    redisTemplate.opsForValue().set(
+        CalendarStateValidator.STATE_KEY_PREFIX + state,
+        userId + CalendarStateValidator.VALUE_DELIMITER + redirectUri,
+        STATE_TTL
+    );
 
     return GOOGLE_AUTH_URL
         + "?client_id=" + URLEncoder.encode(clientId, StandardCharsets.UTF_8)
@@ -63,12 +67,9 @@ public class CalendarService {
         + "&state=" + state;
   }
 
-  public void validateState(Long userId, String state) {
-    calendarStateValidator.validateState(userId, state);
-  }
-
   public CalendarConnectResponse connect(Long userId, CalendarConnectRequest request) {
-    validateState(userId, request.state());
+    String savedRedirectUri = calendarStateValidator.validateState(userId, request.state());
+    String tokenRedirectUri = savedRedirectUri != null ? savedRedirectUri : redirectUri;
 
     if (calendarConnectionRepository.existsByUserId(userId)) {
       throw new CustomException(CalendarErrorCode.CALENDAR_ALREADY_CONNECTED);
@@ -77,7 +78,7 @@ public class CalendarService {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
-    GoogleTokenResponse tokenResponse = googleOAuthClient.exchangeToken(request.authorizationCode(), redirectUri);
+    GoogleTokenResponse tokenResponse = googleOAuthClient.exchangeToken(request.authorizationCode(), tokenRedirectUri);
     GoogleUserInfoResponse userInfo = googleOAuthClient.fetchUserInfo(tokenResponse.accessToken());
     validateSameAccount(user, userInfo);
 

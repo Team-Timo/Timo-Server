@@ -11,15 +11,22 @@ import org.springframework.stereotype.Service;
 public class CalendarStateValidator {
 
   public static final String STATE_KEY_PREFIX = "calendar:oauth:state:";
+  public static final String VALUE_DELIMITER = "|";
 
   private final StringRedisTemplate redisTemplate;
 
-  public void validateState(Long userId, String state) {
-    String key = STATE_KEY_PREFIX + state;
-    String savedUserId = redisTemplate.opsForValue().getAndDelete(key);
-
-    if (savedUserId == null || !savedUserId.equals(String.valueOf(userId))) {
+  public String validateState(Long userId, String state) {
+    String savedValue = redisTemplate.opsForValue().getAndDelete(STATE_KEY_PREFIX + state);
+    if (savedValue == null) {
       throw new CustomException(CalendarErrorCode.CALENDAR_STATE_MISMATCH);
     }
+
+    int delimiterIndex = savedValue.indexOf(VALUE_DELIMITER);
+    String savedUserId = delimiterIndex < 0 ? savedValue : savedValue.substring(0, delimiterIndex);
+    if (!savedUserId.equals(String.valueOf(userId))) {
+      throw new CustomException(CalendarErrorCode.CALENDAR_STATE_MISMATCH);
+    }
+
+    return delimiterIndex < 0 ? null : savedValue.substring(delimiterIndex + 1);
   }
 }
