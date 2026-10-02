@@ -10,10 +10,12 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class CalendarStateValidator {
 
+  public static final String STATE_KEY_PREFIX = "calendar:oauth:state:";
+
   private final StringRedisTemplate redisTemplate;
 
   public void validateState(Long userId, String state) {
-    String key = "calendar:oauth:state:" + state;
+    String key = STATE_KEY_PREFIX + state;
     String savedUserId = redisTemplate.opsForValue().getAndDelete(key);
 
     if (savedUserId == null || !savedUserId.equals(String.valueOf(userId))) {

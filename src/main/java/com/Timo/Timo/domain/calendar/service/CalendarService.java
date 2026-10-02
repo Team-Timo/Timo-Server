@@ -51,7 +51,7 @@ public class CalendarService {
 
   public String buildAuthorizationUrl(Long userId) {
     String state = UUID.randomUUID().toString();
-    redisTemplate.opsForValue().set("calendar:oauth:state:" + state, String.valueOf(userId), STATE_TTL);
+    redisTemplate.opsForValue().set(CalendarStateValidator.STATE_KEY_PREFIX + state, String.valueOf(userId), STATE_TTL);
 
     return GOOGLE_AUTH_URL
         + "?client_id=" + URLEncoder.encode(clientId, StandardCharsets.UTF_8)
