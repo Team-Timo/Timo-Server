@@ -18,6 +18,7 @@ import com.Timo.Timo.global.exception.CustomException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +34,7 @@ public class CalendarService {
 
   private static final String GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
   private static final String CALENDAR_SCOPE = "https://www.googleapis.com/auth/calendar.readonly email";
+  private static final String CALLBACK_PATH = "/oauth/calendar/callback";
   private static final Duration STATE_TTL = Duration.ofMinutes(5);
 
   private final CalendarConnectionRepository calendarConnectionRepository;
@@ -49,22 +51,37 @@ public class CalendarService {
   @Value("${app.calendar.redirect-uri}")
   private String redirectUri;
 
-  public String buildAuthorizationUrl(Long userId) {
+  @Value("${app.oauth2.allowed-frontend-urls}")
+  private List<String> allowedFrontendUrls;
+
+  public String buildAuthorizationUrl(Long userId, String redirectOrigin) {
+    String resolvedRedirectUri = resolveRedirectUri(redirectOrigin);
     String state = UUID.randomUUID().toString();
     redisTemplate.opsForValue().set(
         CalendarStateValidator.STATE_KEY_PREFIX + state,
-        userId + CalendarStateValidator.VALUE_DELIMITER + redirectUri,
+        userId + CalendarStateValidator.VALUE_DELIMITER + resolvedRedirectUri,
         STATE_TTL
     );
 
     return GOOGLE_AUTH_URL
         + "?client_id=" + URLEncoder.encode(clientId, StandardCharsets.UTF_8)
-        + "&redirect_uri=" + URLEncoder.encode(redirectUri, StandardCharsets.UTF_8)
+        + "&redirect_uri=" + URLEncoder.encode(resolvedRedirectUri, StandardCharsets.UTF_8)
         + "&response_type=code"
         + "&scope=" + URLEncoder.encode(CALENDAR_SCOPE, StandardCharsets.UTF_8)
         + "&access_type=offline"
         + "&prompt=consent"
         + "&state=" + state;
+  }
+
+  private String resolveRedirectUri(String redirectOrigin) {
+    if (redirectOrigin == null || redirectOrigin.isBlank()) {
+      return redirectUri;
+    }
+    if (!allowedFrontendUrls.contains(redirectOrigin)) {
+      log.warn("허용되지 않은 redirectOrigin: {}", redirectOrigin);
+      return redirectUri;
+    }
+    return redirectOrigin + CALLBACK_PATH;
   }
 
   public CalendarConnectResponse connect(Long userId, CalendarConnectRequest request) {
