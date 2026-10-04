@@ -59,7 +59,7 @@
 | 로그·MDC·요청 추적 | [logging.md](docs/conventions/logging.md) |
 | Repository·Entity·JPA 조회, 테이블·컬럼 변경 | [persistence.md](docs/conventions/persistence.md) |
 | 이슈·브랜치·커밋·PR·배포 | [git-convention.md](docs/conventions/git-convention.md) |
-| 코드 리뷰·품질 점검 | 변경 영역의 위 문서와 [.coderabbit.yaml](.coderabbit.yaml) |
+| 코드 리뷰·품질 점검 | [git-convention.md](docs/conventions/git-convention.md)의 리뷰 기준, 변경 영역의 위 문서와 [.coderabbit.yaml](.coderabbit.yaml) |
 | 자동화 절차를 설계·수정 | [automation.md](docs/automation.md) |
 
 완료 보고에는 바뀐 파일, 실제 실행한 검증과 결과, 실행하지 못한 검증의 이유, 남은 사람의 판단 지점을 한국어로 적는다. 커밋·푸시·PR·머지를 실행하지 않았다면 완료한 것처럼 말하지 않는다.
