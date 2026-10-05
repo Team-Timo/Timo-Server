@@ -15,6 +15,7 @@ import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.exception.UserErrorCode;
 import com.Timo.Timo.domain.user.repository.UserRepository;
 import com.Timo.Timo.global.exception.CustomException;
+import com.Timo.Timo.global.exception.code.ErrorCode;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -79,7 +80,7 @@ public class CalendarService {
     }
     if (!allowedFrontendUrls.contains(redirectOrigin)) {
       log.warn("허용되지 않은 redirectOrigin: {}", redirectOrigin);
-      return redirectUri;
+      throw new CustomException(ErrorCode.BAD_REQUEST);
     }
     return redirectOrigin + CALLBACK_PATH;
   }
