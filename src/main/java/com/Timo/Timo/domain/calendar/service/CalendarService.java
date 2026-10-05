@@ -52,8 +52,8 @@ public class CalendarService {
   @Value("${app.calendar.redirect-uri}")
   private String redirectUri;
 
-  @Value("${app.oauth2.allowed-frontend-urls}")
-  private List<String> allowedFrontendUrls;
+  @Value("${app.calendar.allowed-redirect-origins}")
+  private List<String> allowedRedirectOrigins;
 
   public String buildAuthorizationUrl(Long userId, String redirectOrigin) {
     String resolvedRedirectUri = resolveRedirectUri(redirectOrigin);
@@ -78,7 +78,7 @@ public class CalendarService {
     if (redirectOrigin == null || redirectOrigin.isBlank()) {
       return redirectUri;
     }
-    if (!allowedFrontendUrls.contains(redirectOrigin)) {
+    if (!allowedRedirectOrigins.contains(redirectOrigin)) {
       log.warn("허용되지 않은 redirectOrigin: {}", redirectOrigin);
       throw new CustomException(ErrorCode.BAD_REQUEST);
     }
