@@ -61,6 +61,12 @@ public class TimerService {
   public TimerStartResponse startTimer(Long userId, Long todoId, LocalDate targetDate) {
     User user = userRepository.findByIdForUpdate(userId)
         .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+    return startTimerInternal(user, todoId, targetDate);
+  }
+
+  private TimerStartResponse startTimerInternal(User user, Long todoId, LocalDate targetDate) {
+    Long userId = user.getId();
     Todo todo = todoRepository.findById(todoId)
         .orElseThrow(() -> new CustomException(TodoErrorCode.TODO_NOT_FOUND));
 
