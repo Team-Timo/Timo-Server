@@ -8,6 +8,7 @@ import com.Timo.Timo.domain.timer.dto.response.TimerFinishResponse;
 import com.Timo.Timo.domain.timer.dto.response.TimerExtendResponse;
 import com.Timo.Timo.domain.timer.dto.response.TimerStartResponse;
 import com.Timo.Timo.domain.timer.dto.response.TimerStatusResponse;
+import com.Timo.Timo.domain.timer.dto.response.TimerSwitchResponse;
 import com.Timo.Timo.domain.timer.entity.TimerRecord;
 import com.Timo.Timo.domain.timer.entity.TimerSession;
 import com.Timo.Timo.domain.timer.enums.TimerAction;
@@ -108,6 +109,20 @@ public class TimerService {
     instance.startTimer();
 
     return TimerStartResponse.from(timerRecord);
+  }
+
+  @Transactional
+  public TimerSwitchResponse switchTimer(Long userId, Long timerId, Long todoId, LocalDate targetDate) {
+    User user = userRepository.findByIdForUpdate(userId)
+        .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+    finishTimerInTransaction(userId, timerId, TimerStatus.STOPPED);
+    TimerRecord stoppedRecord = timerRecordRepository.findById(timerId)
+        .orElseThrow(() -> new CustomException(TimerErrorCode.TIMER_NOT_FOUND));
+
+    TimerStartResponse started = startTimerInternal(user, todoId, targetDate);
+
+    return TimerSwitchResponse.of(stoppedRecord, started);
   }
 
   @Transactional
