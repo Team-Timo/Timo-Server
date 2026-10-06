@@ -1,6 +1,7 @@
 package com.Timo.Timo.global.config;
 
 import java.util.concurrent.Executor;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,6 +19,7 @@ public class AsyncConfig {
     executor.setCorePoolSize(4);
     executor.setMaxPoolSize(4);
     executor.setQueueCapacity(50);
+    executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
     executor.initialize();
     return executor;
   }
