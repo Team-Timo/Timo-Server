@@ -38,9 +38,6 @@ public class GoogleOAuthClient {
   @Value("${spring.security.oauth2.client.registration.google.client-secret}")
   private String clientSecret;
 
-  @Value("${app.calendar.redirect-uri}")
-  private String redirectUri;
-
   private static SimpleClientHttpRequestFactory buildRequestFactory() {
     SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
     factory.setConnectTimeout(CONNECT_TIMEOUT);
@@ -48,7 +45,7 @@ public class GoogleOAuthClient {
     return factory;
   }
 
-  public GoogleTokenResponse exchangeToken(String authorizationCode){
+  public GoogleTokenResponse exchangeToken(String authorizationCode, String redirectUri) {
     MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
     body.add("code", authorizationCode);
     body.add("client_id", clientId);

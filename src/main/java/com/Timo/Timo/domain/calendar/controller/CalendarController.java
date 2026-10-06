@@ -38,9 +38,10 @@ public class CalendarController implements CalendarControllerDocs {
   @Override
   @GetMapping("/authorize")
   public ResponseEntity<BaseResponse<CalendarAuthorizeResponse>> authorize(
-      @AuthenticationPrincipal CustomUserDetails userDetails
+      @AuthenticationPrincipal CustomUserDetails userDetails,
+      @RequestParam(required = false) String redirectOrigin
   ) {
-    String url = calendarService.buildAuthorizationUrl(userDetails.getUserId());
+    String url = calendarService.buildAuthorizationUrl(userDetails.getUserId(), redirectOrigin);
     return ResponseEntity.ok(
         BaseResponse.onSuccess(CalendarSuccessCode.CALENDAR_AUTHORIZE_URL_ISSUED,
             new CalendarAuthorizeResponse(url))

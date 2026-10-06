@@ -36,6 +36,7 @@ app:
     allowed-frontend-urls: ${FRONTEND_URLS}
   calendar:
     redirect-uri: ${FRONTEND_URL}/oauth/calendar/callback
+    allowed-redirect-origins: ${CALENDAR_REDIRECT_ORIGINS}
   auth:
     cookie-secure: false
 
