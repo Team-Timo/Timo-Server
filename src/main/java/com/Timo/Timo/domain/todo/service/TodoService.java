@@ -260,6 +260,11 @@ public class TodoService {
 		todoRepository.delete(todo);
 	}
 
+	@Transactional
+	public void removeTagFromTodos(Long tagId) {
+		todoRepository.clearTagByTagId(tagId);
+	}
+
 	private boolean isScheduleChanged(TodoUpdateRequest request) {
 		return request.date() != null
 				|| request.repeatType() != null
