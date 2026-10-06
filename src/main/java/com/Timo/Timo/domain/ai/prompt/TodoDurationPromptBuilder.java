@@ -27,8 +27,9 @@ public class TodoDurationPromptBuilder {
 
 			기록 신뢰도 판단 기준:
 			- 각 기록 그룹 앞의 요약(count/avgMinutes/minMinutes/maxMinutes)은 이미 정확히 계산된 값이니 그대로 신뢰하고, 직접 다시 계산하지 마.
-			- count가 1이면 그 값 하나에 과도하게 의존하지 말고 일반적인 감각과 함께 보수적으로 조정해.
-			- count가 3 이상이면 avgMinutes를 중심으로 판단하되, minMinutes~maxMinutes 범위를 크게 벗어난 추천은 피해.
+			- count가 0이면 그 기록 그룹은 판단에 사용하지 마.
+			- count가 1~2이면 기록을 참고하되 일반적인 감각과 함께 보고, 기록 쪽으로 조금 더 기울여서 판단해.
+			- count가 3 이상이면 avgMinutes를 기준으로 하고, minMinutes~maxMinutes 범위 안에서 추천해.
 
 			규칙:
 			- 응답은 반드시 JSON 객체 하나만 반환해.
