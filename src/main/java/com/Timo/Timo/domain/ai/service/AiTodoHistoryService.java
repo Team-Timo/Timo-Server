@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.Timo.Timo.domain.ai.dto.TodoDurationHistory;
 
@@ -19,7 +18,6 @@ public class AiTodoHistoryService {
 	private final AiHistoryAsyncQueryService aiHistoryAsyncQueryService;
 	private final AiHistoryCacheService aiHistoryCacheService;
 
-	@Transactional(readOnly = true)
 	public AiTodoHistories findHistories(
 		Long userId,
 		String title,

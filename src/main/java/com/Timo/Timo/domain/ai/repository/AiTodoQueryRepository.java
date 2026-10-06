@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.Timo.Timo.domain.ai.dto.TodoDurationHistory;
 import com.Timo.Timo.domain.ai.dto.TodoFeedbackSource;
@@ -26,6 +27,7 @@ public class AiTodoQueryRepository {
 
 	private final EntityManager entityManager;
 
+	@Transactional(readOnly = true)
 	public TodoFeedbackSource findFeedbackSource(Long userId, Long todoId) {
 		List<TodoFeedbackSource> sources = entityManager.createQuery("""
 				select new com.Timo.Timo.domain.ai.dto.TodoFeedbackSource(

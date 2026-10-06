@@ -35,6 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -195,19 +196,19 @@ public class TimerService {
     timerRecordRepository.deleteByTodoId(todoId);
   }
 
-  @Transactional(readOnly = false)
+  @Transactional(propagation = Propagation.NOT_SUPPORTED)
   public TimerFinishResponse completeTimer(Long userId, Long timerId) {
     return finishTimer(userId, timerId, TimerStatus.COMPLETED);
   }
 
-  @Transactional(readOnly = false)
+  @Transactional(propagation = Propagation.NOT_SUPPORTED)
   public TimerFinishResponse stopTimer(Long userId, Long timerId) {
     return finishTimer(userId, timerId, TimerStatus.STOPPED);
   }
 
   private TimerFinishResponse finishTimer(Long userId, Long timerId, TimerStatus targetStatus) {
     TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
-    transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+    transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
     FinishedTimer finishedTimer = transactionTemplate.execute(status ->
         finishTimerInTransaction(userId, timerId, targetStatus)
     );
