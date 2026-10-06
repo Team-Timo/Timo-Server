@@ -15,9 +15,11 @@ import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.exception.UserErrorCode;
 import com.Timo.Timo.domain.user.repository.UserRepository;
 import com.Timo.Timo.global.exception.CustomException;
+import com.Timo.Timo.global.exception.code.ErrorCode;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +35,7 @@ public class CalendarService {
 
   private static final String GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
   private static final String CALENDAR_SCOPE = "https://www.googleapis.com/auth/calendar.readonly email";
+  private static final String CALLBACK_PATH = "/oauth/calendar/callback";
   private static final Duration STATE_TTL = Duration.ofMinutes(5);
 
   private final CalendarConnectionRepository calendarConnectionRepository;
@@ -49,13 +52,21 @@ public class CalendarService {
   @Value("${app.calendar.redirect-uri}")
   private String redirectUri;
 
-  public String buildAuthorizationUrl(Long userId) {
+  @Value("${app.calendar.allowed-redirect-origins}")
+  private List<String> allowedRedirectOrigins;
+
+  public String buildAuthorizationUrl(Long userId, String redirectOrigin) {
+    String resolvedRedirectUri = resolveRedirectUri(redirectOrigin);
     String state = UUID.randomUUID().toString();
-    redisTemplate.opsForValue().set("calendar:oauth:state:" + state, String.valueOf(userId), STATE_TTL);
+    redisTemplate.opsForValue().set(
+        CalendarStateValidator.STATE_KEY_PREFIX + state,
+        userId + CalendarStateValidator.VALUE_DELIMITER + resolvedRedirectUri,
+        STATE_TTL
+    );
 
     return GOOGLE_AUTH_URL
         + "?client_id=" + URLEncoder.encode(clientId, StandardCharsets.UTF_8)
-        + "&redirect_uri=" + URLEncoder.encode(redirectUri, StandardCharsets.UTF_8)
+        + "&redirect_uri=" + URLEncoder.encode(resolvedRedirectUri, StandardCharsets.UTF_8)
         + "&response_type=code"
         + "&scope=" + URLEncoder.encode(CALENDAR_SCOPE, StandardCharsets.UTF_8)
         + "&access_type=offline"
@@ -63,12 +74,20 @@ public class CalendarService {
         + "&state=" + state;
   }
 
-  public void validateState(Long userId, String state) {
-    calendarStateValidator.validateState(userId, state);
+  private String resolveRedirectUri(String redirectOrigin) {
+    if (redirectOrigin == null || redirectOrigin.isBlank()) {
+      return redirectUri;
+    }
+    if (!allowedRedirectOrigins.contains(redirectOrigin)) {
+      log.warn("허용되지 않은 redirectOrigin: {}", redirectOrigin);
+      throw new CustomException(ErrorCode.BAD_REQUEST);
+    }
+    return redirectOrigin + CALLBACK_PATH;
   }
 
   public CalendarConnectResponse connect(Long userId, CalendarConnectRequest request) {
-    validateState(userId, request.state());
+    String savedRedirectUri = calendarStateValidator.validateState(userId, request.state());
+    String tokenRedirectUri = savedRedirectUri != null ? savedRedirectUri : redirectUri;
 
     if (calendarConnectionRepository.existsByUserId(userId)) {
       throw new CustomException(CalendarErrorCode.CALENDAR_ALREADY_CONNECTED);
@@ -77,7 +96,7 @@ public class CalendarService {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
-    GoogleTokenResponse tokenResponse = googleOAuthClient.exchangeToken(request.authorizationCode());
+    GoogleTokenResponse tokenResponse = googleOAuthClient.exchangeToken(request.authorizationCode(), tokenRedirectUri);
     GoogleUserInfoResponse userInfo = googleOAuthClient.fetchUserInfo(tokenResponse.accessToken());
     validateSameAccount(user, userInfo);
 

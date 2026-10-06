@@ -27,6 +27,9 @@ public interface CalendarControllerDocs {
 			구글 캘린더 연동을 시작하는 구글 인증 URL을 발급합니다.
 			
 			프론트는 이 응답의 authorizationUrl로 window.location.assign 등을 통해 직접 이동해야 합니다.
+
+			redirectOrigin을 전달하면 {redirectOrigin}/oauth/calendar/callback을 redirect_uri로 사용합니다.
+			미입력이면 기본 프론트 주소로 redirect되고, 허용되지 않은 origin이면 400(COMMON_400)을 반환합니다.
 			""",
       security = @SecurityRequirement(name = "bearerAuth")
   )
@@ -35,6 +38,14 @@ public interface CalendarControllerDocs {
           responseCode = "200",
           description = "인증 URL 발급 성공",
           useReturnTypeSchema = true
+      ),
+      @ApiResponse(
+          responseCode = "400",
+          description = "허용되지 않은 redirectOrigin인 경우",
+          content = @Content(
+              mediaType = "application/json",
+              schema = @Schema(implementation = ErrorDto.class)
+          )
       ),
       @ApiResponse(
           responseCode = "401",
@@ -54,7 +65,9 @@ public interface CalendarControllerDocs {
       )
   })
   ResponseEntity<BaseResponse<CalendarAuthorizeResponse>> authorize(
-      @Parameter(hidden = true) CustomUserDetails userDetails
+      @Parameter(hidden = true) CustomUserDetails userDetails,
+      @Parameter(description = "연동 완료 후 돌아올 프론트 origin (미입력 시 기본 프론트 주소, 미허용 시 400)", example = "http://localhost:3000")
+      String redirectOrigin
   );
 
   @Operation(
