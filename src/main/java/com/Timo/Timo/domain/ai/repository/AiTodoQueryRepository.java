@@ -13,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.Timo.Timo.domain.ai.dto.TodoDurationHistory;
 import com.Timo.Timo.domain.ai.dto.TodoFeedbackSource;
-import com.Timo.Timo.domain.timer.entity.TimerRecord;
 
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
@@ -70,19 +69,20 @@ public class AiTodoQueryRepository {
 		String trimmedTitle = title == null ? "" : title.trim();
 		String normalizedSearchTitle = normalize(title);
 
-		List<TimerRecord> exactMatches = findExactMatchCandidates(userId, trimmedTitle, toExclusive, limit);
+		List<TodoDurationHistoryRow> exactMatches = findExactMatchCandidates(userId, trimmedTitle, toExclusive, limit);
 
 		int remaining = limit - exactMatches.size();
-		List<TimerRecord> partialMatches = remaining > 0
+		List<TodoDurationHistoryRow> partialMatches = remaining > 0
 			? findPartialMatchCandidates(userId, normalizedSearchTitle, toExclusive, remaining)
 			: List.of();
 
-		return Stream.concat(exactMatches.stream(), partialMatches.stream())
-			.map(record -> toHistory(record, userZoneId))
-			.toList();
+		return toHistories(
+			Stream.concat(exactMatches.stream(), partialMatches.stream()).toList(),
+			userZoneId
+		);
 	}
 
-	private List<TimerRecord> findExactMatchCandidates(
+	private List<TodoDurationHistoryRow> findExactMatchCandidates(
 		Long userId,
 		String trimmedTitle,
 		LocalDateTime toExclusive,
@@ -93,15 +93,19 @@ public class AiTodoQueryRepository {
 		}
 
 		return entityManager.createQuery("""
-				select tr
+				select new com.Timo.Timo.domain.ai.repository.TodoDurationHistoryRow(
+					t.title,
+					tr.actualSeconds,
+					tr.endedAt
+				)
 				from TimerRecord tr
-				join fetch tr.todo t
+				join tr.todo t
 				where t.user.id = :userId
 					and t.title = :title
 					and tr.actualSeconds is not null
 					and tr.endedAt < :toExclusive
 				order by tr.endedAt desc, tr.id desc
-				""", TimerRecord.class)
+				""", TodoDurationHistoryRow.class)
 			.setParameter("userId", userId)
 			.setParameter("title", trimmedTitle)
 			.setParameter("toExclusive", toExclusive)
@@ -109,7 +113,7 @@ public class AiTodoQueryRepository {
 			.getResultList();
 	}
 
-	private List<TimerRecord> findPartialMatchCandidates(
+	private List<TodoDurationHistoryRow> findPartialMatchCandidates(
 		Long userId,
 		String normalizedSearchTitle,
 		LocalDateTime toExclusive,
@@ -119,30 +123,34 @@ public class AiTodoQueryRepository {
 			return List.of();
 		}
 
-		List<TimerRecord> candidates = entityManager.createQuery("""
-				select tr
+		List<TodoDurationHistoryRow> candidates = entityManager.createQuery("""
+				select new com.Timo.Timo.domain.ai.repository.TodoDurationHistoryRow(
+					t.title,
+					tr.actualSeconds,
+					tr.endedAt
+				)
 				from TimerRecord tr
-				join fetch tr.todo t
+				join tr.todo t
 				where tr.user.id = :userId
 					and tr.actualSeconds is not null
 					and tr.endedAt < :toExclusive
 				order by tr.endedAt desc, tr.id desc
-				""", TimerRecord.class)
+				""", TodoDurationHistoryRow.class)
 			.setParameter("userId", userId)
 			.setParameter("toExclusive", toExclusive)
 			.setMaxResults(CANDIDATE_WINDOW)
 			.getResultList();
 
 		return candidates.stream()
-			.map(record -> new ScoredCandidate(
-				record,
-				matchPriority(normalize(record.getTodo().getTitle()), normalizedSearchTitle)
+			.map(row -> new ScoredCandidate(
+				row,
+				matchPriority(normalize(row.title()), normalizedSearchTitle)
 			))
 			.filter(scored -> scored.priority() > 0 && scored.priority() < UNMATCHED_PRIORITY)
 			.sorted(Comparator.comparingInt(ScoredCandidate::priority)
-				.thenComparing(scored -> scored.record().getEndedAt(), Comparator.reverseOrder()))
+				.thenComparing(scored -> scored.row().recordedAt(), Comparator.reverseOrder()))
 			.limit(limit)
-			.map(ScoredCandidate::record)
+			.map(ScoredCandidate::row)
 			.toList();
 	}
 
@@ -163,7 +171,7 @@ public class AiTodoQueryRepository {
 		return value == null ? "" : value.trim().toLowerCase();
 	}
 
-	private record ScoredCandidate(TimerRecord record, int priority) {
+	private record ScoredCandidate(TodoDurationHistoryRow row, int priority) {
 	}
 
 	public List<TodoDurationHistory> findActualDurationHistoriesByTagId(
@@ -222,14 +230,6 @@ public class AiTodoQueryRepository {
 				toUserLocalDate(row.recordedAt(), userZoneId)
 			))
 			.toList();
-	}
-
-	private TodoDurationHistory toHistory(TimerRecord record, ZoneId userZoneId) {
-		return new TodoDurationHistory(
-			record.getTodo().getTitle(),
-			record.getActualSeconds(),
-			toUserLocalDate(record.getEndedAt(), userZoneId)
-		);
 	}
 
 	private LocalDate toUserLocalDate(LocalDateTime utcDateTime, ZoneId userZoneId) {
