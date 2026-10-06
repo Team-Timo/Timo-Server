@@ -108,6 +108,7 @@ public interface TagControllerDocs {
 			description = """
 					본인이 등록한 태그를 삭제합니다.
 					모든 사용자가 공유하는 기본 태그는 삭제할 수 없으며, 다른 사용자의 태그는 조회되지 않습니다.
+					삭제한 태그가 지정되어 있던 TODO는 태그가 해제됩니다.
 					"""
 	)
 	@ApiResponses({
