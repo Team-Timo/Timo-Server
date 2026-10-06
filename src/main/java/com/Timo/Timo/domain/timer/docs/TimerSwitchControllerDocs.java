@@ -68,7 +68,7 @@ public interface TimerSwitchControllerDocs {
       ),
       @ApiResponse(
           responseCode = "409",
-          description = "이미 종료된 타이머인 경우",
+          description = "이미 종료된 타이머이거나, 종료할 타이머와 같은 투두 + 같은 날짜로 전환을 요청한 경우",
           content = @Content(
               mediaType = "application/json",
               schema = @Schema(implementation = ErrorDto.class)

@@ -116,9 +116,19 @@ public class TimerService {
     User user = userRepository.findByIdForUpdate(userId)
         .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
-    finishTimerInTransaction(userId, timerId, TimerStatus.STOPPED);
-    TimerRecord stoppedRecord = timerRecordRepository.findById(timerId)
+    TimerRecord stoppedRecord = timerRecordRepository.findByIdForUpdate(timerId)
         .orElseThrow(() -> new CustomException(TimerErrorCode.TIMER_NOT_FOUND));
+
+    if (!stoppedRecord.getUser().getId().equals(userId)) {
+      throw new CustomException(ErrorCode.FORBIDDEN);
+    }
+
+    if (stoppedRecord.getTodo().getId().equals(todoId)
+        && resolveTimerDate(stoppedRecord).equals(targetDate)) {
+      throw new CustomException(TimerErrorCode.TIMER_INVALID_STATUS_TRANSITION);
+    }
+
+    finishTimerInTransaction(userId, timerId, TimerStatus.STOPPED);
 
     TimerStartResponse started = startTimerInternal(user, todoId, targetDate);
 
