@@ -177,16 +177,16 @@ public class AiTodoQueryRepository {
 				select new com.Timo.Timo.domain.ai.repository.TodoDurationHistoryRow(
 					t.title,
 					tr.actualSeconds,
-					coalesce(tr.endedAt, tr.startedAt)
+					tr.endedAt
 				)
 				from TimerRecord tr
 				join tr.todo t
 				where t.user.id = :userId
 					and tr.user.id = :userId
 					and tr.actualSeconds is not null
-					and coalesce(tr.endedAt, tr.startedAt) < :toExclusive
+					and tr.endedAt < :toExclusive
 					and t.tagId = :tagId
-				order by coalesce(tr.endedAt, tr.startedAt) desc, tr.id desc
+				order by tr.endedAt desc, tr.id desc
 				""", TodoDurationHistoryRow.class)
 			.setParameter("userId", userId)
 			.setParameter("tagId", tagId)
