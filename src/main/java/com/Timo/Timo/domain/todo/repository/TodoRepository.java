@@ -1,6 +1,7 @@
 package com.Timo.Timo.domain.todo.repository;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,6 +34,6 @@ public interface TodoRepository extends JpaRepository<Todo, Long> {
 	);
 
 	@Modifying(clearAutomatically = true, flushAutomatically = true)
-	@Query("update Todo t set t.tagId = null where t.tagId = :tagId")
-	int clearTagByTagId(@Param("tagId") Long tagId);
+	@Query("update Todo t set t.tagId = null, t.updatedAt = :now where t.tagId = :tagId")
+	int clearTagByTagId(@Param("tagId") Long tagId, @Param("now") LocalDateTime now);
 }
