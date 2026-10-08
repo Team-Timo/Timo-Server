@@ -7,8 +7,13 @@ import org.springframework.stereotype.Component;
 import com.Timo.Timo.domain.ai.dto.TodoDurationHistory;
 import com.Timo.Timo.domain.ai.dto.request.RecommendDurationRequest;
 
+import lombok.RequiredArgsConstructor;
+
 @Component
+@RequiredArgsConstructor
 public class TodoDurationPromptBuilder {
+
+	private final TodoHistoryPromptFormatter historyPromptFormatter;
 
 	public String build(
 		RecommendDurationRequest request,
@@ -25,9 +30,15 @@ public class TodoDurationPromptBuilder {
 			- 비슷한 투두명 기록과 태그 기록이 모두 있으면 둘을 함께 보고, 비슷한 투두명 기록을 조금 더 중요하게 봐.
 			- 기록이 아예 없으면 현재 투두명만 기준으로 일반적인 예상 소요 시간을 판단해.
 
+			기록 신뢰도 판단 기준:
+			- 각 기록 그룹 앞의 요약(count/avgMinutes/minMinutes/maxMinutes)은 이미 정확히 계산된 값이니 그대로 신뢰하고, 직접 다시 계산하지 마.
+			- count가 0이면 그 기록 그룹은 판단에 사용하지 마.
+			- count가 1~2이면 기록을 참고하되 일반적인 감각과 함께 보고, 기록 쪽으로 조금 더 기울여서 판단해.
+			- count가 3 이상이면 avgMinutes를 기준으로 하고, minMinutes~maxMinutes 범위 안에서 추천해.
+
 			규칙:
 			- 응답은 반드시 JSON 객체 하나만 반환해.
-			- recommendedMinutes는 분 단위 정수로 반환해.
+			- recommendedMinutes는 1 이상의 분 단위 정수로 반환해.
 			- 실제 기록에 없는 패턴은 만들지 마.
 
 			반환해야 할 응답 JSON 형식:
@@ -48,45 +59,9 @@ public class TodoDurationPromptBuilder {
 			입력 데이터 - 사용자가 지정한 태그의 최근 실제 소요시간 기록:
 			%s
 			""".formatted(
-			escapeJsonString(request.title()),
-			formatHistories(similarTitleHistories),
-			formatHistories(recentTagHistories)
+			historyPromptFormatter.escapeJsonString(request.title()),
+			historyPromptFormatter.formatHistories(similarTitleHistories),
+			historyPromptFormatter.formatHistories(recentTagHistories)
 		);
-	}
-
-	private String formatHistories(List<TodoDurationHistory> histories) {
-		if (histories == null || histories.isEmpty()) {
-			return "[]";
-		}
-
-		return histories.stream()
-			.map(history -> """
-				{"title":"%s","date":"%s","actualMinutes":%d}
-				""".formatted(
-				escapeJsonString(history.title()),
-				history.date(),
-				toMinutes(history.actualSeconds())
-			).trim())
-			.toList()
-			.toString();
-	}
-
-	private int toMinutes(Integer durationSeconds) {
-		if (durationSeconds == null || durationSeconds <= 0) {
-			return 0;
-		}
-		return Math.max(1, (int)Math.round(durationSeconds / 60.0));
-	}
-
-	private String escapeJsonString(String value) {
-		if (value == null) {
-			return "";
-		}
-		return value
-			.replace("\\", "\\\\")
-			.replace("\"", "\\\"")
-			.replace("\n", " ")
-			.replace("\r", " ")
-			.replace("\t", " ");
 	}
 }

@@ -9,7 +9,10 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import com.Timo.Timo.domain.ai.service.AiHistoryCacheService;
 import com.Timo.Timo.domain.tag.entity.Tag;
 import com.Timo.Timo.domain.tag.exception.TagErrorCode;
 import com.Timo.Timo.domain.tag.repository.TagRepository;
@@ -57,6 +60,7 @@ public class TodoService {
 	private final TodoCapacityChecker todoCapacityChecker;
 	private final TodoInstanceReorderer todoInstanceReorderer;
 	private final TimerService timerService;
+	private final AiHistoryCacheService aiHistoryCacheService;
 
 	@Transactional
 	public TodoCreateResponse createTodo(Long userId, TodoCreateRequest request) {
@@ -217,6 +221,8 @@ public class TodoService {
 
 		validateTagExists(request.tagId());
 
+		boolean changesHistoryKey = isHistoryKeyChanged(todo, request);
+
 		todo.updateFields(
 				request.icon(),
 				request.title(),
@@ -242,6 +248,10 @@ public class TodoService {
 			}
 			todo.replaceSubtasks(toSubtaskEdits(request.subtasks()));
 		}
+
+		if (changesHistoryKey) {
+			bumpAiHistoryVersionAfterCommit(userId);
+		}
 	}
 
 	@Transactional
@@ -258,6 +268,22 @@ public class TodoService {
 		subtaskCompletionRepository.deleteByTodoId(todoId);
 		todoInstanceRepository.deleteByTodoId(todoId);
 		todoRepository.delete(todo);
+
+		bumpAiHistoryVersionAfterCommit(userId);
+	}
+
+	private boolean isHistoryKeyChanged(Todo todo, TodoUpdateRequest request) {
+		return (request.title() != null && !request.title().equals(todo.getTitle()))
+				|| (request.tagId() != null && !request.tagId().equals(todo.getTagId()));
+	}
+
+	private void bumpAiHistoryVersionAfterCommit(Long userId) {
+		TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+			@Override
+			public void afterCommit() {
+				aiHistoryCacheService.bumpUserHistoryVersion(userId);
+			}
+		});
 	}
 
 	private boolean isScheduleChanged(TodoUpdateRequest request) {

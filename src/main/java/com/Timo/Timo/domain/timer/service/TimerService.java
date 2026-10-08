@@ -1,6 +1,8 @@
 package com.Timo.Timo.domain.timer.service;
 
 import com.Timo.Timo.domain.ai.service.AiTodoService;
+import com.Timo.Timo.domain.ai.service.AiHistoryCacheService;
+import com.Timo.Timo.domain.ai.service.AiFeedbackPersistenceService;
 import com.Timo.Timo.domain.timer.dto.response.TimerActiveResponse;
 import com.Timo.Timo.domain.timer.dto.response.TimerFinishResponse;
 import com.Timo.Timo.domain.timer.dto.response.TimerExtendResponse;
@@ -32,6 +34,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -49,6 +53,8 @@ public class TimerService {
   private final UserRepository userRepository;
   private final TodoInstanceReorderer todoInstanceReorderer;
   private final AiTodoService aiTodoService;
+  private final AiHistoryCacheService aiHistoryCacheService;
+  private final AiFeedbackPersistenceService aiFeedbackPersistenceService;
   private final PlatformTransactionManager transactionManager;
 
   @Transactional
@@ -194,27 +200,27 @@ public class TimerService {
     timerRecordRepository.deleteByTodoId(todoId);
   }
 
-  @Transactional(readOnly = false)
+  @Transactional(propagation = Propagation.NOT_SUPPORTED)
   public TimerFinishResponse completeTimer(Long userId, Long timerId) {
     return finishTimer(userId, timerId, TimerStatus.COMPLETED);
   }
 
-  @Transactional(readOnly = false)
+  @Transactional(propagation = Propagation.NOT_SUPPORTED)
   public TimerFinishResponse stopTimer(Long userId, Long timerId) {
     return finishTimer(userId, timerId, TimerStatus.STOPPED);
   }
 
   private TimerFinishResponse finishTimer(Long userId, Long timerId, TimerStatus targetStatus) {
     TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
+    transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
     FinishedTimer finishedTimer = transactionTemplate.execute(status ->
         finishTimerInTransaction(userId, timerId, targetStatus)
     );
+    aiHistoryCacheService.bumpUserHistoryVersion(userId);
 
     String feedback = generateAiFeedback(userId, finishedTimer.todoId());
     if (feedback != null) {
-      transactionTemplate.executeWithoutResult(status ->
-          updateAiFeedback(timerId, feedback)
-      );
+      aiFeedbackPersistenceService.persistFeedback(timerId, feedback);
     }
 
     return new TimerFinishResponse(
@@ -264,12 +270,6 @@ public class TimerService {
       );
       return null;
     }
-  }
-
-  private void updateAiFeedback(Long timerId, String feedback) {
-    TimerRecord timerRecord = timerRecordRepository.findByIdForUpdate(timerId)
-        .orElseThrow(() -> new CustomException(TimerErrorCode.TIMER_NOT_FOUND));
-    timerRecord.updateAiFeedback(feedback);
   }
 
   private record FinishedTimer(
