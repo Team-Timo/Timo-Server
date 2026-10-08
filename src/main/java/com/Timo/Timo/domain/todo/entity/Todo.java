@@ -27,6 +27,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
@@ -40,7 +41,10 @@ import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
-@Table(name = "todos")
+@Table(
+	name = "todos",
+	indexes = @Index(name = "idx_todos_user_title", columnList = "user_id, title")
+)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Todo extends BaseTimeEntity {
