@@ -8,6 +8,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
+import com.Timo.Timo.global.logging.MdcTaskDecorator;
+
 @Configuration
 @EnableAsync
 public class AsyncConfig {
@@ -20,6 +22,7 @@ public class AsyncConfig {
     executor.setMaxPoolSize(4);
     executor.setQueueCapacity(50);
     executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+    executor.setTaskDecorator(new MdcTaskDecorator());
     executor.initialize();
     return executor;
   }
