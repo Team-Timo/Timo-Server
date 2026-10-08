@@ -6,6 +6,8 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.springframework.stereotype.Repository;
@@ -72,8 +74,11 @@ public class AiTodoQueryRepository {
 		List<TodoDurationHistoryRow> exactMatches = findExactMatchCandidates(userId, trimmedTitle, toExclusive, limit);
 
 		int remaining = limit - exactMatches.size();
+		Set<Long> exactMatchIds = exactMatches.stream()
+			.map(TodoDurationHistoryRow::timerRecordId)
+			.collect(Collectors.toSet());
 		List<TodoDurationHistoryRow> partialMatches = remaining > 0
-			? findPartialMatchCandidates(userId, normalizedSearchTitle, toExclusive, remaining)
+			? findPartialMatchCandidates(userId, normalizedSearchTitle, exactMatchIds, toExclusive, remaining)
 			: List.of();
 
 		return toHistories(
@@ -94,6 +99,7 @@ public class AiTodoQueryRepository {
 
 		return entityManager.createQuery("""
 				select new com.Timo.Timo.domain.ai.repository.TodoDurationHistoryRow(
+					tr.id,
 					t.title,
 					tr.actualSeconds,
 					tr.endedAt
@@ -116,6 +122,7 @@ public class AiTodoQueryRepository {
 	private List<TodoDurationHistoryRow> findPartialMatchCandidates(
 		Long userId,
 		String normalizedSearchTitle,
+		Set<Long> excludedIds,
 		LocalDateTime toExclusive,
 		int limit
 	) {
@@ -125,6 +132,7 @@ public class AiTodoQueryRepository {
 
 		List<TodoDurationHistoryRow> candidates = entityManager.createQuery("""
 				select new com.Timo.Timo.domain.ai.repository.TodoDurationHistoryRow(
+					tr.id,
 					t.title,
 					tr.actualSeconds,
 					tr.endedAt
@@ -142,11 +150,12 @@ public class AiTodoQueryRepository {
 			.getResultList();
 
 		return candidates.stream()
+			.filter(row -> !excludedIds.contains(row.timerRecordId()))
 			.map(row -> new ScoredCandidate(
 				row,
 				matchPriority(normalize(row.title()), normalizedSearchTitle)
 			))
-			.filter(scored -> scored.priority() > 0 && scored.priority() < UNMATCHED_PRIORITY)
+			.filter(scored -> scored.priority() < UNMATCHED_PRIORITY)
 			.sorted(Comparator.comparingInt(ScoredCandidate::priority)
 				.thenComparing(scored -> scored.row().recordedAt(), Comparator.reverseOrder()))
 			.limit(limit)
@@ -183,6 +192,7 @@ public class AiTodoQueryRepository {
 	) {
 		List<TodoDurationHistoryRow> rows = entityManager.createQuery("""
 				select new com.Timo.Timo.domain.ai.repository.TodoDurationHistoryRow(
+					tr.id,
 					t.title,
 					tr.actualSeconds,
 					tr.endedAt
