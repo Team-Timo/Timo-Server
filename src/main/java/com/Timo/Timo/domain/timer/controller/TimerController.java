@@ -6,13 +6,16 @@ import com.Timo.Timo.domain.timer.docs.TimerExtendControllerDocs;
 import com.Timo.Timo.domain.timer.docs.TimerStartControllerDocs;
 import com.Timo.Timo.domain.timer.docs.TimerStatusControllerDocs;
 import com.Timo.Timo.domain.timer.docs.TimerStopControllerDocs;
+import com.Timo.Timo.domain.timer.docs.TimerSwitchControllerDocs;
 import com.Timo.Timo.domain.timer.dto.request.TimerActionRequest;
 import com.Timo.Timo.domain.timer.dto.request.TimerExtendRequest;
+import com.Timo.Timo.domain.timer.dto.request.TimerSwitchRequest;
 import com.Timo.Timo.domain.timer.dto.response.TimerExtendResponse;
 import com.Timo.Timo.domain.timer.dto.response.TimerActiveResponse;
 import com.Timo.Timo.domain.timer.dto.response.TimerFinishResponse;
 import com.Timo.Timo.domain.timer.dto.response.TimerStartResponse;
 import com.Timo.Timo.domain.timer.dto.response.TimerStatusResponse;
+import com.Timo.Timo.domain.timer.dto.response.TimerSwitchResponse;
 import com.Timo.Timo.domain.timer.exception.TimerSuccessCode;
 import com.Timo.Timo.domain.timer.service.TimerService;
 import com.Timo.Timo.global.auth.principal.CustomUserDetails;
@@ -40,7 +43,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class TimerController implements TimerStartControllerDocs, TimerStatusControllerDocs,
     TimerActiveControllerDocs, TimerCompleteControllerDocs,
-    TimerStopControllerDocs, TimerExtendControllerDocs {
+    TimerStopControllerDocs, TimerExtendControllerDocs, TimerSwitchControllerDocs {
 
   private final TimerService timerService;
 
@@ -77,6 +80,21 @@ public class TimerController implements TimerStartControllerDocs, TimerStatusCon
 
     return ResponseEntity.ok()
         .body(BaseResponse.onSuccess(successCode, response));
+  }
+
+  @Override
+  @PatchMapping("timers/{timerId}/switch")
+  public ResponseEntity<BaseResponse<TimerSwitchResponse>> switchTimer(
+      @PathVariable Long timerId,
+      @Valid @RequestBody TimerSwitchRequest request,
+      @AuthenticationPrincipal CustomUserDetails userDetails
+  ) {
+    Long userId = userDetails.getUserId();
+    TimerSwitchResponse response = timerService.switchTimer(userId, timerId, request.todoId(),
+        request.date());
+
+    return ResponseEntity.ok()
+        .body(BaseResponse.onSuccess(TimerSuccessCode.TIMER_SWITCHED, response));
   }
 
   @Override

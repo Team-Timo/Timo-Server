@@ -1,6 +1,7 @@
 package com.Timo.Timo.domain.todo.service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.time.ZoneId;
 import java.util.List;
@@ -9,8 +10,6 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.Timo.Timo.domain.ai.service.AiHistoryCacheService;
 import com.Timo.Timo.domain.tag.entity.Tag;
@@ -250,7 +249,7 @@ public class TodoService {
 		}
 
 		if (changesHistoryKey) {
-			bumpAiHistoryVersionAfterCommit(userId);
+			aiHistoryCacheService.bumpUserHistoryVersionAfterCommit(userId);
 		}
 	}
 
@@ -269,7 +268,7 @@ public class TodoService {
 		todoInstanceRepository.deleteByTodoId(todoId);
 		todoRepository.delete(todo);
 
-		bumpAiHistoryVersionAfterCommit(userId);
+		aiHistoryCacheService.bumpUserHistoryVersionAfterCommit(userId);
 	}
 
 	private boolean isHistoryKeyChanged(Todo todo, TodoUpdateRequest request) {
@@ -277,13 +276,9 @@ public class TodoService {
 				|| (request.tagId() != null && !request.tagId().equals(todo.getTagId()));
 	}
 
-	private void bumpAiHistoryVersionAfterCommit(Long userId) {
-		TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-			@Override
-			public void afterCommit() {
-				aiHistoryCacheService.bumpUserHistoryVersion(userId);
-			}
-		});
+	@Transactional
+	public void removeTagFromTodos(Long tagId) {
+		todoRepository.clearTagByTagId(tagId, LocalDateTime.now());
 	}
 
 	private boolean isScheduleChanged(TodoUpdateRequest request) {
