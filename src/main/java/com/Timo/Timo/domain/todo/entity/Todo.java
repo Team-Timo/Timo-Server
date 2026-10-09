@@ -33,17 +33,23 @@ import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
 @Table(
 	name = "todos",
-	indexes = @Index(name = "idx_todos_user_title", columnList = "user_id, title")
+	indexes = @Index(name = "idx_todos_user_title", columnList = "user_id, title"),
+	uniqueConstraints = @UniqueConstraint(
+		name = "uk_todo_user_external_event",
+		columnNames = {"user_id", "external_event_id"}
+	)
 )
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -103,6 +109,13 @@ public class Todo extends BaseTimeEntity {
 	@Lob
 	@Column(name = "memo")
 	private String memo;
+
+	@Column(name = "external_event_id", length = 255)
+	private String externalEventId;
+
+	@ColumnDefault("false")
+	@Column(name = "deleted_from_google", nullable = false)
+	private boolean deletedFromGoogle;
 
 	@Builder(access = AccessLevel.PRIVATE)
 	private Todo(
@@ -261,6 +274,10 @@ public class Todo extends BaseTimeEntity {
 
 	public List<Weekday> getRepeatWeekdays() {
 		return Collections.unmodifiableList(repeatWeekdays);
+	}
+
+	public boolean isGoogleEvent() {
+		return externalEventId != null;
 	}
 
 	private void addSubtask(Subtask subtask) {
