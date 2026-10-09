@@ -38,6 +38,8 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 @Slf4j
@@ -124,10 +126,20 @@ public class TimerService {
     }
 
     finish(userId, stoppedRecord, TimerStatus.STOPPED);
+    bumpAiHistoryVersionAfterCommit(userId);
 
     TimerStartResponse started = startTimerInternal(user, todoId, targetDate);
 
     return TimerSwitchResponse.of(stoppedRecord, started);
+  }
+
+  private void bumpAiHistoryVersionAfterCommit(Long userId) {
+    TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+      @Override
+      public void afterCommit() {
+        aiHistoryCacheService.bumpUserHistoryVersion(userId);
+      }
+    });
   }
 
   @Transactional
