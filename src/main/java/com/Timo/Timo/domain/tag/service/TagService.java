@@ -64,8 +64,8 @@ public class TagService {
 			throw new CustomException(TagErrorCode.TAG_NOT_FOUND);
 		}
 
-		todoService.removeTagFromTodos(tagId);
 		tagRepository.delete(tag);
+		todoService.removeTagFromTodos(tagId);
 	}
 
 	private boolean isOwnedBy(Tag tag, Long userId) {
