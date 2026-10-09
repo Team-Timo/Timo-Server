@@ -1,6 +1,7 @@
 package com.Timo.Timo.domain.todo.service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.time.ZoneId;
 import java.util.List;
@@ -273,6 +274,11 @@ public class TodoService {
 	private boolean isHistoryKeyChanged(Todo todo, TodoUpdateRequest request) {
 		return (request.title() != null && !request.title().equals(todo.getTitle()))
 				|| (request.tagId() != null && !request.tagId().equals(todo.getTagId()));
+	}
+
+	@Transactional
+	public void removeTagFromTodos(Long tagId) {
+		todoRepository.clearTagByTagId(tagId, LocalDateTime.now());
 	}
 
 	private boolean isScheduleChanged(TodoUpdateRequest request) {
