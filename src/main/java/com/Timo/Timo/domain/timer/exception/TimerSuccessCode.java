@@ -16,6 +16,7 @@ public enum TimerSuccessCode implements BaseSuccessCode {
   TIMER_COMPLETED(HttpStatus.OK, "TIMER_200", "타이머가 완료되었습니다."),
   TIMER_STOPPED(HttpStatus.OK, "TIMER_200", "타이머가 종료되었습니다."),
   TIMER_EXTENDED(HttpStatus.OK, "TIMER_200", "타이머가 연장되었습니다."),
+  TIMER_SWITCHED(HttpStatus.OK, "TIMER_200", "타이머가 전환되었습니다."),
 
   TIMER_STARTED(HttpStatus.CREATED, "TIMER_201", "타이머가 시작되었습니다."),
   ;
