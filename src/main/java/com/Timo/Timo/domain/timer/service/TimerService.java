@@ -116,19 +116,14 @@ public class TimerService {
     User user = userRepository.findByIdForUpdate(userId)
         .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
-    TimerRecord stoppedRecord = timerRecordRepository.findByIdForUpdate(timerId)
-        .orElseThrow(() -> new CustomException(TimerErrorCode.TIMER_NOT_FOUND));
-
-    if (!stoppedRecord.getUser().getId().equals(userId)) {
-      throw new CustomException(ErrorCode.FORBIDDEN);
-    }
+    TimerRecord stoppedRecord = getOwnedTimerForUpdate(userId, timerId);
 
     if (stoppedRecord.getTodo().getId().equals(todoId)
         && resolveTimerDate(stoppedRecord).equals(targetDate)) {
       throw new CustomException(TimerErrorCode.TIMER_SWITCH_SAME_TARGET);
     }
 
-    finishTimerInTransaction(userId, timerId, TimerStatus.STOPPED);
+    finish(userId, stoppedRecord, TimerStatus.STOPPED);
 
     TimerStartResponse started = startTimerInternal(user, todoId, targetDate);
 
@@ -265,6 +260,11 @@ public class TimerService {
   }
 
   private FinishedTimer finishTimerInTransaction(Long userId, Long timerId, TimerStatus targetStatus) {
+    TimerRecord timerRecord = getOwnedTimerForUpdate(userId, timerId);
+    return finish(userId, timerRecord, targetStatus);
+  }
+
+  private TimerRecord getOwnedTimerForUpdate(Long userId, Long timerId) {
     TimerRecord timerRecord = timerRecordRepository.findByIdForUpdate(timerId)
         .orElseThrow(() -> new CustomException(TimerErrorCode.TIMER_NOT_FOUND));
 
@@ -272,6 +272,11 @@ public class TimerService {
       throw new CustomException(ErrorCode.FORBIDDEN);
     }
 
+    return timerRecord;
+  }
+
+  private FinishedTimer finish(Long userId, TimerRecord timerRecord, TimerStatus targetStatus) {
+    Long timerId = timerRecord.getId();
     LocalDateTime now = LocalDateTime.now();
     int actualSeconds = calculateElapsedSeconds(timerId, now);
 
