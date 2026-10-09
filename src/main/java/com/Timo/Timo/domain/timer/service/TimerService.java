@@ -125,7 +125,7 @@ public class TimerService {
 
     if (stoppedRecord.getTodo().getId().equals(todoId)
         && resolveTimerDate(stoppedRecord).equals(targetDate)) {
-      throw new CustomException(TimerErrorCode.TIMER_INVALID_STATUS_TRANSITION);
+      throw new CustomException(TimerErrorCode.TIMER_SWITCH_SAME_TARGET);
     }
 
     finishTimerInTransaction(userId, timerId, TimerStatus.STOPPED);
