@@ -19,6 +19,8 @@ import com.Timo.Timo.global.exception.code.ErrorCode;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -123,7 +125,8 @@ public class CalendarService {
             .build()
     );
 
-    commandService.deleteConnection(calendarConnection);
+    ZoneId userZone = ZoneId.of(calendarConnection.getUser().getZoneId());
+    commandService.deleteConnection(calendarConnection, LocalDate.now(userZone));
 
     return CalendarDisconnectResponse.builder()
         .calendarConnected(false)

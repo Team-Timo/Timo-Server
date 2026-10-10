@@ -8,6 +8,7 @@ import com.Timo.Timo.domain.calendar.exception.CalendarErrorCode;
 import com.Timo.Timo.domain.calendar.repository.CalendarConnectionRepository;
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.global.exception.CustomException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
@@ -23,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class CalendarConnectionCommandService {
 
   private final CalendarConnectionRepository calendarConnectionRepository;
+  private final CalendarTodoSynchronizer calendarTodoSynchronizer;
 
   @Transactional
   public CalendarConnectResponse saveConnection(
@@ -52,7 +54,8 @@ public class CalendarConnectionCommandService {
   }
 
   @Transactional
-  public void deleteConnection(CalendarConnection calendarConnection) {
+  public void deleteConnection(CalendarConnection calendarConnection, LocalDate today) {
+    calendarTodoSynchronizer.removeEventsAfter(calendarConnection.getUser().getId(), today);
     calendarConnectionRepository.delete(calendarConnection);
   }
 

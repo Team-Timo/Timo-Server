@@ -3,6 +3,7 @@ package com.Timo.Timo.domain.calendar.service;
 import com.Timo.Timo.domain.calendar.dto.client.CalendarEventItem;
 import com.Timo.Timo.domain.calendar.utils.CalendarEventDateResolver;
 import com.Timo.Timo.domain.timer.repository.TimerRecordRepository;
+import com.Timo.Timo.domain.timer.service.TimerService;
 import com.Timo.Timo.domain.todo.entity.Todo;
 import com.Timo.Timo.domain.todo.repository.SubtaskCompletionRepository;
 import com.Timo.Timo.domain.todo.repository.TodoInstanceRepository;
@@ -40,6 +41,22 @@ public class CalendarTodoSynchronizer {
   private final SubtaskCompletionRepository subtaskCompletionRepository;
   private final TimerRecordRepository timerRecordRepository;
   private final UserRepository userRepository;
+  private final TimerService timerService;
+
+  @Transactional
+  public void removeEventsAfter(Long userId, LocalDate date) {
+    userRepository.findByIdForUpdate(userId)
+        .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+    List<Long> todoIds = todoRepository.findGoogleEventsAfter(userId, date).stream()
+        .map(Todo::getId)
+        .toList();
+    if (todoIds.isEmpty()) {
+      return;
+    }
+
+    deleteTodos(todoIds);
+  }
 
   @Transactional
   public void synchronize(
@@ -124,12 +141,17 @@ public class CalendarTodoSynchronizer {
       return;
     }
 
+    deleteTodos(deletableTodoIds);
+  }
+
+  private void deleteTodos(List<Long> todoIds) {
     todoRepository.flush();
-    for (Long todoId : deletableTodoIds) {
+    for (Long todoId : todoIds) {
+      timerService.deleteTimersByTodo(todoId);
       subtaskCompletionRepository.deleteByTodoId(todoId);
       todoInstanceRepository.deleteByTodoId(todoId);
     }
-    todoRepository.deleteAllById(deletableTodoIds);
+    todoRepository.deleteAllById(todoIds);
   }
 
   private List<EventOccurrence> toOccurrences(
