@@ -32,6 +32,8 @@ public class HomeTodoMapper {
 				mapTag(context.tag()),
 				hasMemo(todo, instance),
 				todo.getRepeatType() != RepeatType.NONE,
+				todo.isGoogleEvent(),
+				todo.isDeletedFromGoogle(),
 				resolveTimerStatus(instance),
 				instance != null ? instance.getSortOrder() : context.defaultSortOrder(),
 				mapSubtasks(todo.getSubtasks(), context.completedSubtaskIds())

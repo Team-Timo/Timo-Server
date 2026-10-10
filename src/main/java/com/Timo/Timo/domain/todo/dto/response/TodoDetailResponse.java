@@ -13,6 +13,8 @@ import com.Timo.Timo.domain.todo.enums.RepeatType;
 import com.Timo.Timo.domain.todo.enums.TodoTimerStatus;
 import com.Timo.Timo.domain.todo.enums.Weekday;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 
 public record TodoDetailResponse(
@@ -32,6 +34,12 @@ public record TodoDetailResponse(
 		TagResponse tag,
 		@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 		RepeatResponse repeat,
+		@JsonProperty("isGoogleEvent")
+		@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+		boolean isGoogleEvent,
+		@JsonProperty("isDeletedFromGoogle")
+		@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+		boolean isDeletedFromGoogle,
 		@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 		TodoTimerStatus timerStatus,
 		String memo,
@@ -53,6 +61,8 @@ public record TodoDetailResponse(
 				todo.getPriority() != null ? todo.getPriority().name() : null,
 				TagResponse.from(tag),
 				RepeatResponse.from(todo),
+				todo.isGoogleEvent(),
+				todo.isDeletedFromGoogle(),
 				instance != null ? instance.getTimerStatus() : TodoTimerStatus.STOPPED,
 				instance != null ? instance.resolveMemo() : todo.getMemo(),
 				instance != null ? instance.getSortOrder() : null,
