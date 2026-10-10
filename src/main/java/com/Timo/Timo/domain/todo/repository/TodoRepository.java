@@ -1,6 +1,7 @@
 package com.Timo.Timo.domain.todo.repository;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -13,6 +14,8 @@ import com.Timo.Timo.domain.todo.entity.Todo;
 public interface TodoRepository extends JpaRepository<Todo, Long> {
 
 	Optional<Todo> findByIdAndUser_Id(Long id, Long userId);
+
+	List<Todo> findByUser_IdAndExternalEventIdIn(Long userId, Collection<String> externalEventIds);
 
 	@Query("""
 		select t from Todo t

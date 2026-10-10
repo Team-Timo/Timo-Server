@@ -130,7 +130,8 @@ public class Todo extends BaseTimeEntity {
 			Integer durationSeconds,
 			TodoPriority priority,
 			Long tagId,
-			String memo
+			String memo,
+			String externalEventId
 	) {
 		this.user = user;
 		this.icon = icon == TodoIcon.NONE ? null : icon;
@@ -145,6 +146,24 @@ public class Todo extends BaseTimeEntity {
 		this.priority = priority;
 		this.tagId = tagId;
 		this.memo = memo;
+		this.externalEventId = externalEventId;
+	}
+
+	public static Todo createFromGoogleEvent(
+			User user,
+			String title,
+			LocalDate date,
+			String externalEventId
+	) {
+		return Todo.builder()
+				.user(user)
+				.title(title)
+				.startDate(date)
+				.endDate(date)
+				.repeatType(RepeatType.NONE)
+				.durationSeconds(0)
+				.externalEventId(externalEventId)
+				.build();
 	}
 
 	public static Todo create(
