@@ -2,18 +2,21 @@ package com.Timo.Timo.domain.calendar.controller;
 
 import com.Timo.Timo.domain.calendar.docs.CalendarControllerDocs;
 import com.Timo.Timo.domain.calendar.dto.request.CalendarConnectRequest;
+import com.Timo.Timo.domain.calendar.dto.request.CalendarSyncRequest;
 import com.Timo.Timo.domain.calendar.dto.response.CalendarAuthorizeResponse;
 import com.Timo.Timo.domain.calendar.dto.response.CalendarConnectResponse;
 import com.Timo.Timo.domain.calendar.dto.response.CalendarDisconnectResponse;
 import com.Timo.Timo.domain.calendar.dto.response.CalendarEventsResponse;
 import com.Timo.Timo.domain.calendar.exception.CalendarSuccessCode;
 import com.Timo.Timo.domain.calendar.service.CalendarEventQueryService;
+import com.Timo.Timo.domain.calendar.service.CalendarEventSyncService;
 import com.Timo.Timo.domain.calendar.service.CalendarService;
 import com.Timo.Timo.global.auth.principal.CustomUserDetails;
 import com.Timo.Timo.global.response.BaseResponse;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,6 +37,7 @@ public class CalendarController implements CalendarControllerDocs {
 
   private final CalendarService calendarService;
   private final CalendarEventQueryService calendarEventQueryService;
+  private final CalendarEventSyncService calendarEventSyncService;
 
   @Override
   @GetMapping("/authorize")
@@ -88,6 +92,23 @@ public class CalendarController implements CalendarControllerDocs {
 
     return ResponseEntity.ok(
         BaseResponse.onSuccess(CalendarSuccessCode.CALENDAR_EVENTS_RETRIEVED, response)
+    );
+  }
+
+  @Override
+  @PostMapping("/events/sync")
+  public ResponseEntity<BaseResponse<Object>> syncCalendarEvents(
+      @AuthenticationPrincipal CustomUserDetails userDetails,
+      @RequestBody(required = false) CalendarSyncRequest request
+  ) {
+    Long userId = userDetails.getUserId();
+    String filter = request != null ? request.filter() : null;
+    String baseDate = request != null ? request.baseDate() : null;
+
+    calendarEventSyncService.syncEvents(userId, filter, baseDate);
+
+    return ResponseEntity.ok(
+        BaseResponse.onSuccess(CalendarSuccessCode.CALENDAR_EVENTS_SYNCED, Map.of())
     );
   }
 }

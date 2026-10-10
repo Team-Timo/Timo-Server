@@ -8,6 +8,9 @@ import com.Timo.Timo.domain.todo.repository.SubtaskCompletionRepository;
 import com.Timo.Timo.domain.todo.repository.TodoInstanceRepository;
 import com.Timo.Timo.domain.todo.repository.TodoRepository;
 import com.Timo.Timo.domain.user.entity.User;
+import com.Timo.Timo.domain.user.exception.UserErrorCode;
+import com.Timo.Timo.domain.user.repository.UserRepository;
+import com.Timo.Timo.global.exception.CustomException;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -22,6 +25,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
@@ -35,8 +39,19 @@ public class CalendarTodoSynchronizer {
   private final TodoInstanceRepository todoInstanceRepository;
   private final SubtaskCompletionRepository subtaskCompletionRepository;
   private final TimerRecordRepository timerRecordRepository;
+  private final UserRepository userRepository;
 
-  public void registerEvents(
+  @Transactional
+  public void synchronize(
+      Long userId, List<CalendarEventItem> items, LocalDate from, LocalDate to, ZoneId userZone
+  ) {
+    User user = userRepository.findByIdForUpdate(userId)
+        .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+    registerEvents(user, items, from, to, userZone);
+  }
+
+  private void registerEvents(
       User user, List<CalendarEventItem> items, LocalDate from, LocalDate to, ZoneId userZone
   ) {
     List<EventOccurrence> occurrences = toOccurrences(items, from, to, userZone);
