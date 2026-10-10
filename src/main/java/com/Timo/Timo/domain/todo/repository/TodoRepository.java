@@ -20,6 +20,18 @@ public interface TodoRepository extends JpaRepository<Todo, Long> {
 	@Query("""
 		select t from Todo t
 		where t.user.id = :userId
+		  and t.externalEventId is not null
+		  and t.startDate between :from and :to
+		""")
+	List<Todo> findGoogleEventsInRange(
+			@Param("userId") Long userId,
+			@Param("from") LocalDate from,
+			@Param("to") LocalDate to
+	);
+
+	@Query("""
+		select t from Todo t
+		where t.user.id = :userId
 		  and t.startDate <= :to
 		  and t.endDate >= :from
 		order by t.createdAt asc, t.id asc

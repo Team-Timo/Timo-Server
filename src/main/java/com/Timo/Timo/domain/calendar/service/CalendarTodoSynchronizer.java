@@ -2,7 +2,10 @@ package com.Timo.Timo.domain.calendar.service;
 
 import com.Timo.Timo.domain.calendar.dto.client.CalendarEventItem;
 import com.Timo.Timo.domain.calendar.utils.CalendarEventDateResolver;
+import com.Timo.Timo.domain.timer.repository.TimerRecordRepository;
 import com.Timo.Timo.domain.todo.entity.Todo;
+import com.Timo.Timo.domain.todo.repository.SubtaskCompletionRepository;
+import com.Timo.Timo.domain.todo.repository.TodoInstanceRepository;
 import com.Timo.Timo.domain.todo.repository.TodoRepository;
 import com.Timo.Timo.domain.user.entity.User;
 import java.time.LocalDate;
@@ -10,9 +13,11 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -27,11 +32,20 @@ public class CalendarTodoSynchronizer {
   private static final String EMPTY_TITLE = "제목 없음";
 
   private final TodoRepository todoRepository;
+  private final TodoInstanceRepository todoInstanceRepository;
+  private final SubtaskCompletionRepository subtaskCompletionRepository;
+  private final TimerRecordRepository timerRecordRepository;
 
   public void registerEvents(
       User user, List<CalendarEventItem> items, LocalDate from, LocalDate to, ZoneId userZone
   ) {
     List<EventOccurrence> occurrences = toOccurrences(items, from, to, userZone);
+
+    saveOrUpdate(user, occurrences);
+    removeMissing(user, occurrences, from, to);
+  }
+
+  private void saveOrUpdate(User user, List<EventOccurrence> occurrences) {
     if (occurrences.isEmpty()) {
       return;
     }
@@ -55,10 +69,52 @@ public class CalendarTodoSynchronizer {
         ));
         continue;
       }
+      if (existing.isDeletedFromGoogle()) {
+        existing.unmarkDeletedFromGoogle();
+      }
       if (!existing.getTitle().equals(occurrence.title())) {
         existing.updateFields(null, occurrence.title(), null, null, null);
       }
     }
+  }
+
+  private void removeMissing(
+      User user, List<EventOccurrence> occurrences, LocalDate from, LocalDate to
+  ) {
+    Set<String> currentExternalEventIds = occurrences.stream()
+        .map(EventOccurrence::externalEventId)
+        .collect(Collectors.toSet());
+
+    List<Todo> missingTodos = todoRepository.findGoogleEventsInRange(user.getId(), from, to)
+        .stream()
+        .filter(todo -> !currentExternalEventIds.contains(todo.getExternalEventId()))
+        .toList();
+    if (missingTodos.isEmpty()) {
+      return;
+    }
+
+    Set<Long> recordedTodoIds = new HashSet<>(timerRecordRepository.findTodoIdsHavingRecords(
+        missingTodos.stream().map(Todo::getId).toList()
+    ));
+
+    List<Long> deletableTodoIds = new ArrayList<>();
+    for (Todo todo : missingTodos) {
+      if (recordedTodoIds.contains(todo.getId())) {
+        todo.markDeletedFromGoogle();
+        continue;
+      }
+      deletableTodoIds.add(todo.getId());
+    }
+    if (deletableTodoIds.isEmpty()) {
+      return;
+    }
+
+    todoRepository.flush();
+    for (Long todoId : deletableTodoIds) {
+      subtaskCompletionRepository.deleteByTodoId(todoId);
+      todoInstanceRepository.deleteByTodoId(todoId);
+    }
+    todoRepository.deleteAllById(deletableTodoIds);
   }
 
   private List<EventOccurrence> toOccurrences(

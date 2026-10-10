@@ -299,6 +299,14 @@ public class Todo extends BaseTimeEntity {
 		return externalEventId != null;
 	}
 
+	public void markDeletedFromGoogle() {
+		this.deletedFromGoogle = true;
+	}
+
+	public void unmarkDeletedFromGoogle() {
+		this.deletedFromGoogle = false;
+	}
+
 	private void addSubtask(Subtask subtask) {
 		this.subtasks.add(subtask);
 		subtask.assignTodo(this);

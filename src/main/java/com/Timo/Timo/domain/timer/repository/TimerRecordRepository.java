@@ -5,6 +5,7 @@ import com.Timo.Timo.domain.timer.enums.TimerStatus;
 import jakarta.persistence.LockModeType;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -18,6 +19,9 @@ public interface TimerRecordRepository extends JpaRepository<TimerRecord, Long> 
   Optional<TimerRecord> findByUserIdAndStatusIn(Long userId, List<TimerStatus> statuses);
 
   boolean existsByTodo_IdAndStatusIn(Long todoId, List<TimerStatus> statuses);
+
+  @Query("select distinct tr.todo.id from TimerRecord tr where tr.todo.id in :todoIds")
+  List<Long> findTodoIdsHavingRecords(@Param("todoIds") Collection<Long> todoIds);
 
   boolean existsByTodo_IdAndTargetDateAndStatusIn(
       Long todoId, LocalDate targetDate, List<TimerStatus> statuses);
