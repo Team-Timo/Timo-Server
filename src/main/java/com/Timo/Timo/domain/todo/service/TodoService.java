@@ -212,6 +212,8 @@ public class TodoService {
 		Todo todo = todoRepository.findByIdAndUser_Id(todoId, userId)
 				.orElseThrow(() -> new CustomException(TodoErrorCode.TODO_NOT_FOUND));
 
+		validateGoogleEventUpdatable(todo, request);
+
 		boolean changesTimerSensitiveFields = request.durationSeconds() != null || isScheduleChanged(request);
 		if (changesTimerSensitiveFields && timerService.hasActiveTimer(todoId)) {
 			throw new CustomException(TodoErrorCode.TIMER_RUNNING);
@@ -257,6 +259,10 @@ public class TodoService {
 		Todo todo = todoRepository.findByIdAndUser_Id(todoId, userId)
 				.orElseThrow(() -> new CustomException(TodoErrorCode.TODO_NOT_FOUND));
 
+		if (todo.isGoogleEvent() && !todo.isDeletedFromGoogle()) {
+			throw new CustomException(TodoErrorCode.GOOGLE_EVENT_NOT_DELETABLE);
+		}
+
 		if (timerService.hasActiveTimer(todoId)) {
 			throw new CustomException(TodoErrorCode.TIMER_RUNNING);
 		}
@@ -268,6 +274,23 @@ public class TodoService {
 		todoRepository.delete(todo);
 
 		aiHistoryCacheService.bumpUserHistoryVersionAfterCommit(userId);
+	}
+
+	private void validateGoogleEventUpdatable(Todo todo, TodoUpdateRequest request) {
+		if (!todo.isGoogleEvent()) {
+			return;
+		}
+
+		boolean changesTitle = request.title() != null && !request.title().equals(todo.getTitle());
+		boolean changesSchedule = (request.date() != null && !request.date().equals(todo.getStartDate()))
+				|| (request.repeatType() != null && request.repeatType() != todo.getRepeatType())
+				|| (request.repeatWeekdays() != null && !request.repeatWeekdays().equals(todo.getRepeatWeekdays()))
+				|| (request.repeatDayOfMonth() != null
+						&& !request.repeatDayOfMonth().equals(todo.getRepeatDayOfMonth()));
+
+		if (changesTitle || changesSchedule) {
+			throw new CustomException(TodoErrorCode.GOOGLE_EVENT_NOT_MODIFIABLE);
+		}
 	}
 
 	private boolean isHistoryKeyChanged(Todo todo, TodoUpdateRequest request) {

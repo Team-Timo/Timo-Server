@@ -277,6 +277,9 @@ public interface TodoControllerDocs {
 			subtasks를 전달하면 하위 태스크 목록 전체가 교체됩니다.
 			subtaskId가 있으면 기존 태스크를 수정하고, null이면 신규 태스크로 추가하며, 전달되지 않은 기존 태스크는 삭제됩니다.
 
+			구글 캘린더에서 가져온 일정은 구글이 원본이므로 제목, 날짜(반복 규칙 포함)를 수정할 수 없습니다.
+			소요 시간, 아이콘, 우선순위, 태그, 하위 태스크는 수정할 수 있습니다.
+
 			Swagger UI 오른쪽 위의 Authorize 버튼을 눌러 유효한 Access Token을 입력해야 합니다.
 			"""
 	)
@@ -333,7 +336,7 @@ public interface TodoControllerDocs {
 		),
 		@ApiResponse(
 			responseCode = "409",
-			description = "타이머 실행 중에 일정/소요시간 변경을 시도했거나, 변경된 일정의 특정 날짜 TODO가 최대 개수(20개)를 초과한 경우",
+			description = "타이머 실행 중에 일정/소요시간 변경을 시도했거나, 변경된 일정의 특정 날짜 TODO가 최대 개수(20개)를 초과했거나, 구글 캘린더 일정의 제목/날짜를 수정하려는 경우",
 			content = @Content(
 				mediaType = "application/json",
 				schema = @Schema(implementation = ErrorDto.class)
@@ -359,6 +362,9 @@ public interface TodoControllerDocs {
 		description = """
 			TODO와 연결된 하위 태스크, 반복 규칙을 함께 삭제합니다.
 			해당 TODO에 실행 중이거나 일시정지된 타이머가 있으면 삭제할 수 없습니다.
+
+			구글 캘린더에서 가져온 일정은 삭제할 수 없습니다.
+			단, 구글에서 삭제되었지만 타이머 기록이 있어 남아 있는 일정은 삭제할 수 있습니다.
 
 			Swagger UI 오른쪽 위의 Authorize 버튼을 눌러 유효한 Access Token을 입력해야 합니다.
 			"""
@@ -387,7 +393,7 @@ public interface TodoControllerDocs {
 		),
 		@ApiResponse(
 			responseCode = "409",
-			description = "타이머가 실행 중이거나 일시정지된 상태에서 삭제를 시도한 경우",
+			description = "타이머가 실행 중이거나 일시정지된 상태에서 삭제를 시도했거나, 구글 캘린더 일정을 삭제하려는 경우",
 			content = @Content(
 				mediaType = "application/json",
 				schema = @Schema(implementation = ErrorDto.class)
