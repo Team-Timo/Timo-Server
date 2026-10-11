@@ -214,7 +214,7 @@ public class TodoService {
 
 		validateGoogleEventUpdatable(todo, request);
 
-		boolean changesTimerSensitiveFields = request.durationSeconds() != null || isScheduleChanged(request);
+		boolean changesTimerSensitiveFields = request.durationSeconds() != null || isScheduleChanged(todo, request);
 		if (changesTimerSensitiveFields && timerService.hasActiveTimer(todoId)) {
 			throw new CustomException(TodoErrorCode.TIMER_RUNNING);
 		}
@@ -298,15 +298,17 @@ public class TodoService {
 				|| (request.tagId() != null && !request.tagId().equals(todo.getTagId()));
 	}
 
-	private boolean isScheduleChanged(TodoUpdateRequest request) {
-		return request.date() != null
-				|| request.repeatType() != null
-				|| request.repeatWeekdays() != null
-				|| request.repeatDayOfMonth() != null;
+	private boolean isScheduleChanged(Todo todo, TodoUpdateRequest request) {
+		return (request.date() != null && !request.date().equals(todo.getStartDate()))
+				|| (request.repeatType() != null && request.repeatType() != todo.getRepeatType())
+				|| (request.repeatWeekdays() != null
+						&& !request.repeatWeekdays().equals(todo.getRepeatWeekdays()))
+				|| (request.repeatDayOfMonth() != null
+						&& !request.repeatDayOfMonth().equals(todo.getRepeatDayOfMonth()));
 	}
 
 	private void applyScheduleChange(Todo todo, TodoUpdateRequest request) {
-		if (!isScheduleChanged(request)) {
+		if (!isScheduleChanged(todo, request)) {
 			return;
 		}
 
