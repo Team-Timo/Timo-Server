@@ -14,12 +14,16 @@ import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.exception.UserErrorCode;
 import com.Timo.Timo.domain.user.repository.UserRepository;
 import com.Timo.Timo.global.exception.CustomException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +40,7 @@ public class CalendarTodoSynchronizer {
 
   private static final int MAX_TITLE_LENGTH = 30;
   private static final int MAX_EXTERNAL_EVENT_ID_LENGTH = 255;
+  private static final String HASHED_ID_PREFIX = "sha256:";
   private static final String EMPTY_TITLE = "제목 없음";
 
   private final TodoRepository todoRepository;
@@ -175,10 +180,7 @@ public class CalendarTodoSynchronizer {
         if (date.isBefore(from) || date.isAfter(to)) {
           continue;
         }
-        String externalEventId = item.id() + "_" + date;
-        if (externalEventId.length() > MAX_EXTERNAL_EVENT_ID_LENGTH) {
-          continue;
-        }
+        String externalEventId = toExternalEventId(item.id(), date);
         occurrencesByExternalEventId.putIfAbsent(
             externalEventId, new EventOccurrence(externalEventId, title, date)
         );
@@ -188,6 +190,24 @@ public class CalendarTodoSynchronizer {
     return occurrencesByExternalEventId.values().stream()
         .sorted(Comparator.comparing(EventOccurrence::date))
         .toList();
+  }
+
+  private String toExternalEventId(String googleEventId, LocalDate date) {
+    String externalEventId = googleEventId + "_" + date;
+    if (externalEventId.length() <= MAX_EXTERNAL_EVENT_ID_LENGTH) {
+      return externalEventId;
+    }
+    return HASHED_ID_PREFIX + sha256Hex(externalEventId);
+  }
+
+  private String sha256Hex(String value) {
+    try {
+      byte[] digest = MessageDigest.getInstance("SHA-256")
+          .digest(value.getBytes(StandardCharsets.UTF_8));
+      return HexFormat.of().formatHex(digest);
+    } catch (NoSuchAlgorithmException e) {
+      throw new IllegalStateException(e);
+    }
   }
 
   private String toTitle(String summary) {
