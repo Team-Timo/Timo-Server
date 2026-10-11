@@ -1,6 +1,8 @@
 package com.Timo.Timo.domain.calendar.service;
 
 import com.Timo.Timo.domain.calendar.dto.client.CalendarEventItem;
+import com.Timo.Timo.domain.calendar.exception.CalendarErrorCode;
+import com.Timo.Timo.domain.calendar.repository.CalendarConnectionRepository;
 import com.Timo.Timo.domain.calendar.utils.CalendarEventDateResolver;
 import com.Timo.Timo.domain.timer.repository.TimerRecordRepository;
 import com.Timo.Timo.domain.timer.service.TimerService;
@@ -42,6 +44,7 @@ public class CalendarTodoSynchronizer {
   private final TimerRecordRepository timerRecordRepository;
   private final UserRepository userRepository;
   private final TimerService timerService;
+  private final CalendarConnectionRepository calendarConnectionRepository;
 
   @Transactional
   public void removeEventsAfter(Long userId, LocalDate date) {
@@ -64,6 +67,10 @@ public class CalendarTodoSynchronizer {
   ) {
     User user = userRepository.findByIdForUpdate(userId)
         .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+    if (!calendarConnectionRepository.existsByUserId(userId)) {
+      throw new CustomException(CalendarErrorCode.CALENDAR_NOT_CONNECTED);
+    }
 
     registerEvents(user, items, from, to, userZone);
   }
