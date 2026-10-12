@@ -319,6 +319,14 @@ public class Todo extends BaseTimeEntity {
 		this.disconnectedFromGoogle = false;
 	}
 
+	public void moveGoogleEvent(LocalDate date, String externalEventId) {
+		this.startDate = date;
+		this.endDate = date;
+		this.externalEventId = externalEventId;
+		this.deletedFromGoogle = false;
+		this.disconnectedFromGoogle = false;
+	}
+
 	private void addSubtask(Subtask subtask) {
 		this.subtasks.add(subtask);
 		subtask.assignTodo(this);
