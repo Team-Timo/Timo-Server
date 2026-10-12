@@ -57,11 +57,23 @@ public class CalendarTodoSynchronizer {
     userRepository.findByIdForUpdate(userId)
         .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
-    List<Long> todoIds = todoRepository.findGoogleEventsAfter(userId, today).stream()
-        .map(Todo::getId)
-        .toList();
-    if (!todoIds.isEmpty()) {
-      deleteTodos(todoIds);
+    List<Todo> futureTodos = todoRepository.findGoogleEventsAfter(userId, today);
+    if (!futureTodos.isEmpty()) {
+      Set<Long> recordedTodoIds = new HashSet<>(timerRecordRepository.findTodoIdsHavingRecords(
+          futureTodos.stream().map(Todo::getId).toList()
+      ));
+
+      List<Long> deletableTodoIds = new ArrayList<>();
+      for (Todo todo : futureTodos) {
+        if (recordedTodoIds.contains(todo.getId())) {
+          todo.markDisconnectedFromGoogle();
+          continue;
+        }
+        deletableTodoIds.add(todo.getId());
+      }
+      if (!deletableTodoIds.isEmpty()) {
+        deleteTodos(deletableTodoIds);
+      }
     }
 
     todoRepository.findGoogleEventsUpTo(userId, today)
