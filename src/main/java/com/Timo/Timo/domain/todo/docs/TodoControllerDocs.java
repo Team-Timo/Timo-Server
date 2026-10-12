@@ -364,7 +364,8 @@ public interface TodoControllerDocs {
 			해당 TODO에 실행 중이거나 일시정지된 타이머가 있으면 삭제할 수 없습니다.
 
 			구글 캘린더에서 가져온 일정은 삭제할 수 없습니다.
-			단, 구글에서 삭제되었지만 타이머 기록이 있어 남아 있는 일정은 삭제할 수 있습니다.
+			단, 구글에서 삭제되었지만 타이머 기록이 있어 남아 있는 일정(isDeletedFromGoogle=true)과
+			캘린더 연동 해제 후 남은 일정(isDisconnectedFromGoogle=true)은 삭제할 수 있습니다.
 
 			Swagger UI 오른쪽 위의 Authorize 버튼을 눌러 유효한 Access Token을 입력해야 합니다.
 			"""

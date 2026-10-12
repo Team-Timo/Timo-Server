@@ -55,7 +55,7 @@ public class CalendarConnectionCommandService {
 
   @Transactional
   public void deleteConnection(CalendarConnection calendarConnection, LocalDate today) {
-    calendarTodoSynchronizer.removeEventsAfter(calendarConnection.getUser().getId(), today);
+    calendarTodoSynchronizer.handleDisconnect(calendarConnection.getUser().getId(), today);
     calendarConnectionRepository.delete(calendarConnection);
   }
 

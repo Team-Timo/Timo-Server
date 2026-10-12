@@ -84,6 +84,9 @@ public record HomeResponse(
 			@JsonProperty("isDeletedFromGoogle")
 			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 			boolean isDeletedFromGoogle,
+			@JsonProperty("isDisconnectedFromGoogle")
+			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+			boolean isDisconnectedFromGoogle,
 			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 			TodoTimerStatus timerStatus,
 			Integer sortOrder,

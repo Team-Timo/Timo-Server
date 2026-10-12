@@ -52,18 +52,19 @@ public class CalendarTodoSynchronizer {
   private final CalendarConnectionRepository calendarConnectionRepository;
 
   @Transactional
-  public void removeEventsAfter(Long userId, LocalDate date) {
+  public void handleDisconnect(Long userId, LocalDate today) {
     userRepository.findByIdForUpdate(userId)
         .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
-    List<Long> todoIds = todoRepository.findGoogleEventsAfter(userId, date).stream()
+    List<Long> todoIds = todoRepository.findGoogleEventsAfter(userId, today).stream()
         .map(Todo::getId)
         .toList();
-    if (todoIds.isEmpty()) {
-      return;
+    if (!todoIds.isEmpty()) {
+      deleteTodos(todoIds);
     }
 
-    deleteTodos(todoIds);
+    todoRepository.findGoogleEventsUpTo(userId, today)
+        .forEach(Todo::markDisconnectedFromGoogle);
   }
 
   @Transactional
@@ -115,6 +116,9 @@ public class CalendarTodoSynchronizer {
       }
       if (existing.isDeletedFromGoogle()) {
         existing.unmarkDeletedFromGoogle();
+      }
+      if (existing.isDisconnectedFromGoogle()) {
+        existing.unmarkDisconnectedFromGoogle();
       }
       if (!existing.getTitle().equals(occurrence.title())) {
         existing.updateFields(null, occurrence.title(), null, null, null);

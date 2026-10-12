@@ -259,7 +259,7 @@ public class TodoService {
 		Todo todo = todoRepository.findByIdAndUser_Id(todoId, userId)
 				.orElseThrow(() -> new CustomException(TodoErrorCode.TODO_NOT_FOUND));
 
-		if (todo.isGoogleEvent() && !todo.isDeletedFromGoogle()) {
+		if (todo.isGoogleEvent() && !todo.isDeletedFromGoogle() && !todo.isDisconnectedFromGoogle()) {
 			throw new CustomException(TodoErrorCode.GOOGLE_EVENT_NOT_DELETABLE);
 		}
 

@@ -40,6 +40,9 @@ public record TodoDetailResponse(
 		@JsonProperty("isDeletedFromGoogle")
 		@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 		boolean isDeletedFromGoogle,
+		@JsonProperty("isDisconnectedFromGoogle")
+		@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+		boolean isDisconnectedFromGoogle,
 		@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 		TodoTimerStatus timerStatus,
 		String memo,
@@ -63,6 +66,7 @@ public record TodoDetailResponse(
 				RepeatResponse.from(todo),
 				todo.isGoogleEvent(),
 				todo.isDeletedFromGoogle(),
+				todo.isDisconnectedFromGoogle(),
 				instance != null ? instance.getTimerStatus() : TodoTimerStatus.STOPPED,
 				instance != null ? instance.resolveMemo() : todo.getMemo(),
 				instance != null ? instance.getSortOrder() : null,

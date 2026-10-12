@@ -117,6 +117,10 @@ public class Todo extends BaseTimeEntity {
 	@Column(name = "deleted_from_google", nullable = false)
 	private boolean deletedFromGoogle;
 
+	@ColumnDefault("false")
+	@Column(name = "disconnected_from_google", nullable = false)
+	private boolean disconnectedFromGoogle;
+
 	@Builder(access = AccessLevel.PRIVATE)
 	private Todo(
 			User user,
@@ -305,6 +309,14 @@ public class Todo extends BaseTimeEntity {
 
 	public void unmarkDeletedFromGoogle() {
 		this.deletedFromGoogle = false;
+	}
+
+	public void markDisconnectedFromGoogle() {
+		this.disconnectedFromGoogle = true;
+	}
+
+	public void unmarkDisconnectedFromGoogle() {
+		this.disconnectedFromGoogle = false;
 	}
 
 	private void addSubtask(Subtask subtask) {

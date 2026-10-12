@@ -177,6 +177,10 @@ public interface CalendarControllerDocs {
       summary = "구글 캘린더 연동 해제",
       description = """
           연동된 구글 캘린더 정보를 삭제하고 구글 토큰을 revoke합니다.
+
+          해제 시점 기준 오늘 이후의 구글 일정 투두는 삭제됩니다.
+          오늘과 지난 구글 일정 투두는 유지되며 isDisconnectedFromGoogle=true로 표시되어 삭제할 수 있게 됩니다.
+          다시 연동하여 동기화하면 구글에 남아 있는 일정은 다시 isDisconnectedFromGoogle=false로 표시됩니다.
           """,
       security = @SecurityRequirement(name = "bearerAuth")
   )
