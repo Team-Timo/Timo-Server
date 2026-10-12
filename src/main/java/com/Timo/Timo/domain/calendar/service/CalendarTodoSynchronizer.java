@@ -1,5 +1,6 @@
 package com.Timo.Timo.domain.calendar.service;
 
+import com.Timo.Timo.domain.ai.service.AiHistoryCacheService;
 import com.Timo.Timo.domain.calendar.dto.client.CalendarEventItem;
 import com.Timo.Timo.domain.calendar.exception.CalendarErrorCode;
 import com.Timo.Timo.domain.calendar.repository.CalendarConnectionRepository;
@@ -51,6 +52,7 @@ public class CalendarTodoSynchronizer {
   private final UserRepository userRepository;
   private final TimerService timerService;
   private final CalendarConnectionRepository calendarConnectionRepository;
+  private final AiHistoryCacheService aiHistoryCacheService;
 
   @Transactional
   public void handleDisconnect(Long userId, LocalDate today) {
@@ -105,13 +107,14 @@ public class CalendarTodoSynchronizer {
         .toList();
     List<Todo> missingTodos = findMissing(user.getId(), occurrences, from, to);
 
+    boolean titleChanged = false;
     Set<Long> movedTodoIds = new HashSet<>();
     Set<String> movedExternalEventIds = new HashSet<>();
     for (EventMove move : matchMoves(missingTodos, newOccurrences)) {
       movedTodoIds.add(move.todo().getId());
       movedExternalEventIds.add(move.occurrence().externalEventId());
       if (!timerService.hasActiveTimer(move.todo().getId())) {
-        applyMove(move);
+        titleChanged |= applyMove(move);
       }
     }
 
@@ -122,8 +125,12 @@ public class CalendarTodoSynchronizer {
         .filter(todo -> !movedTodoIds.contains(todo.getId()))
         .toList();
 
-    saveOrUpdate(user, remainingOccurrences, existingByExternalEventId);
+    titleChanged |= saveOrUpdate(user, remainingOccurrences, existingByExternalEventId);
     removeMissing(remainingMissingTodos);
+
+    if (titleChanged) {
+      aiHistoryCacheService.bumpUserHistoryVersionAfterCommit(user.getId());
+    }
   }
 
   private Map<String, Todo> findExisting(Long userId, List<EventOccurrence> occurrences) {
@@ -182,13 +189,14 @@ public class CalendarTodoSynchronizer {
     return moves;
   }
 
-  private void applyMove(EventMove move) {
+  private boolean applyMove(EventMove move) {
     Todo todo = move.todo();
     EventOccurrence occurrence = move.occurrence();
     LocalDate previousDate = todo.getStartDate();
 
     todo.moveGoogleEvent(occurrence.date(), occurrence.externalEventId());
-    if (!todo.getTitle().equals(occurrence.title())) {
+    boolean titleChanged = !todo.getTitle().equals(occurrence.title());
+    if (titleChanged) {
       todo.updateFields(null, occurrence.title(), null, null, null);
     }
 
@@ -196,6 +204,7 @@ public class CalendarTodoSynchronizer {
       todoInstanceRepository.findByTodo_IdAndDate(todo.getId(), previousDate)
           .ifPresent(instance -> instance.moveTo(occurrence.date()));
     }
+    return titleChanged;
   }
 
   private String toGoogleEventId(String externalEventId) {
@@ -210,11 +219,12 @@ public class CalendarTodoSynchronizer {
     return externalEventId.substring(0, separatorIndex);
   }
 
-  private void saveOrUpdate(
+  private boolean saveOrUpdate(
       User user, List<EventOccurrence> occurrences, Map<String, Todo> existingByExternalEventId
   ) {
+    boolean titleChanged = false;
     if (occurrences.isEmpty()) {
-      return;
+      return titleChanged;
     }
 
     List<EventOccurrence> newestFirst = new ArrayList<>(occurrences);
@@ -236,8 +246,10 @@ public class CalendarTodoSynchronizer {
       }
       if (!existing.getTitle().equals(occurrence.title())) {
         existing.updateFields(null, occurrence.title(), null, null, null);
+        titleChanged = true;
       }
     }
+    return titleChanged;
   }
 
   private void removeMissing(List<Todo> missingTodos) {
