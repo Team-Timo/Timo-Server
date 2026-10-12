@@ -9,6 +9,8 @@ import java.util.List;
 
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.Timo.Timo.domain.ai.dto.TodoDurationHistory;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -70,6 +72,15 @@ public class AiHistoryCacheService {
     } catch (Exception exception) {
       log.warn("Failed to bump AI history cache version. userId={}", userId, exception);
     }
+  }
+
+  public void bumpUserHistoryVersionAfterCommit(Long userId) {
+    TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+      @Override
+      public void afterCommit() {
+        bumpUserHistoryVersion(userId);
+      }
+    });
   }
 
   private CacheLookupResult getHistories(String key) {

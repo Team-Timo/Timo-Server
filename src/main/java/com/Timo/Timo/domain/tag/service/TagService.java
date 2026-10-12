@@ -10,6 +10,7 @@ import com.Timo.Timo.domain.tag.dto.response.TagListResponse;
 import com.Timo.Timo.domain.tag.entity.Tag;
 import com.Timo.Timo.domain.tag.exception.TagErrorCode;
 import com.Timo.Timo.domain.tag.repository.TagRepository;
+import com.Timo.Timo.domain.todo.service.TodoService;
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.exception.UserErrorCode;
 import com.Timo.Timo.domain.user.repository.UserRepository;
@@ -24,6 +25,7 @@ public class TagService {
 
 	private final TagRepository tagRepository;
 	private final UserRepository userRepository;
+	private final TodoService todoService;
 
 	public TagCreateResponse createTag(Long userId, TagCreateRequest request) {
 		User user = userRepository.findById(userId)
@@ -63,6 +65,7 @@ public class TagService {
 		}
 
 		tagRepository.delete(tag);
+		todoService.removeTagFromTodos(tagId);
 	}
 
 	private boolean isOwnedBy(Tag tag, Long userId) {
