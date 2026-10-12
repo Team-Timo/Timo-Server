@@ -278,6 +278,7 @@ public interface TodoControllerDocs {
 			예상 소요 시간은 durationSeconds 필드에 초 단위 정수로 전달합니다.
 			subtasks를 전달하면 하위 태스크 목록 전체가 교체됩니다.
 			subtaskId가 있으면 기존 태스크를 수정하고, null이면 신규 태스크로 추가하며, 전달되지 않은 기존 태스크는 삭제됩니다.
+			subtasks 배열 순서로 하위 태스크 순서를 바꾸지 않습니다. 신규 태스크는 맨 뒤에 추가되며, 순서 변경은 하위 태스크 순서 변경 API를 사용합니다.
 
 			Swagger UI 오른쪽 위의 Authorize 버튼을 눌러 유효한 Access Token을 입력해야 합니다.
 			"""
