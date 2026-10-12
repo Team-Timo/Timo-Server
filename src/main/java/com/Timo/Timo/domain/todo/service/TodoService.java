@@ -282,11 +282,7 @@ public class TodoService {
 		}
 
 		boolean changesTitle = request.title() != null && !request.title().equals(todo.getTitle());
-		boolean changesSchedule = (request.date() != null && !request.date().equals(todo.getStartDate()))
-				|| (request.repeatType() != null && request.repeatType() != todo.getRepeatType())
-				|| (request.repeatWeekdays() != null && !request.repeatWeekdays().equals(todo.getRepeatWeekdays()))
-				|| (request.repeatDayOfMonth() != null
-						&& !request.repeatDayOfMonth().equals(todo.getRepeatDayOfMonth()));
+		boolean changesSchedule = isScheduleChanged(todo, request);
 
 		if (changesTitle || changesSchedule) {
 			throw new CustomException(TodoErrorCode.GOOGLE_EVENT_NOT_MODIFIABLE);
