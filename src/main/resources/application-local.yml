@@ -55,3 +55,6 @@ ai:
     user-rpd: ${AI_USER_RPD}
     global-rpd: ${AI_GLOBAL_RPD}
     global-tpm: ${AI_GLOBAL_TPM}
+
+holiday:
+  api-key: ${HOLIDAY_API_KEY:}
