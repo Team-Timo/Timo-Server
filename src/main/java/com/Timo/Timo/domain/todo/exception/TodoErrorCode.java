@@ -22,6 +22,7 @@ public enum TodoErrorCode implements BaseErrorCode {
 	SUBTASK_NOT_FOUND(HttpStatus.NOT_FOUND, "SUBTASK_404", "존재하지 않는 하위 태스크입니다."),
 	MAX_COUNT_EXCEEDED(HttpStatus.CONFLICT, "TODO_409", "해당 날짜의 투두가 최대 개수(20개)를 초과했습니다."),
 	COMPLETED_CANNOT_REORDER(HttpStatus.CONFLICT, "TODO_409", "완료된 투두는 순서를 변경할 수 없습니다."),
+	COMPLETED_SUBTASK_CANNOT_REORDER(HttpStatus.CONFLICT, "SUBTASK_409", "완료된 하위 태스크는 순서를 변경할 수 없습니다."),
 	TIMER_RUNNING(HttpStatus.CONFLICT, "TODO_409", "타이머가 실행 중인 TODO는 변경할 수 없습니다. 타이머를 먼저 종료해주세요."),
 	;
 
