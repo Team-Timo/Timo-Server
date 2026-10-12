@@ -36,6 +36,7 @@ import com.Timo.Timo.domain.todo.repository.SubtaskCompletionRepository;
 import com.Timo.Timo.domain.todo.repository.TodoInstanceRepository;
 import com.Timo.Timo.domain.todo.repository.TodoRepository;
 import com.Timo.Timo.domain.todo.vo.Duration;
+import com.Timo.Timo.domain.todo.vo.SubtaskStates;
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.exception.UserErrorCode;
 import com.Timo.Timo.domain.user.repository.UserRepository;
@@ -109,19 +110,16 @@ public class TodoService {
 				? tagRepository.findById(todo.getTagId()).orElse(null)
 				: null;
 
-		Set<Long> completedSubtaskIds = resolveCompletedSubtaskIds(instance);
+		SubtaskStates subtaskStates = resolveSubtaskStates(instance);
 
-		return TodoDetailResponse.of(todo, instance, date, tag, completedSubtaskIds);
+		return TodoDetailResponse.of(todo, instance, date, tag, subtaskStates);
 	}
 
-	private Set<Long> resolveCompletedSubtaskIds(TodoInstance instance) {
+	private SubtaskStates resolveSubtaskStates(TodoInstance instance) {
 		if (instance == null) {
-			return Set.of();
+			return SubtaskStates.EMPTY;
 		}
-		return subtaskCompletionRepository.findByTodoInstance_IdIn(List.of(instance.getId())).stream()
-				.filter(SubtaskCompletion::isCompleted)
-				.map(completion -> completion.getSubtask().getId())
-				.collect(Collectors.toSet());
+		return SubtaskStates.from(subtaskCompletionRepository.findByTodoInstance_IdIn(List.of(instance.getId())));
 	}
 
 	@Transactional

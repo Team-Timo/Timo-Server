@@ -1,7 +1,6 @@
 package com.Timo.Timo.domain.home.mapper;
 
 import java.util.List;
-import java.util.Set;
 
 import org.springframework.stereotype.Component;
 
@@ -14,6 +13,7 @@ import com.Timo.Timo.domain.todo.entity.Todo;
 import com.Timo.Timo.domain.todo.entity.TodoInstance;
 import com.Timo.Timo.domain.todo.enums.RepeatType;
 import com.Timo.Timo.domain.todo.enums.TodoTimerStatus;
+import com.Timo.Timo.domain.todo.vo.SubtaskStates;
 
 @Component
 public class HomeTodoMapper {
@@ -34,7 +34,7 @@ public class HomeTodoMapper {
 				todo.getRepeatType() != RepeatType.NONE,
 				resolveTimerStatus(instance),
 				instance != null ? instance.getSortOrder() : context.defaultSortOrder(),
-				mapSubtasks(todo.getSubtasks(), context.completedSubtaskIds())
+				mapSubtasks(todo.getSubtasks(), context.subtaskStates())
 		);
 	}
 
@@ -51,9 +51,9 @@ public class HomeTodoMapper {
 		return instance != null ? instance.getTimerStatus() : TodoTimerStatus.STOPPED;
 	}
 
-	private List<SubtaskResponse> mapSubtasks(List<Subtask> subtasks, Set<Long> completedSubtaskIds) {
-		return subtasks.stream()
-				.map(subtask -> SubtaskResponse.from(subtask, completedSubtaskIds.contains(subtask.getId())))
+	private List<SubtaskResponse> mapSubtasks(List<Subtask> subtasks, SubtaskStates subtaskStates) {
+		return subtaskStates.sort(subtasks).stream()
+				.map(subtask -> SubtaskResponse.from(subtask, subtaskStates.isCompleted(subtask.getId())))
 				.toList();
 	}
 
@@ -62,7 +62,7 @@ public class HomeTodoMapper {
 			TodoInstance instance,
 			Tag tag,
 			int defaultSortOrder,
-			Set<Long> completedSubtaskIds
+			SubtaskStates subtaskStates
 	) {
 	}
 }
