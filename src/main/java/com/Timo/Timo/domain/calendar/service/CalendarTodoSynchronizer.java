@@ -40,6 +40,7 @@ public class CalendarTodoSynchronizer {
 
   private static final int MAX_TITLE_LENGTH = 30;
   private static final int MAX_EXTERNAL_EVENT_ID_LENGTH = 255;
+  private static final int DATE_SUFFIX_LENGTH = 11;
   private static final String HASHED_ID_PREFIX = "sha256:";
   private static final String EMPTY_TITLE = "제목 없음";
 
@@ -85,23 +86,124 @@ public class CalendarTodoSynchronizer {
       User user, List<CalendarEventItem> items, LocalDate from, LocalDate to, ZoneId userZone
   ) {
     List<EventOccurrence> occurrences = toOccurrences(items, from, to, userZone);
+    Map<String, Todo> existingByExternalEventId = findExisting(user.getId(), occurrences);
 
-    saveOrUpdate(user, occurrences);
-    removeMissing(user, occurrences, from, to);
+    List<EventOccurrence> newOccurrences = occurrences.stream()
+        .filter(occurrence -> !existingByExternalEventId.containsKey(occurrence.externalEventId()))
+        .toList();
+    List<Todo> missingTodos = findMissing(user.getId(), occurrences, from, to);
+
+    Set<Long> movedTodoIds = new HashSet<>();
+    Set<String> movedExternalEventIds = new HashSet<>();
+    for (EventMove move : matchMoves(missingTodos, newOccurrences)) {
+      movedTodoIds.add(move.todo().getId());
+      movedExternalEventIds.add(move.occurrence().externalEventId());
+      if (!timerService.hasActiveTimer(move.todo().getId())) {
+        applyMove(move);
+      }
+    }
+
+    List<EventOccurrence> remainingOccurrences = occurrences.stream()
+        .filter(occurrence -> !movedExternalEventIds.contains(occurrence.externalEventId()))
+        .toList();
+    List<Todo> remainingMissingTodos = missingTodos.stream()
+        .filter(todo -> !movedTodoIds.contains(todo.getId()))
+        .toList();
+
+    saveOrUpdate(user, remainingOccurrences, existingByExternalEventId);
+    removeMissing(remainingMissingTodos);
   }
 
-  private void saveOrUpdate(User user, List<EventOccurrence> occurrences) {
+  private Map<String, Todo> findExisting(Long userId, List<EventOccurrence> occurrences) {
     if (occurrences.isEmpty()) {
-      return;
+      return Map.of();
     }
 
     List<String> externalEventIds = occurrences.stream()
         .map(EventOccurrence::externalEventId)
         .toList();
-    Map<String, Todo> existingByExternalEventId = todoRepository
-        .findByUser_IdAndExternalEventIdIn(user.getId(), externalEventIds)
+    return todoRepository.findByUser_IdAndExternalEventIdIn(userId, externalEventIds)
         .stream()
         .collect(Collectors.toMap(Todo::getExternalEventId, Function.identity()));
+  }
+
+  private List<Todo> findMissing(
+      Long userId, List<EventOccurrence> occurrences, LocalDate from, LocalDate to
+  ) {
+    Set<String> currentExternalEventIds = occurrences.stream()
+        .map(EventOccurrence::externalEventId)
+        .collect(Collectors.toSet());
+
+    return todoRepository.findGoogleEventsInRange(userId, from, to).stream()
+        .filter(todo -> !currentExternalEventIds.contains(todo.getExternalEventId()))
+        .sorted(Comparator.comparing(Todo::getStartDate))
+        .toList();
+  }
+
+  private List<EventMove> matchMoves(List<Todo> missingTodos, List<EventOccurrence> newOccurrences) {
+    Map<String, List<Todo>> missingByGoogleEventId = new LinkedHashMap<>();
+    for (Todo todo : missingTodos) {
+      String googleEventId = toGoogleEventId(todo.getExternalEventId());
+      if (googleEventId != null) {
+        missingByGoogleEventId.computeIfAbsent(googleEventId, key -> new ArrayList<>()).add(todo);
+      }
+    }
+
+    Map<String, List<EventOccurrence>> newByGoogleEventId = new LinkedHashMap<>();
+    for (EventOccurrence occurrence : newOccurrences) {
+      newByGoogleEventId
+          .computeIfAbsent(occurrence.googleEventId(), key -> new ArrayList<>())
+          .add(occurrence);
+    }
+
+    List<EventMove> moves = new ArrayList<>();
+    missingByGoogleEventId.forEach((googleEventId, todos) -> {
+      List<EventOccurrence> occurrences = newByGoogleEventId.get(googleEventId);
+      if (occurrences == null) {
+        return;
+      }
+      int pairCount = Math.min(todos.size(), occurrences.size());
+      for (int i = 0; i < pairCount; i++) {
+        moves.add(new EventMove(todos.get(i), occurrences.get(i)));
+      }
+    });
+    return moves;
+  }
+
+  private void applyMove(EventMove move) {
+    Todo todo = move.todo();
+    EventOccurrence occurrence = move.occurrence();
+    LocalDate previousDate = todo.getStartDate();
+
+    todo.moveGoogleEvent(occurrence.date(), occurrence.externalEventId());
+    if (!todo.getTitle().equals(occurrence.title())) {
+      todo.updateFields(null, occurrence.title(), null, null, null);
+    }
+
+    if (todoInstanceRepository.findByTodo_IdAndDate(todo.getId(), occurrence.date()).isEmpty()) {
+      todoInstanceRepository.findByTodo_IdAndDate(todo.getId(), previousDate)
+          .ifPresent(instance -> instance.moveTo(occurrence.date()));
+    }
+  }
+
+  private String toGoogleEventId(String externalEventId) {
+    if (externalEventId.startsWith(HASHED_ID_PREFIX)) {
+      return null;
+    }
+
+    int separatorIndex = externalEventId.length() - DATE_SUFFIX_LENGTH;
+    if (separatorIndex <= 0 || externalEventId.charAt(separatorIndex) != '_') {
+      return null;
+    }
+    return externalEventId.substring(0, separatorIndex);
+  }
+
+  private void saveOrUpdate(
+      User user, List<EventOccurrence> occurrences, Map<String, Todo> existingByExternalEventId
+  ) {
+    if (occurrences.isEmpty()) {
+      return;
+    }
 
     List<EventOccurrence> newestFirst = new ArrayList<>(occurrences);
     Collections.reverse(newestFirst);
@@ -126,17 +228,7 @@ public class CalendarTodoSynchronizer {
     }
   }
 
-  private void removeMissing(
-      User user, List<EventOccurrence> occurrences, LocalDate from, LocalDate to
-  ) {
-    Set<String> currentExternalEventIds = occurrences.stream()
-        .map(EventOccurrence::externalEventId)
-        .collect(Collectors.toSet());
-
-    List<Todo> missingTodos = todoRepository.findGoogleEventsInRange(user.getId(), from, to)
-        .stream()
-        .filter(todo -> !currentExternalEventIds.contains(todo.getExternalEventId()))
-        .toList();
+  private void removeMissing(List<Todo> missingTodos) {
     if (missingTodos.isEmpty()) {
       return;
     }
@@ -186,7 +278,7 @@ public class CalendarTodoSynchronizer {
         }
         String externalEventId = toExternalEventId(item.id(), date);
         occurrencesByExternalEventId.putIfAbsent(
-            externalEventId, new EventOccurrence(externalEventId, title, date)
+            externalEventId, new EventOccurrence(item.id(), externalEventId, title, date)
         );
       }
     }
@@ -226,7 +318,13 @@ public class CalendarTodoSynchronizer {
     return title.substring(0, title.offsetByCodePoints(0, MAX_TITLE_LENGTH));
   }
 
-  private record EventOccurrence(String externalEventId, String title, LocalDate date) {
+  private record EventOccurrence(
+      String googleEventId, String externalEventId, String title, LocalDate date
+  ) {
+
+  }
+
+  private record EventMove(Todo todo, EventOccurrence occurrence) {
 
   }
 }
