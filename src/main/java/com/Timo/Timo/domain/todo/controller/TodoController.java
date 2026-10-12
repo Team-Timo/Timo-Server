@@ -150,9 +150,10 @@ public class TodoController implements TodoControllerDocs {
 	@DeleteMapping("/{todoId}")
 	public ResponseEntity<BaseResponse<Object>> deleteTodo(
 		@AuthenticationPrincipal CustomUserDetails userDetails,
-		@PathVariable Long todoId
+		@PathVariable Long todoId,
+		@RequestParam(required = false) String date
 	) {
-		todoService.deleteTodo(userDetails.getUserId(), todoId);
+		todoService.deleteTodo(userDetails.getUserId(), todoId, date);
 
 		return ResponseEntity
 			.status(TodoSuccessCode.DELETED.getHttpStatus())

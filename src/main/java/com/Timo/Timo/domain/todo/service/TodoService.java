@@ -255,10 +255,36 @@ public class TodoService {
 	}
 
 	@Transactional
-	public void deleteTodo(Long userId, Long todoId) {
+	public void deleteTodo(Long userId, Long todoId, String dateValue) {
+		LocalDate date = parseDate(dateValue);
 		Todo todo = todoRepository.findByIdAndUser_Id(todoId, userId)
 				.orElseThrow(() -> new CustomException(TodoErrorCode.TODO_NOT_FOUND));
 
+		if (todo.isRepeating() && todo.startsBefore(date)) {
+			removeTodoFrom(todo, date);
+		} else {
+			removeTodo(todo);
+		}
+
+		bumpAiHistoryVersionAfterCommit(userId);
+	}
+
+	private void removeTodoFrom(Todo todo, LocalDate date) {
+		Long todoId = todo.getId();
+		if (timerService.hasActiveTimerFrom(todoId, date)) {
+			throw new CustomException(TodoErrorCode.TIMER_RUNNING);
+		}
+
+		todo.endRepeatBefore(date);
+		todoRepository.flush();
+
+		timerService.deleteTimersByTodoFrom(todoId, date);
+		subtaskCompletionRepository.deleteByTodoIdAndDateFrom(todoId, date);
+		todoInstanceRepository.deleteByTodoIdAndDateFrom(todoId, date);
+	}
+
+	private void removeTodo(Todo todo) {
+		Long todoId = todo.getId();
 		if (timerService.hasActiveTimer(todoId)) {
 			throw new CustomException(TodoErrorCode.TIMER_RUNNING);
 		}
@@ -268,8 +294,6 @@ public class TodoService {
 		subtaskCompletionRepository.deleteByTodoId(todoId);
 		todoInstanceRepository.deleteByTodoId(todoId);
 		todoRepository.delete(todo);
-
-		bumpAiHistoryVersionAfterCommit(userId);
 	}
 
 	private boolean isHistoryKeyChanged(Todo todo, TodoUpdateRequest request) {
