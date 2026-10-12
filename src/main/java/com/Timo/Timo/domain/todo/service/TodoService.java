@@ -14,12 +14,14 @@ import com.Timo.Timo.domain.tag.entity.Tag;
 import com.Timo.Timo.domain.tag.exception.TagErrorCode;
 import com.Timo.Timo.domain.tag.repository.TagRepository;
 import com.Timo.Timo.domain.timer.service.TimerService;
+import com.Timo.Timo.domain.todo.dto.request.SubtaskReorderRequest;
 import com.Timo.Timo.domain.todo.dto.request.SubtaskStatusUpdateRequest;
 import com.Timo.Timo.domain.todo.dto.request.TodoCreateRequest;
 import com.Timo.Timo.domain.todo.dto.request.TodoReorderRequest;
 import com.Timo.Timo.domain.todo.dto.request.TodoStatusUpdateRequest;
 import com.Timo.Timo.domain.todo.dto.request.TodoSubtaskUpdateRequest;
 import com.Timo.Timo.domain.todo.dto.request.TodoUpdateRequest;
+import com.Timo.Timo.domain.todo.dto.response.SubtaskReorderResponse;
 import com.Timo.Timo.domain.todo.dto.response.SubtaskStatusChangeResponse;
 import com.Timo.Timo.domain.todo.dto.response.TodoCreateResponse;
 import com.Timo.Timo.domain.todo.dto.response.TodoDetailResponse;
@@ -57,6 +59,7 @@ public class TodoService {
 	private final TodoDateCalculator todoDateCalculator;
 	private final TodoCapacityChecker todoCapacityChecker;
 	private final TodoInstanceReorderer todoInstanceReorderer;
+	private final SubtaskReorderer subtaskReorderer;
 	private final TimerService timerService;
 
 	@Transactional
@@ -197,6 +200,26 @@ public class TodoService {
 
 		TodoInstance instance = todoInstanceReorderer.applyReorder(userId, todo, date, request.newIndex());
 		return TodoReorderResponse.from(todoId, instance);
+	}
+
+	@Transactional
+	public SubtaskReorderResponse reorderSubtask(
+			Long userId, Long todoId, Long subtaskId, SubtaskReorderRequest request) {
+		Todo todo = todoRepository.findByIdAndUser_Id(todoId, userId)
+				.orElseThrow(() -> new CustomException(TodoErrorCode.TODO_NOT_FOUND));
+
+		Subtask subtask = todo.getSubtasks().stream()
+				.filter(it -> it.getId().equals(subtaskId))
+				.findFirst()
+				.orElseThrow(() -> new CustomException(TodoErrorCode.SUBTASK_NOT_FOUND));
+
+		LocalDate date = resolveDate(userId, request.date());
+		requireOccurrence(todo, date);
+
+		// 하위 태스크 순서는 날짜별로 저장하므로 해당 날짜의 인스턴스를 먼저 확정한다.
+		TodoInstance instance = todoInstanceReorderer.materializeInstance(userId, todo, date);
+		SubtaskCompletion completion = subtaskReorderer.applyReorder(todo, instance, subtask, request.newIndex());
+		return SubtaskReorderResponse.from(completion);
 	}
 
 	@Transactional
