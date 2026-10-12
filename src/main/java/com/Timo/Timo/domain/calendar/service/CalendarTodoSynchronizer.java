@@ -110,7 +110,7 @@ public class CalendarTodoSynchronizer {
     boolean titleChanged = false;
     Set<Long> movedTodoIds = new HashSet<>();
     Set<String> movedExternalEventIds = new HashSet<>();
-    for (EventMove move : matchMoves(missingTodos, newOccurrences)) {
+    for (EventMove move : matchMoves(missingTodos, occurrences, newOccurrences)) {
       movedTodoIds.add(move.todo().getId());
       movedExternalEventIds.add(move.occurrence().externalEventId());
       if (!timerService.hasActiveTimer(move.todo().getId())) {
@@ -159,7 +159,12 @@ public class CalendarTodoSynchronizer {
         .toList();
   }
 
-  private List<EventMove> matchMoves(List<Todo> missingTodos, List<EventOccurrence> newOccurrences) {
+  private List<EventMove> matchMoves(
+      List<Todo> missingTodos, List<EventOccurrence> occurrences, List<EventOccurrence> newOccurrences
+  ) {
+    Map<String, Long> occurrenceCountByGoogleEventId = occurrences.stream()
+        .collect(Collectors.groupingBy(EventOccurrence::googleEventId, Collectors.counting()));
+
     Map<String, List<Todo>> missingByGoogleEventId = new LinkedHashMap<>();
     for (Todo todo : missingTodos) {
       String googleEventId = toGoogleEventId(todo.getExternalEventId());
@@ -177,13 +182,15 @@ public class CalendarTodoSynchronizer {
 
     List<EventMove> moves = new ArrayList<>();
     missingByGoogleEventId.forEach((googleEventId, todos) -> {
-      List<EventOccurrence> occurrences = newByGoogleEventId.get(googleEventId);
-      if (occurrences == null) {
+      List<EventOccurrence> candidates = newByGoogleEventId.get(googleEventId);
+      if (candidates == null) {
         return;
       }
-      int pairCount = Math.min(todos.size(), occurrences.size());
-      for (int i = 0; i < pairCount; i++) {
-        moves.add(new EventMove(todos.get(i), occurrences.get(i)));
+      boolean singleDayEvent = todos.size() == 1
+          && candidates.size() == 1
+          && occurrenceCountByGoogleEventId.getOrDefault(googleEventId, 0L) == 1L;
+      if (singleDayEvent) {
+        moves.add(new EventMove(todos.get(0), candidates.get(0)));
       }
     });
     return moves;
