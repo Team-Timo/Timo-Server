@@ -259,7 +259,7 @@ public class TodoService {
 		Todo todo = todoRepository.findByIdAndUser_Id(todoId, userId)
 				.orElseThrow(() -> new CustomException(TodoErrorCode.TODO_NOT_FOUND));
 
-		if (todo.isRepeating() && todo.startsBefore(date)) {
+		if (todo.isRepeating() && todoDateCalculator.occursBefore(todo, date)) {
 			removeTodoFrom(todo, date);
 		} else {
 			removeTodo(todo);

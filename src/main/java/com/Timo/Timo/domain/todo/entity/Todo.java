@@ -222,10 +222,6 @@ public class Todo extends BaseTimeEntity {
 		return repeatType != RepeatType.NONE;
 	}
 
-	public boolean startsBefore(LocalDate date) {
-		return startDate.isBefore(date);
-	}
-
 	public void endRepeatBefore(LocalDate date) {
 		if (!date.isAfter(endDate)) {
 			this.endDate = date.minusDays(1);
