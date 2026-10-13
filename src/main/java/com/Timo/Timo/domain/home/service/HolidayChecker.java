@@ -52,7 +52,7 @@ public class HolidayChecker {
 	@EventListener(ApplicationReadyEvent.class)
 	public void loadHolidaysOnStartup() {
 		if (!holidayApiClient.isConfigured()) {
-			log.warn("공휴일 API 키가 설정되지 않아 일요일만 공휴일로 판단합니다.");
+			log.warn("Holiday API key is not configured.");
 			return;
 		}
 
@@ -137,7 +137,7 @@ public class HolidayChecker {
 			return holidays;
 		} catch (Exception e) {
 			failedAtByYear.put(year, Instant.now());
-			log.warn("공휴일 API 조회 실패. year={}", year, e);
+			log.warn("Failed to fetch holidays. year={}", year, e);
 			return null;
 		} finally {
 			loadingYears.remove(year);
