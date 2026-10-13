@@ -31,7 +31,7 @@ public interface TimerRecordRepository extends JpaRepository<TimerRecord, Long> 
       from TimerRecord r
       where r.todo.id = :todoId
         and r.status in :statuses
-        and (r.targetDate is null or r.targetDate >= :fromDate)
+        and r.targetDate >= :fromDate
       """)
   boolean existsByTodoIdAndTargetDateFromAndStatusIn(
       @Param("todoId") Long todoId,
