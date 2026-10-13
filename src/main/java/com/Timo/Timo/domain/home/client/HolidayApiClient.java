@@ -3,6 +3,7 @@ package com.Timo.Timo.domain.home.client;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -72,7 +73,7 @@ public class HolidayApiClient {
 		JsonNode responseNode = readTree(response).path("response");
 		String resultCode = responseNode.path("header").path("resultCode").asText();
 		if (!SUCCESS_CODE.equals(resultCode)) {
-			throw new IllegalStateException("공휴일 API 응답 오류. resultCode=" + resultCode);
+			throw new IllegalStateException("Holiday API returned an error result.");
 		}
 
 		JsonNode itemNode = responseNode.path("body").path("items").path("item");
@@ -89,13 +90,19 @@ public class HolidayApiClient {
 		try {
 			return objectMapper.readTree(response);
 		} catch (JsonProcessingException e) {
-			throw new IllegalStateException("공휴일 API 응답 파싱 실패", e);
+			throw new IllegalStateException("Failed to parse holiday API response.");
 		}
 	}
 
 	private void addHoliday(Set<LocalDate> holidays, JsonNode item) {
-		if (HOLIDAY_FLAG.equals(item.path("isHoliday").asText())) {
+		if (!HOLIDAY_FLAG.equals(item.path("isHoliday").asText())) {
+			return;
+		}
+
+		try {
 			holidays.add(LocalDate.parse(item.path("locdate").asText(), DateTimeFormatter.BASIC_ISO_DATE));
+		} catch (DateTimeParseException e) {
+			throw new IllegalStateException("Invalid holiday date in API response.");
 		}
 	}
 }
