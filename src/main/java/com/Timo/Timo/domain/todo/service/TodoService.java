@@ -256,6 +256,8 @@ public class TodoService {
 	@Transactional
 	public void deleteTodo(Long userId, Long todoId, String dateValue) {
 		LocalDate date = parseDate(dateValue);
+		userRepository.findByIdForUpdate(userId)
+				.orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 		Todo todo = todoRepository.findByIdAndUser_Id(todoId, userId)
 				.orElseThrow(() -> new CustomException(TodoErrorCode.TODO_NOT_FOUND));
 
