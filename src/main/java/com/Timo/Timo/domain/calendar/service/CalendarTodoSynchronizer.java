@@ -8,6 +8,7 @@ import com.Timo.Timo.domain.calendar.utils.CalendarEventDateResolver;
 import com.Timo.Timo.domain.timer.repository.TimerRecordRepository;
 import com.Timo.Timo.domain.timer.service.TimerService;
 import com.Timo.Timo.domain.todo.entity.Todo;
+import com.Timo.Timo.domain.todo.entity.TodoInstance;
 import com.Timo.Timo.domain.todo.repository.SubtaskCompletionRepository;
 import com.Timo.Timo.domain.todo.repository.TodoInstanceRepository;
 import com.Timo.Timo.domain.todo.repository.TodoRepository;
@@ -209,9 +210,16 @@ public class CalendarTodoSynchronizer {
 
     if (todoInstanceRepository.findByTodo_IdAndDate(todo.getId(), occurrence.date()).isEmpty()) {
       todoInstanceRepository.findByTodo_IdAndDate(todo.getId(), previousDate)
-          .ifPresent(instance -> instance.moveTo(occurrence.date()));
+          .ifPresent(instance -> moveInstanceToTop(instance, todo.getUser().getId(), occurrence.date()));
     }
     return titleChanged;
+  }
+
+  private void moveInstanceToTop(TodoInstance instance, Long userId, LocalDate date) {
+    todoInstanceRepository.findDailyInstances(userId, date)
+        .forEach(other -> other.updateSortOrder(other.getSortOrder() + 1));
+    instance.moveTo(date);
+    instance.updateSortOrder(0);
   }
 
   private String toGoogleEventId(String externalEventId) {
