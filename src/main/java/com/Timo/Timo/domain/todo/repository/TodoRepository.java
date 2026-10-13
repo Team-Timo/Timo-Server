@@ -70,6 +70,19 @@ public interface TodoRepository extends JpaRepository<Todo, Long> {
 			Long userId, LocalDate to, LocalDate from
 	);
 
+	@Modifying(flushAutomatically = true)
+	@Query("""
+		update Todo t
+		set t.disconnectedFromGoogle = false, t.updatedAt = :now
+		where t.user.id = :userId
+		  and t.externalEventId is not null
+		  and t.disconnectedFromGoogle = true
+		""")
+	int clearDisconnectedFromGoogleByUserId(
+			@Param("userId") Long userId,
+			@Param("now") LocalDateTime now
+	);
+
 	@Modifying(clearAutomatically = true, flushAutomatically = true)
 	@Query("update Todo t set t.tagId = null, t.updatedAt = :now where t.tagId = :tagId")
 	int clearTagByTagId(@Param("tagId") Long tagId, @Param("now") LocalDateTime now);

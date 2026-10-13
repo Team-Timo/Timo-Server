@@ -8,6 +8,7 @@ import com.Timo.Timo.domain.calendar.entity.CalendarRevocationOutbox;
 import com.Timo.Timo.domain.calendar.exception.CalendarErrorCode;
 import com.Timo.Timo.domain.calendar.repository.CalendarConnectionRepository;
 import com.Timo.Timo.domain.calendar.repository.CalendarRevocationOutboxRepository;
+import com.Timo.Timo.domain.todo.repository.TodoRepository;
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.global.exception.CustomException;
 import java.time.LocalDate;
@@ -28,6 +29,7 @@ public class CalendarConnectionCommandService {
   private final CalendarConnectionRepository calendarConnectionRepository;
   private final CalendarRevocationOutboxRepository calendarRevocationOutboxRepository;
   private final CalendarTodoSynchronizer calendarTodoSynchronizer;
+  private final TodoRepository todoRepository;
 
   @Transactional
   public CalendarConnectResponse saveConnection(
@@ -48,6 +50,8 @@ public class CalendarConnectionCommandService {
     } catch (DataIntegrityViolationException e) {
       throw new CustomException(CalendarErrorCode.CALENDAR_ALREADY_CONNECTED);
     }
+
+    todoRepository.clearDisconnectedFromGoogleByUserId(user.getId(), LocalDateTime.now());
 
     return CalendarConnectResponse.builder()
         .calendarConnected(true)
