@@ -19,6 +19,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -78,8 +79,7 @@ public class CalendarTodoSynchronizer {
       }
     }
 
-    todoRepository.findGoogleEventsUpTo(userId, today)
-        .forEach(Todo::markDisconnectedFromGoogle);
+    todoRepository.markDisconnectedFromGoogleUpTo(userId, today, LocalDateTime.now());
   }
 
   @Transactional

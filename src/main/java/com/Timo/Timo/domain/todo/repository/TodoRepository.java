@@ -42,15 +42,19 @@ public interface TodoRepository extends JpaRepository<Todo, Long> {
 			@Param("date") LocalDate date
 	);
 
+	@Modifying(flushAutomatically = true)
 	@Query("""
-		select t from Todo t
+		update Todo t
+		set t.disconnectedFromGoogle = true, t.updatedAt = :now
 		where t.user.id = :userId
 		  and t.externalEventId is not null
 		  and t.startDate <= :date
+		  and t.disconnectedFromGoogle = false
 		""")
-	List<Todo> findGoogleEventsUpTo(
+	int markDisconnectedFromGoogleUpTo(
 			@Param("userId") Long userId,
-			@Param("date") LocalDate date
+			@Param("date") LocalDate date,
+			@Param("now") LocalDateTime now
 	);
 
 	@Query("""
