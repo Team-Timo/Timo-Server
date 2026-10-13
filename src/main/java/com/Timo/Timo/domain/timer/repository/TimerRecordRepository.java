@@ -5,6 +5,7 @@ import com.Timo.Timo.domain.timer.enums.TimerStatus;
 import jakarta.persistence.LockModeType;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -19,12 +20,28 @@ public interface TimerRecordRepository extends JpaRepository<TimerRecord, Long> 
 
   boolean existsByTodo_IdAndStatusIn(Long todoId, List<TimerStatus> statuses);
 
+  @Query("select distinct tr.todo.id from TimerRecord tr where tr.todo.id in :todoIds")
+  List<Long> findTodoIdsHavingRecords(@Param("todoIds") Collection<Long> todoIds);
+
   boolean existsByTodo_IdAndTargetDateAndStatusIn(
       Long todoId, LocalDate targetDate, List<TimerStatus> statuses);
 
   @Modifying(clearAutomatically = true)
   @Query("delete from TimerRecord r where r.todo.id = :todoId")
   void deleteByTodoId(@Param("todoId") Long todoId);
+
+  @Modifying(flushAutomatically = true)
+  @Query("""
+      update TimerRecord r
+      set r.targetDate = :toDate
+      where r.todo.id = :todoId
+        and r.targetDate = :fromDate
+      """)
+  int moveTargetDate(
+      @Param("todoId") Long todoId,
+      @Param("fromDate") LocalDate fromDate,
+      @Param("toDate") LocalDate toDate
+  );
 
   @Lock(LockModeType.PESSIMISTIC_WRITE)
   @Query("select t from TimerRecord t where t.id = :id")

@@ -213,7 +213,9 @@ public class TodoService {
 		Todo todo = todoRepository.findByIdAndUser_Id(todoId, userId)
 				.orElseThrow(() -> new CustomException(TodoErrorCode.TODO_NOT_FOUND));
 
-		boolean changesTimerSensitiveFields = request.durationSeconds() != null || isScheduleChanged(request);
+		validateGoogleEventUpdatable(todo, request);
+
+		boolean changesTimerSensitiveFields = request.durationSeconds() != null || isScheduleChanged(todo, request);
 		if (changesTimerSensitiveFields && timerService.hasActiveTimer(todoId)) {
 			throw new CustomException(TodoErrorCode.TIMER_RUNNING);
 		}
@@ -258,6 +260,10 @@ public class TodoService {
 		Todo todo = todoRepository.findByIdAndUser_Id(todoId, userId)
 				.orElseThrow(() -> new CustomException(TodoErrorCode.TODO_NOT_FOUND));
 
+		if (todo.isGoogleEvent() && !todo.isDeletedFromGoogle() && !todo.isDisconnectedFromGoogle()) {
+			throw new CustomException(TodoErrorCode.GOOGLE_EVENT_NOT_DELETABLE);
+		}
+
 		if (timerService.hasActiveTimer(todoId)) {
 			throw new CustomException(TodoErrorCode.TIMER_RUNNING);
 		}
@@ -271,6 +277,19 @@ public class TodoService {
 		aiHistoryCacheService.bumpUserHistoryVersionAfterCommit(userId);
 	}
 
+	private void validateGoogleEventUpdatable(Todo todo, TodoUpdateRequest request) {
+		if (!todo.isGoogleEvent()) {
+			return;
+		}
+
+		boolean changesTitle = request.title() != null && !request.title().equals(todo.getTitle());
+		boolean changesSchedule = isScheduleChanged(todo, request);
+
+		if (changesTitle || changesSchedule) {
+			throw new CustomException(TodoErrorCode.GOOGLE_EVENT_NOT_MODIFIABLE);
+		}
+	}
+
 	private boolean isHistoryKeyChanged(Todo todo, TodoUpdateRequest request) {
 		return (request.title() != null && !request.title().equals(todo.getTitle()))
 				|| (request.tagId() != null && !request.tagId().equals(todo.getTagId()));
@@ -281,15 +300,17 @@ public class TodoService {
 		todoRepository.clearTagByTagId(tagId, LocalDateTime.now());
 	}
 
-	private boolean isScheduleChanged(TodoUpdateRequest request) {
-		return request.date() != null
-				|| request.repeatType() != null
-				|| request.repeatWeekdays() != null
-				|| request.repeatDayOfMonth() != null;
+	private boolean isScheduleChanged(Todo todo, TodoUpdateRequest request) {
+		return (request.date() != null && !request.date().equals(todo.getStartDate()))
+				|| (request.repeatType() != null && request.repeatType() != todo.getRepeatType())
+				|| (request.repeatWeekdays() != null
+						&& !request.repeatWeekdays().equals(todo.getRepeatWeekdays()))
+				|| (request.repeatDayOfMonth() != null
+						&& !request.repeatDayOfMonth().equals(todo.getRepeatDayOfMonth()));
 	}
 
 	private void applyScheduleChange(Todo todo, TodoUpdateRequest request) {
-		if (!isScheduleChanged(request)) {
+		if (!isScheduleChanged(todo, request)) {
 			return;
 		}
 
