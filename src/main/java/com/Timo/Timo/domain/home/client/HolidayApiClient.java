@@ -7,9 +7,11 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.NestedExceptionUtils;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -40,10 +42,18 @@ public class HolidayApiClient {
 	}
 
 	public Set<LocalDate> fetchHolidays(int year) {
-		String response = restClient.get()
-			.uri(REST_DE_INFO_URL, apiKey, year)
-			.retrieve()
-			.body(String.class);
+		String response;
+		try {
+			response = restClient.get()
+				.uri(REST_DE_INFO_URL, apiKey, year)
+				.retrieve()
+				.body(String.class);
+		} catch (RestClientException e) {
+			throw new IllegalStateException(
+				"Holiday API request failed. year=" + year
+					+ ", cause=" + NestedExceptionUtils.getMostSpecificCause(e).getClass().getSimpleName()
+			);
+		}
 
 		return extractHolidays(response);
 	}
