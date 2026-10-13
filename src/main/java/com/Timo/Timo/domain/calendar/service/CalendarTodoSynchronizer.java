@@ -203,6 +203,7 @@ public class CalendarTodoSynchronizer {
     LocalDate previousDate = todo.getStartDate();
 
     todo.moveGoogleEvent(occurrence.date(), occurrence.externalEventId());
+    timerRecordRepository.moveTargetDate(todo.getId(), previousDate, occurrence.date());
     boolean titleChanged = !todo.getTitle().equals(occurrence.title());
     if (titleChanged) {
       todo.updateFields(null, occurrence.title(), null, null, null);
