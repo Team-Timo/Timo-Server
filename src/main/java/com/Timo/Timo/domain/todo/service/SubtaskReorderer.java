@@ -81,7 +81,7 @@ public class SubtaskReorderer {
 	// 새 레코드는 검증이 끝난 뒤에 저장해, 잘못된 요청에 INSERT가 나가지 않게 한다.
 	private DayGroup loadDayGroup(Todo todo, TodoInstance instance) {
 		Map<Long, SubtaskCompletion> completionsBySubtaskId = subtaskCompletionRepository
-				.findByTodoInstance_IdIn(List.of(instance.getId())).stream()
+				.findAllByTodoInstanceIdForUpdate(instance.getId()).stream()
 				.collect(Collectors.toMap(completion -> completion.getSubtask().getId(), Function.identity()));
 
 		List<SubtaskCompletion> newCompletions = new ArrayList<>();
