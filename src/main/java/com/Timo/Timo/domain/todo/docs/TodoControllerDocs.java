@@ -500,6 +500,8 @@ public interface TodoControllerDocs {
 			하위 태스크의 완료 여부를 변경합니다.
 
 			todoId로 소유한 TODO를 확인한 뒤, 해당 TODO에 속한 subtaskId의 완료 상태를 변경합니다.
+			완료하면 해당 날짜 완료 그룹의 맨 아래로, 완료를 취소하면 미완료 그룹의 맨 위로 이동하며 해당 날짜의 하위 태스크 순서를 재계산합니다.
+			응답의 sortOrder는 해당 날짜에서 확정된 정렬 순서입니다.
 
 			Swagger UI 오른쪽 위의 Authorize 버튼을 눌러 유효한 Access Token을 입력해야 합니다.
 			"""

@@ -46,6 +46,27 @@ public class SubtaskReorderer {
 		return targetCompletion;
 	}
 
+	public SubtaskCompletion applyCompletion(Todo todo, TodoInstance instance, Subtask target, boolean completed) {
+		DayGroup group = loadDayGroup(todo, instance);
+		SubtaskCompletion targetCompletion = group.completionOf(target);
+
+		List<SubtaskCompletion> incomplete = group.incomplete();
+		List<SubtaskCompletion> completedGroup = group.completed();
+		incomplete.remove(targetCompletion);
+		completedGroup.remove(targetCompletion);
+
+		targetCompletion.updateCompleted(completed);
+		if (completed) {
+			completedGroup.add(targetCompletion);
+		} else {
+			incomplete.add(0, targetCompletion);
+		}
+
+		renumber(incomplete, completedGroup);
+		subtaskCompletionRepository.saveAll(group.newCompletions());
+		return targetCompletion;
+	}
+
 	private void renumber(List<SubtaskCompletion> incomplete, List<SubtaskCompletion> completed) {
 		int sortOrder = 0;
 		for (SubtaskCompletion completion : incomplete) {

@@ -160,13 +160,8 @@ public class TodoService {
 		requireOccurrence(todo, date);
 
 		TodoInstance instance = lockInstance(userId, todo, date);
-		SubtaskCompletion completion = subtaskCompletionRepository
-				.findByTodoInstance_IdAndSubtask_Id(instance.getId(), subtaskId)
-				.orElseGet(() -> subtaskCompletionRepository.save(
-						SubtaskCompletion.of(instance, subtask, false)));
-		completion.updateCompleted(request.isCompleted());
-
-		return new SubtaskStatusChangeResponse(subtaskId, request.isCompleted());
+		SubtaskCompletion completion = subtaskReorderer.applyCompletion(todo, instance, subtask, request.isCompleted());
+		return SubtaskStatusChangeResponse.from(completion);
 	}
 
 	@Transactional
