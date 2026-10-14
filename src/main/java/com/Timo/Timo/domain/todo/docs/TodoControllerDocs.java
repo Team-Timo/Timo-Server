@@ -551,6 +551,14 @@ public interface TodoControllerDocs {
 			)
 		),
 		@ApiResponse(
+			responseCode = "409",
+			description = "같은 날짜의 다른 요청이 처리 중이어서 잠금 대기 시간을 초과한 경우",
+			content = @Content(
+				mediaType = "application/json",
+				schema = @Schema(implementation = ErrorDto.class)
+			)
+		),
+		@ApiResponse(
 			responseCode = "500",
 			description = "서버 내부 오류",
 			content = @Content(
@@ -631,7 +639,7 @@ public interface TodoControllerDocs {
 		),
 		@ApiResponse(
 			responseCode = "409",
-			description = "완료된 하위 태스크의 순서를 변경하려는 경우",
+			description = "완료된 하위 태스크의 순서를 변경하려는 경우, 같은 날짜의 다른 요청이 처리 중이어서 잠금 대기 시간을 초과한 경우",
 			content = @Content(
 				mediaType = "application/json",
 				schema = @Schema(implementation = ErrorDto.class)

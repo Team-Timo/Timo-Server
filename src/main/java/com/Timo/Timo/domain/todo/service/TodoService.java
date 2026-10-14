@@ -159,7 +159,7 @@ public class TodoService {
 
 		requireOccurrence(todo, date);
 
-		TodoInstance instance = todoInstanceReorderer.materializeInstance(userId, todo, date);
+		TodoInstance instance = lockInstance(userId, todo, date);
 		SubtaskCompletion completion = subtaskCompletionRepository
 				.findByTodoInstance_IdAndSubtask_Id(instance.getId(), subtaskId)
 				.orElseGet(() -> subtaskCompletionRepository.save(
@@ -179,6 +179,14 @@ public class TodoService {
 		// 메모는 생성 이후 항상 날짜별로 저장한다. 대상 인스턴스를 확정한 뒤 override를 설정.
 		TodoInstance instance = todoInstanceReorderer.materializeInstance(userId, todo, date);
 		instance.updateMemo(memo);
+	}
+
+	// 하위 태스크 완료·순서는 날짜별 인스턴스에 저장하므로 인스턴스를 확정한 뒤 잠근다.
+	// 같은 날짜의 요청이 겹쳐도 완료 레코드를 중복 생성하지 않도록 순서대로 처리한다.
+	private TodoInstance lockInstance(Long userId, Todo todo, LocalDate date) {
+		TodoInstance instance = todoInstanceReorderer.materializeInstance(userId, todo, date);
+		return todoInstanceRepository.findByIdForUpdate(instance.getId())
+				.orElseThrow(() -> new CustomException(TodoErrorCode.TODO_NOT_FOUND));
 	}
 
 	private void requireOccurrence(Todo todo, LocalDate date) {
@@ -216,8 +224,7 @@ public class TodoService {
 		LocalDate date = resolveDate(userId, request.date());
 		requireOccurrence(todo, date);
 
-		// 하위 태스크 순서는 날짜별로 저장하므로 해당 날짜의 인스턴스를 먼저 확정한다.
-		TodoInstance instance = todoInstanceReorderer.materializeInstance(userId, todo, date);
+		TodoInstance instance = lockInstance(userId, todo, date);
 		SubtaskCompletion completion = subtaskReorderer.applyReorder(todo, instance, subtask, request.newIndex());
 		return SubtaskReorderResponse.from(completion);
 	}
