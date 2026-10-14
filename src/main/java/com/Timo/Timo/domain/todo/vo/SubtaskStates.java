@@ -2,7 +2,6 @@ package com.Timo.Timo.domain.todo.vo;
 
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -21,18 +20,24 @@ public record SubtaskStates(
 
 	public static final SubtaskStates EMPTY = new SubtaskStates(Set.of(), Map.of());
 
+	// 값 객체이므로 생성 후 내부 컬렉션이 바뀌지 않도록 불변 복사본으로 보관한다.
+	public SubtaskStates {
+		completedSubtaskIds = Set.copyOf(completedSubtaskIds);
+		sortOrderBySubtaskId = Map.copyOf(sortOrderBySubtaskId);
+	}
+
 	public static SubtaskStates from(Collection<SubtaskCompletion> completions) {
 		Set<Long> completedSubtaskIds = completions.stream()
 				.filter(SubtaskCompletion::isCompleted)
 				.map(completion -> completion.getSubtask().getId())
 				.collect(Collectors.toSet());
 
-		Map<Long, Integer> sortOrderBySubtaskId = new HashMap<>();
-		for (SubtaskCompletion completion : completions) {
-			if (completion.getSortOrder() != null) {
-				sortOrderBySubtaskId.put(completion.getSubtask().getId(), completion.getSortOrder());
-			}
-		}
+		Map<Long, Integer> sortOrderBySubtaskId = completions.stream()
+				.filter(completion -> completion.getSortOrder() != null)
+				.collect(Collectors.toMap(
+						completion -> completion.getSubtask().getId(),
+						SubtaskCompletion::getSortOrder
+				));
 
 		return new SubtaskStates(completedSubtaskIds, sortOrderBySubtaskId);
 	}
