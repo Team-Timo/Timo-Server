@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import com.Timo.Timo.domain.todo.enums.RepeatType;
@@ -225,7 +226,7 @@ public class Todo extends BaseTimeEntity {
 		int nextSortOrder = edits.stream()
 				.map(SubtaskEdit::subtaskId)
 				.map(existingById::get)
-				.filter(subtask -> subtask != null)
+				.filter(Objects::nonNull)
 				.mapToInt(Subtask::getSortOrder)
 				.max()
 				.orElse(0) + 1;
