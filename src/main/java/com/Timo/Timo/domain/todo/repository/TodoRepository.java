@@ -2,6 +2,7 @@ package com.Timo.Timo.domain.todo.repository;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,6 +16,46 @@ import com.Timo.Timo.domain.todo.entity.Todo;
 public interface TodoRepository extends JpaRepository<Todo, Long> {
 
 	Optional<Todo> findByIdAndUser_Id(Long id, Long userId);
+
+	List<Todo> findByUser_IdAndExternalEventIdIn(Long userId, Collection<String> externalEventIds);
+
+	@Query("""
+		select t from Todo t
+		where t.user.id = :userId
+		  and t.externalEventId is not null
+		  and t.startDate between :from and :to
+		""")
+	List<Todo> findGoogleEventsInRange(
+			@Param("userId") Long userId,
+			@Param("from") LocalDate from,
+			@Param("to") LocalDate to
+	);
+
+	@Query("""
+		select t from Todo t
+		where t.user.id = :userId
+		  and t.externalEventId is not null
+		  and t.startDate > :date
+		""")
+	List<Todo> findGoogleEventsAfter(
+			@Param("userId") Long userId,
+			@Param("date") LocalDate date
+	);
+
+	@Modifying(flushAutomatically = true)
+	@Query("""
+		update Todo t
+		set t.disconnectedFromGoogle = true, t.updatedAt = :now
+		where t.user.id = :userId
+		  and t.externalEventId is not null
+		  and t.startDate <= :date
+		  and t.disconnectedFromGoogle = false
+		""")
+	int markDisconnectedFromGoogleUpTo(
+			@Param("userId") Long userId,
+			@Param("date") LocalDate date,
+			@Param("now") LocalDateTime now
+	);
 
 	@Query("""
 		select t from Todo t
@@ -31,6 +72,19 @@ public interface TodoRepository extends JpaRepository<Todo, Long> {
 
 	long countByUser_IdAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
 			Long userId, LocalDate to, LocalDate from
+	);
+
+	@Modifying(flushAutomatically = true)
+	@Query("""
+		update Todo t
+		set t.disconnectedFromGoogle = false, t.updatedAt = :now
+		where t.user.id = :userId
+		  and t.externalEventId is not null
+		  and t.disconnectedFromGoogle = true
+		""")
+	int clearDisconnectedFromGoogleByUserId(
+			@Param("userId") Long userId,
+			@Param("now") LocalDateTime now
 	);
 
 	@Modifying(clearAutomatically = true, flushAutomatically = true)

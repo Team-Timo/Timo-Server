@@ -4,10 +4,14 @@ import com.Timo.Timo.domain.calendar.dto.response.CalendarConnectResponse;
 import com.Timo.Timo.domain.calendar.dto.client.GoogleTokenResponse;
 import com.Timo.Timo.domain.calendar.dto.client.GoogleUserInfoResponse;
 import com.Timo.Timo.domain.calendar.entity.CalendarConnection;
+import com.Timo.Timo.domain.calendar.entity.CalendarRevocationOutbox;
 import com.Timo.Timo.domain.calendar.exception.CalendarErrorCode;
 import com.Timo.Timo.domain.calendar.repository.CalendarConnectionRepository;
+import com.Timo.Timo.domain.calendar.repository.CalendarRevocationOutboxRepository;
+import com.Timo.Timo.domain.todo.repository.TodoRepository;
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.global.exception.CustomException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
@@ -23,6 +27,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class CalendarConnectionCommandService {
 
   private final CalendarConnectionRepository calendarConnectionRepository;
+  private final CalendarRevocationOutboxRepository calendarRevocationOutboxRepository;
+  private final CalendarTodoSynchronizer calendarTodoSynchronizer;
+  private final TodoRepository todoRepository;
 
   @Transactional
   public CalendarConnectResponse saveConnection(
@@ -44,6 +51,8 @@ public class CalendarConnectionCommandService {
       throw new CustomException(CalendarErrorCode.CALENDAR_ALREADY_CONNECTED);
     }
 
+    todoRepository.clearDisconnectedFromGoogleByUserId(user.getId(), LocalDateTime.now());
+
     return CalendarConnectResponse.builder()
         .calendarConnected(true)
         .calendarEmail(calendarConnection.getCalendarEmail())
@@ -52,7 +61,18 @@ public class CalendarConnectionCommandService {
   }
 
   @Transactional
-  public void deleteConnection(CalendarConnection calendarConnection) {
+  public void deleteConnection(CalendarConnection calendarConnection, LocalDate today) {
+    calendarTodoSynchronizer.handleDisconnect(calendarConnection.getUser().getId(), today);
+
+    String tokenToRevoke = calendarConnection.getRefreshToken() != null
+        ? calendarConnection.getRefreshToken()
+        : calendarConnection.getAccessToken();
+    calendarRevocationOutboxRepository.save(
+        CalendarRevocationOutbox.builder()
+            .token(tokenToRevoke)
+            .build()
+    );
+
     calendarConnectionRepository.delete(calendarConnection);
   }
 
