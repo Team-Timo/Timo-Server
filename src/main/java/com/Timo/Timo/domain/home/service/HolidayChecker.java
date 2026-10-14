@@ -129,6 +129,7 @@ public class HolidayChecker {
 		try {
 			Set<LocalDate> holidays = Set.copyOf(holidayApiClient.fetchHolidays(year));
 			if (holidays.isEmpty()) {
+				log.info("Holiday list is empty. year={}", year);
 				failedAtByYear.put(year, Instant.now());
 				return null;
 			}
