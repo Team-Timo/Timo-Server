@@ -257,7 +257,7 @@ public class TodoService {
 
 	@Transactional
 	public void deleteTodo(Long userId, Long todoId, String dateValue) {
-		LocalDate date = parseDate(dateValue);
+		LocalDate date = dateValue == null ? null : parseDate(dateValue);
 		userRepository.findByIdForUpdate(userId)
 				.orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 		Todo todo = todoRepository.findByIdAndUser_Id(todoId, userId)
@@ -267,7 +267,7 @@ public class TodoService {
 			throw new CustomException(TodoErrorCode.GOOGLE_EVENT_NOT_DELETABLE);
 		}
 
-		if (todo.isRepeating() && todoDateCalculator.occursBefore(todo, date)) {
+		if (date != null && todo.isRepeating() && todoDateCalculator.occursBefore(todo, date)) {
 			removeTodoFrom(todo, date);
 		} else {
 			removeTodo(todo);
