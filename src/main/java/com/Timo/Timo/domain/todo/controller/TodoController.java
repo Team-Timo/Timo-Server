@@ -17,12 +17,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.Timo.Timo.domain.todo.docs.TodoControllerDocs;
+import com.Timo.Timo.domain.todo.dto.request.SubtaskReorderRequest;
 import com.Timo.Timo.domain.todo.dto.request.SubtaskStatusUpdateRequest;
 import com.Timo.Timo.domain.todo.dto.request.TodoCreateRequest;
 import com.Timo.Timo.domain.todo.dto.request.TodoMemoUpdateRequest;
 import com.Timo.Timo.domain.todo.dto.request.TodoReorderRequest;
 import com.Timo.Timo.domain.todo.dto.request.TodoStatusUpdateRequest;
 import com.Timo.Timo.domain.todo.dto.request.TodoUpdateRequest;
+import com.Timo.Timo.domain.todo.dto.response.SubtaskReorderResponse;
 import com.Timo.Timo.domain.todo.dto.response.SubtaskStatusChangeResponse;
 import com.Timo.Timo.domain.todo.dto.response.TodoCreateResponse;
 import com.Timo.Timo.domain.todo.dto.response.TodoReorderResponse;
@@ -130,6 +132,22 @@ public class TodoController implements TodoControllerDocs {
 		return ResponseEntity
 			.status(TodoSuccessCode.REORDERED.getHttpStatus())
 			.body(BaseResponse.onSuccess(TodoSuccessCode.REORDERED, response));
+	}
+
+	@Override
+	@PatchMapping("/{todoId}/subtasks/{subtaskId}/order")
+	public ResponseEntity<BaseResponse<SubtaskReorderResponse>> reorderSubtask(
+		@AuthenticationPrincipal CustomUserDetails userDetails,
+		@PathVariable Long todoId,
+		@PathVariable Long subtaskId,
+		@Valid @RequestBody SubtaskReorderRequest request
+	) {
+		SubtaskReorderResponse response =
+			todoService.reorderSubtask(userDetails.getUserId(), todoId, subtaskId, request);
+
+		return ResponseEntity
+			.status(TodoSuccessCode.SUBTASK_REORDERED.getHttpStatus())
+			.body(BaseResponse.onSuccess(TodoSuccessCode.SUBTASK_REORDERED, response));
 	}
 
 	@Override

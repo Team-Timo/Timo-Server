@@ -3,7 +3,6 @@ package com.Timo.Timo.domain.todo.dto.response;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 import com.Timo.Timo.domain.tag.entity.Tag;
 import com.Timo.Timo.domain.todo.entity.Subtask;
@@ -12,6 +11,7 @@ import com.Timo.Timo.domain.todo.entity.TodoInstance;
 import com.Timo.Timo.domain.todo.enums.RepeatType;
 import com.Timo.Timo.domain.todo.enums.TodoTimerStatus;
 import com.Timo.Timo.domain.todo.enums.Weekday;
+import com.Timo.Timo.domain.todo.vo.SubtaskStates;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -52,7 +52,7 @@ public record TodoDetailResponse(
 ) {
 
 	public static TodoDetailResponse of(Todo todo, TodoInstance instance, LocalDate date, Tag tag,
-			Set<Long> completedSubtaskIds) {
+			SubtaskStates subtaskStates) {
 		return new TodoDetailResponse(
 				todo.getId(),
 				todo.getIcon() != null ? todo.getIcon().name() : null,
@@ -70,8 +70,8 @@ public record TodoDetailResponse(
 				instance != null ? instance.getTimerStatus() : TodoTimerStatus.STOPPED,
 				instance != null ? instance.resolveMemo() : todo.getMemo(),
 				instance != null ? instance.getSortOrder() : null,
-				todo.getSubtasks().stream()
-						.map(subtask -> SubtaskResponse.from(subtask, completedSubtaskIds.contains(subtask.getId())))
+				subtaskStates.sort(todo.getSubtasks()).stream()
+						.map(subtask -> SubtaskResponse.from(subtask, subtaskStates.isCompleted(subtask.getId())))
 						.toList()
 		);
 	}

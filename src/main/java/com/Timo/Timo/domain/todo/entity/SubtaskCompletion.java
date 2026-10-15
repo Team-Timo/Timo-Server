@@ -48,6 +48,10 @@ public class SubtaskCompletion extends BaseTimeEntity {
 	@Column(name = "completed", nullable = false)
 	private boolean completed;
 
+	// 해당 날짜에서 사용자가 지정한 순서. null이면 하위 태스크의 기본 순서를 따른다.
+	@Column(name = "sort_order")
+	private Integer sortOrder;
+
 	private SubtaskCompletion(TodoInstance todoInstance, Subtask subtask, boolean completed) {
 		this.todoInstance = todoInstance;
 		this.subtask = subtask;
@@ -60,5 +64,9 @@ public class SubtaskCompletion extends BaseTimeEntity {
 
 	public void updateCompleted(boolean completed) {
 		this.completed = completed;
+	}
+
+	public void updateSortOrder(int sortOrder) {
+		this.sortOrder = sortOrder;
 	}
 }

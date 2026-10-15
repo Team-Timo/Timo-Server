@@ -4,12 +4,14 @@ import java.time.LocalDate;
 
 import org.springframework.http.ResponseEntity;
 
+import com.Timo.Timo.domain.todo.dto.request.SubtaskReorderRequest;
 import com.Timo.Timo.domain.todo.dto.request.SubtaskStatusUpdateRequest;
 import com.Timo.Timo.domain.todo.dto.request.TodoCreateRequest;
 import com.Timo.Timo.domain.todo.dto.request.TodoMemoUpdateRequest;
 import com.Timo.Timo.domain.todo.dto.request.TodoReorderRequest;
 import com.Timo.Timo.domain.todo.dto.request.TodoStatusUpdateRequest;
 import com.Timo.Timo.domain.todo.dto.request.TodoUpdateRequest;
+import com.Timo.Timo.domain.todo.dto.response.SubtaskReorderResponse;
 import com.Timo.Timo.domain.todo.dto.response.SubtaskStatusChangeResponse;
 import com.Timo.Timo.domain.todo.dto.response.TodoCreateResponse;
 import com.Timo.Timo.domain.todo.dto.response.TodoDetailResponse;
@@ -276,6 +278,7 @@ public interface TodoControllerDocs {
 			예상 소요 시간은 durationSeconds 필드에 초 단위 정수로 전달합니다.
 			subtasks를 전달하면 하위 태스크 목록 전체가 교체됩니다.
 			subtaskId가 있으면 기존 태스크를 수정하고, null이면 신규 태스크로 추가하며, 전달되지 않은 기존 태스크는 삭제됩니다.
+			subtasks 배열 순서로 하위 태스크 순서를 바꾸지 않습니다. 신규 태스크는 맨 뒤에 추가되며, 순서 변경은 하위 태스크 순서 변경 API를 사용합니다.
 
 			구글 캘린더에서 가져온 일정은 구글이 원본이므로 제목, 날짜(반복 규칙 포함)를 수정할 수 없습니다.
 			소요 시간, 아이콘, 우선순위, 태그, 하위 태스크는 수정할 수 있습니다.
@@ -519,6 +522,8 @@ public interface TodoControllerDocs {
 			하위 태스크의 완료 여부를 변경합니다.
 
 			todoId로 소유한 TODO를 확인한 뒤, 해당 TODO에 속한 subtaskId의 완료 상태를 변경합니다.
+			완료하면 해당 날짜 완료 그룹의 맨 아래로, 완료를 취소하면 미완료 그룹의 맨 위로 이동하며 해당 날짜의 하위 태스크 순서를 재계산합니다.
+			응답의 sortOrder는 해당 날짜에서 확정된 정렬 순서입니다.
 
 			Swagger UI 오른쪽 위의 Authorize 버튼을 눌러 유효한 Access Token을 입력해야 합니다.
 			"""
@@ -570,6 +575,14 @@ public interface TodoControllerDocs {
 			)
 		),
 		@ApiResponse(
+			responseCode = "409",
+			description = "같은 날짜의 다른 요청이 처리 중이어서 잠금 대기 시간을 초과한 경우",
+			content = @Content(
+				mediaType = "application/json",
+				schema = @Schema(implementation = ErrorDto.class)
+			)
+		),
+		@ApiResponse(
 			responseCode = "500",
 			description = "서버 내부 오류",
 			content = @Content(
@@ -585,6 +598,91 @@ public interface TodoControllerDocs {
 		@Parameter(description = "완료 상태를 변경할 날짜 (ISO). 반복 TODO는 날짜별로 완료가 분리됩니다.", example = "2026-07-20")
 		LocalDate date,
 		SubtaskStatusUpdateRequest request
+	);
+
+	@Operation(
+		summary = "하위 태스크 순서 변경",
+		description = """
+			드래그 앤 드롭으로 변경된 하위 태스크의 순서를 반영합니다.
+
+			하위 태스크 순서는 날짜별로 관리되며, 요청한 날짜에만 적용됩니다. 순서를 바꾸지 않은 날짜는 기본 순서를 따릅니다.
+			순서 변경은 같은 날짜의 미완료 하위 태스크 그룹 내부에서만 가능하며, 완료된 하위 태스크는 순서를 변경할 수 없습니다.
+			newIndex는 해당 날짜 미완료 그룹 내에서 0부터 시작하는 목표 위치입니다.
+			date를 생략하면 사용자 타임존 기준 오늘로 처리합니다.
+			서버는 대상 하위 태스크를 새 인덱스로 옮기고, 미완료 그룹을 0부터 재정렬한 뒤 완료 그룹을 그 아래에 배치합니다.
+
+			Swagger UI 오른쪽 위의 Authorize 버튼을 눌러 유효한 Access Token을 입력해야 합니다.
+			"""
+	)
+	@RequestBody(
+		required = true,
+		description = "하위 태스크 순서 변경 요청",
+		content = @Content(
+			mediaType = "application/json",
+			schema = @Schema(implementation = SubtaskReorderRequest.class),
+			examples = @ExampleObject(
+				name = "하위 태스크 순서 변경 요청 예시",
+				value = """
+					{
+					  "newIndex": 0,
+					  "date": "2026-10-09"
+					}
+					"""
+			)
+		)
+	)
+	@ApiResponses({
+		@ApiResponse(
+			responseCode = "200",
+			description = "하위 태스크 순서 변경 성공",
+			useReturnTypeSchema = true
+		),
+		@ApiResponse(
+			responseCode = "400",
+			description = "newIndex가 누락되었거나 음수이거나 미완료 그룹 크기를 초과하는 경우, 요청 형식이 잘못된 경우",
+			content = @Content(
+				mediaType = "application/json",
+				schema = @Schema(implementation = ErrorDto.class)
+			)
+		),
+		@ApiResponse(
+			responseCode = "401",
+			description = "Access Token이 없거나 만료되었거나 유효하지 않은 경우",
+			content = @Content(
+				mediaType = "application/json",
+				schema = @Schema(implementation = ErrorDto.class)
+			)
+		),
+		@ApiResponse(
+			responseCode = "404",
+			description = "존재하지 않는 TODO이거나 해당 날짜에 발생하지 않는 TODO인 경우, 해당 TODO에 속하지 않는 하위 태스크인 경우",
+			content = @Content(
+				mediaType = "application/json",
+				schema = @Schema(implementation = ErrorDto.class)
+			)
+		),
+		@ApiResponse(
+			responseCode = "409",
+			description = "완료된 하위 태스크의 순서를 변경하려는 경우, 같은 날짜의 다른 요청이 처리 중이어서 잠금 대기 시간을 초과한 경우",
+			content = @Content(
+				mediaType = "application/json",
+				schema = @Schema(implementation = ErrorDto.class)
+			)
+		),
+		@ApiResponse(
+			responseCode = "500",
+			description = "서버 내부 오류",
+			content = @Content(
+				mediaType = "application/json",
+				schema = @Schema(implementation = ErrorDto.class)
+			)
+		)
+	})
+	ResponseEntity<BaseResponse<SubtaskReorderResponse>> reorderSubtask(
+		@Parameter(hidden = true) CustomUserDetails userDetails,
+		@Parameter(description = "대상 TODO ID", example = "145") Long todoId,
+		@Parameter(description = "이동할 하위 태스크 ID", example = "12") Long subtaskId,
+		SubtaskReorderRequest request
 	);
 
 	@Operation(
