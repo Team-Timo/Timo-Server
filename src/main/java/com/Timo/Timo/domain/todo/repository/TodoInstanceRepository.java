@@ -8,23 +8,17 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.data.repository.query.Param;
 
 import com.Timo.Timo.domain.todo.entity.TodoInstance;
 
 import jakarta.persistence.LockModeType;
-import jakarta.persistence.QueryHint;
 
 public interface TodoInstanceRepository extends JpaRepository<TodoInstance, Long> {
 
     Optional<TodoInstance> findByTodo_IdAndDate(Long todoId, LocalDate date);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @QueryHints({
-        @QueryHint(name = "jakarta.persistence.lock.timeout", value = "3000"),
-        @QueryHint(name = "jakarta.persistence.lock.scope", value = "NORMAL")
-    })
     @Query("select ti from TodoInstance ti where ti.id = :id")
     Optional<TodoInstance> findByIdForUpdate(@Param("id") Long id);
 
