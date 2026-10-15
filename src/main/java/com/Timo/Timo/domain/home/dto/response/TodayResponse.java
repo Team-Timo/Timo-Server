@@ -59,6 +59,15 @@ public record TodayResponse(
 			@JsonProperty("isRepeated")
 			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 			boolean isRepeated,
+			@JsonProperty("isGoogleEvent")
+			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+			boolean isGoogleEvent,
+			@JsonProperty("isDeletedFromGoogle")
+			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+			boolean isDeletedFromGoogle,
+			@JsonProperty("isDisconnectedFromGoogle")
+			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+			boolean isDisconnectedFromGoogle,
 			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 			boolean hasMemo,
 			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
@@ -78,6 +87,9 @@ public record TodayResponse(
 					todo.priority(),
 					todo.tag(),
 					todo.isRepeated(),
+					todo.isGoogleEvent(),
+					todo.isDeletedFromGoogle(),
+					todo.isDisconnectedFromGoogle(),
 					todo.hasMemo(),
 					todo.timerStatus(),
 					todo.sortOrder(),

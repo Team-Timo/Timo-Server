@@ -85,6 +85,10 @@ public class TodoInstance extends BaseTimeEntity {
         this.completed = false;
     }
 
+    public void moveTo(LocalDate date) {
+        this.date = date;
+    }
+
     public void updateSortOrder(int sortOrder) {
         this.sortOrder = sortOrder;
     }

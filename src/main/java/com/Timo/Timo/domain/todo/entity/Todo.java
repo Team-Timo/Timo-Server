@@ -33,17 +33,23 @@ import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
 @Table(
 	name = "todos",
-	indexes = @Index(name = "idx_todos_user_title", columnList = "user_id, title")
+	indexes = @Index(name = "idx_todos_user_title", columnList = "user_id, title"),
+	uniqueConstraints = @UniqueConstraint(
+		name = "uk_todo_user_external_event",
+		columnNames = {"user_id", "external_event_id"}
+	)
 )
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -104,6 +110,17 @@ public class Todo extends BaseTimeEntity {
 	@Column(name = "memo")
 	private String memo;
 
+	@Column(name = "external_event_id", length = 255)
+	private String externalEventId;
+
+	@ColumnDefault("false")
+	@Column(name = "deleted_from_google", nullable = false)
+	private boolean deletedFromGoogle;
+
+	@ColumnDefault("false")
+	@Column(name = "disconnected_from_google", nullable = false)
+	private boolean disconnectedFromGoogle;
+
 	@Builder(access = AccessLevel.PRIVATE)
 	private Todo(
 			User user,
@@ -117,7 +134,8 @@ public class Todo extends BaseTimeEntity {
 			Integer durationSeconds,
 			TodoPriority priority,
 			Long tagId,
-			String memo
+			String memo,
+			String externalEventId
 	) {
 		this.user = user;
 		this.icon = icon == TodoIcon.NONE ? null : icon;
@@ -132,6 +150,24 @@ public class Todo extends BaseTimeEntity {
 		this.priority = priority;
 		this.tagId = tagId;
 		this.memo = memo;
+		this.externalEventId = externalEventId;
+	}
+
+	public static Todo createFromGoogleEvent(
+			User user,
+			String title,
+			LocalDate date,
+			String externalEventId
+	) {
+		return Todo.builder()
+				.user(user)
+				.title(title)
+				.startDate(date)
+				.endDate(date)
+				.repeatType(RepeatType.NONE)
+				.durationSeconds(0)
+				.externalEventId(externalEventId)
+				.build();
 	}
 
 	public static Todo create(
@@ -271,6 +307,34 @@ public class Todo extends BaseTimeEntity {
 
 	public List<Weekday> getRepeatWeekdays() {
 		return Collections.unmodifiableList(repeatWeekdays);
+	}
+
+	public boolean isGoogleEvent() {
+		return externalEventId != null;
+	}
+
+	public void markDeletedFromGoogle() {
+		this.deletedFromGoogle = true;
+	}
+
+	public void unmarkDeletedFromGoogle() {
+		this.deletedFromGoogle = false;
+	}
+
+	public void markDisconnectedFromGoogle() {
+		this.disconnectedFromGoogle = true;
+	}
+
+	public void unmarkDisconnectedFromGoogle() {
+		this.disconnectedFromGoogle = false;
+	}
+
+	public void moveGoogleEvent(LocalDate date, String externalEventId) {
+		this.startDate = date;
+		this.endDate = date;
+		this.externalEventId = externalEventId;
+		this.deletedFromGoogle = false;
+		this.disconnectedFromGoogle = false;
 	}
 
 	private void addSubtask(Subtask subtask) {
