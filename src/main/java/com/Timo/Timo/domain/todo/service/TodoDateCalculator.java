@@ -79,6 +79,16 @@ public class TodoDateCalculator {
         };
     }
 
+    public boolean occursBefore(Todo rule, LocalDate date) {
+        LocalDate end = date.isAfter(rule.getEndDate()) ? rule.getEndDate().plusDays(1) : date;
+        if (!end.isAfter(rule.getStartDate())) {
+            return false;
+        }
+
+        return rule.getStartDate().datesUntil(end)
+                .anyMatch(candidate -> occursOn(rule, candidate));
+    }
+
     private boolean matchesWeekly(LocalDate date, List<Weekday> weekdays) {
         Set<DayOfWeek> targets = weekdays.stream()
                 .map(DAY_OF_WEEKS::get)

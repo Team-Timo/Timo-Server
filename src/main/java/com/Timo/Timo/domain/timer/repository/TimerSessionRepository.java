@@ -1,6 +1,7 @@
 package com.Timo.Timo.domain.timer.repository;
 
 import com.Timo.Timo.domain.timer.entity.TimerSession;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -18,6 +19,17 @@ public interface TimerSessionRepository extends JpaRepository<TimerSession, Long
   @Modifying(clearAutomatically = true)
   @Query("delete from TimerSession s where s.timerRecord.todo.id = :todoId")
   void deleteByTodoId(@Param("todoId") Long todoId);
+
+  @Modifying(clearAutomatically = true)
+  @Query("""
+      delete from TimerSession s
+      where s.timerRecord.todo.id = :todoId
+        and s.timerRecord.targetDate >= :fromDate
+      """)
+  void deleteByTodoIdAndTargetDateFrom(
+      @Param("todoId") Long todoId,
+      @Param("fromDate") LocalDate fromDate
+  );
 
   @Query("""
       select ts

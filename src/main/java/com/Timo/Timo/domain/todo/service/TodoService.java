@@ -256,7 +256,10 @@ public class TodoService {
 	}
 
 	@Transactional
-	public void deleteTodo(Long userId, Long todoId) {
+	public void deleteTodo(Long userId, Long todoId, String dateValue) {
+		LocalDate date = parseDate(dateValue);
+		userRepository.findByIdForUpdate(userId)
+				.orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 		Todo todo = todoRepository.findByIdAndUser_Id(todoId, userId)
 				.orElseThrow(() -> new CustomException(TodoErrorCode.TODO_NOT_FOUND));
 
@@ -264,6 +267,31 @@ public class TodoService {
 			throw new CustomException(TodoErrorCode.GOOGLE_EVENT_NOT_DELETABLE);
 		}
 
+		if (todo.isRepeating() && todoDateCalculator.occursBefore(todo, date)) {
+			removeTodoFrom(todo, date);
+		} else {
+			removeTodo(todo);
+		}
+
+		aiHistoryCacheService.bumpUserHistoryVersionAfterCommit(userId);
+	}
+
+	private void removeTodoFrom(Todo todo, LocalDate date) {
+		Long todoId = todo.getId();
+		if (timerService.hasActiveTimerFrom(todoId, date)) {
+			throw new CustomException(TodoErrorCode.TIMER_RUNNING);
+		}
+
+		todo.endRepeatBefore(date);
+		todoRepository.flush();
+
+		timerService.deleteTimersByTodoFrom(todoId, date);
+		subtaskCompletionRepository.deleteByTodoIdAndDateFrom(todoId, date);
+		todoInstanceRepository.deleteByTodoIdAndDateFrom(todoId, date);
+	}
+
+	private void removeTodo(Todo todo) {
+		Long todoId = todo.getId();
 		if (timerService.hasActiveTimer(todoId)) {
 			throw new CustomException(TodoErrorCode.TIMER_RUNNING);
 		}
@@ -273,8 +301,6 @@ public class TodoService {
 		subtaskCompletionRepository.deleteByTodoId(todoId);
 		todoInstanceRepository.deleteByTodoId(todoId);
 		todoRepository.delete(todo);
-
-		aiHistoryCacheService.bumpUserHistoryVersionAfterCommit(userId);
 	}
 
 	private void validateGoogleEventUpdatable(Todo todo, TodoUpdateRequest request) {
