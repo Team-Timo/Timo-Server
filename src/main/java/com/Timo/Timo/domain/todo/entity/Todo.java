@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import com.Timo.Timo.domain.todo.enums.RepeatType;
@@ -32,6 +33,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
@@ -74,6 +76,7 @@ public class Todo extends BaseTimeEntity {
 
 	@Getter(AccessLevel.NONE)
 	@OneToMany(mappedBy = "todo", cascade = CascadeType.ALL, orphanRemoval = true)
+	@OrderBy("sortOrder ASC, id ASC")
 	private List<Subtask> subtasks = new ArrayList<>();
 
 	@Column(name = "start_date", nullable = false)
@@ -269,20 +272,26 @@ public class Todo extends BaseTimeEntity {
 				.filter(subtask -> subtask.getId() != null)
 				.collect(Collectors.toMap(Subtask::getId, subtask -> subtask));
 
-		List<Subtask> retained = new ArrayList<>();
-		for (int i = 0; i < edits.size(); i++) {
-			SubtaskEdit edit = edits.get(i);
-			int sortOrder = i + 1;
+		// 하위 태스크 순서는 날짜별 순서 변경 API로만 바꾼다. 기존 항목은 기본 순서를 유지하고 새 항목은 맨 뒤에 붙인다.
+		int nextSortOrder = edits.stream()
+				.map(SubtaskEdit::subtaskId)
+				.map(existingById::get)
+				.filter(Objects::nonNull)
+				.mapToInt(Subtask::getSortOrder)
+				.max()
+				.orElse(0) + 1;
 
+		List<Subtask> retained = new ArrayList<>();
+		for (SubtaskEdit edit : edits) {
 			if (edit.subtaskId() != null) {
 				Subtask existing = existingById.get(edit.subtaskId());
 				if (existing == null) {
 					throw new CustomException(TodoErrorCode.SUBTASK_NOT_FOUND);
 				}
-				existing.update(edit.content(), sortOrder);
+				existing.updateContent(edit.content());
 				retained.add(existing);
 			} else {
-				Subtask created = Subtask.of(edit.content(), sortOrder);
+				Subtask created = Subtask.of(edit.content(), nextSortOrder++);
 				created.assignTodo(this);
 				retained.add(created);
 			}

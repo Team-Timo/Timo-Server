@@ -7,7 +7,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -18,13 +17,13 @@ import com.Timo.Timo.domain.home.mapper.HomeTodoMapper;
 import com.Timo.Timo.domain.home.mapper.HomeTodoMapper.TodoContext;
 import com.Timo.Timo.domain.tag.entity.Tag;
 import com.Timo.Timo.domain.tag.repository.TagRepository;
-import com.Timo.Timo.domain.todo.entity.SubtaskCompletion;
 import com.Timo.Timo.domain.todo.entity.Todo;
 import com.Timo.Timo.domain.todo.entity.TodoInstance;
 import com.Timo.Timo.domain.todo.repository.SubtaskCompletionRepository;
 import com.Timo.Timo.domain.todo.repository.TodoInstanceRepository;
 import com.Timo.Timo.domain.todo.repository.TodoRepository;
 import com.Timo.Timo.domain.todo.service.TodoDateCalculator;
+import com.Timo.Timo.domain.todo.vo.SubtaskStates;
 
 import lombok.RequiredArgsConstructor;
 
@@ -42,8 +41,8 @@ public class HomeTodoReader {
 	public LoadedTodos load(Long userId, LocalDate from, LocalDate to) {
 		List<Todo> rules = todoRepository.findRulesInRange(userId, from, to);
 		Map<InstanceKey, TodoInstance> instances = loadInstances(rules, from, to);
-		Map<Long, Set<Long>> completedSubtaskIds = loadCompletedSubtaskIds(instances.values());
-		return new LoadedTodos(rules, instances, loadTags(rules), completedSubtaskIds);
+		Map<Long, SubtaskStates> subtaskStates = loadSubtaskStates(instances.values());
+		return new LoadedTodos(rules, instances, loadTags(rules), subtaskStates);
 	}
 
 	public List<TodoResponse> sortedTodosOn(LoadedTodos loaded, LocalDate date) {
@@ -63,7 +62,7 @@ public class HomeTodoReader {
 			Tag tag = rule.getTagId() == null ? null : loaded.tagsById().get(rule.getTagId());
 			todos.add(homeTodoMapper.toResponse(
 					new TodoContext(rule, entry.instance(), tag, index,
-							completedSubtaskIdsFor(loaded, entry.instance()))
+							subtaskStatesFor(loaded, entry.instance()))
 			));
 		}
 
@@ -73,20 +72,20 @@ public class HomeTodoReader {
 	public TodoResponse todoResponseOn(Todo rule, LocalDate date) {
 		TodoInstance instance = todoInstanceRepository.findByTodo_IdAndDate(rule.getId(), date).orElse(null);
 		Tag tag = rule.getTagId() == null ? null : tagRepository.findById(rule.getTagId()).orElse(null);
-		Set<Long> completedSubtaskIds = instance == null
-				? Set.of()
-				: loadCompletedSubtaskIds(List.of(instance)).getOrDefault(instance.getId(), Set.of());
-		return homeTodoMapper.toResponse(new TodoContext(rule, instance, tag, 0, completedSubtaskIds));
+		SubtaskStates subtaskStates = instance == null
+				? SubtaskStates.EMPTY
+				: loadSubtaskStates(List.of(instance)).getOrDefault(instance.getId(), SubtaskStates.EMPTY);
+		return homeTodoMapper.toResponse(new TodoContext(rule, instance, tag, 0, subtaskStates));
 	}
 
-	private Set<Long> completedSubtaskIdsFor(LoadedTodos loaded, TodoInstance instance) {
+	private SubtaskStates subtaskStatesFor(LoadedTodos loaded, TodoInstance instance) {
 		if (instance == null) {
-			return Set.of();
+			return SubtaskStates.EMPTY;
 		}
-		return loaded.completedSubtaskIdsByInstanceId().getOrDefault(instance.getId(), Set.of());
+		return loaded.subtaskStatesByInstanceId().getOrDefault(instance.getId(), SubtaskStates.EMPTY);
 	}
 
-	private Map<Long, Set<Long>> loadCompletedSubtaskIds(Collection<TodoInstance> instances) {
+	private Map<Long, SubtaskStates> loadSubtaskStates(Collection<TodoInstance> instances) {
 		List<Long> instanceIds = instances.stream()
 				.map(TodoInstance::getId)
 				.toList();
@@ -94,10 +93,9 @@ public class HomeTodoReader {
 			return Map.of();
 		}
 		return subtaskCompletionRepository.findByTodoInstance_IdIn(instanceIds).stream()
-				.filter(SubtaskCompletion::isCompleted)
 				.collect(Collectors.groupingBy(
 						completion -> completion.getTodoInstance().getId(),
-						Collectors.mapping(completion -> completion.getSubtask().getId(), Collectors.toSet())
+						Collectors.collectingAndThen(Collectors.toList(), SubtaskStates::from)
 				));
 	}
 
@@ -163,7 +161,7 @@ public class HomeTodoReader {
 			List<Todo> rules,
 			Map<InstanceKey, TodoInstance> instancesByKey,
 			Map<Long, Tag> tagsById,
-			Map<Long, Set<Long>> completedSubtaskIdsByInstanceId
+			Map<Long, SubtaskStates> subtaskStatesByInstanceId
 	) {
 	}
 

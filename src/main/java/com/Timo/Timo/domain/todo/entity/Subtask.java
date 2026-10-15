@@ -46,9 +46,8 @@ public class Subtask extends BaseTimeEntity {
 		return subtask;
 	}
 
-	public void update(String content, int sortOrder) {
+	public void updateContent(String content) {
 		this.content = content;
-		this.sortOrder = sortOrder;
 	}
 
 	void assignTodo(Todo todo) {

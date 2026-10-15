@@ -16,12 +16,14 @@ import com.Timo.Timo.domain.tag.entity.Tag;
 import com.Timo.Timo.domain.tag.exception.TagErrorCode;
 import com.Timo.Timo.domain.tag.repository.TagRepository;
 import com.Timo.Timo.domain.timer.service.TimerService;
+import com.Timo.Timo.domain.todo.dto.request.SubtaskReorderRequest;
 import com.Timo.Timo.domain.todo.dto.request.SubtaskStatusUpdateRequest;
 import com.Timo.Timo.domain.todo.dto.request.TodoCreateRequest;
 import com.Timo.Timo.domain.todo.dto.request.TodoReorderRequest;
 import com.Timo.Timo.domain.todo.dto.request.TodoStatusUpdateRequest;
 import com.Timo.Timo.domain.todo.dto.request.TodoSubtaskUpdateRequest;
 import com.Timo.Timo.domain.todo.dto.request.TodoUpdateRequest;
+import com.Timo.Timo.domain.todo.dto.response.SubtaskReorderResponse;
 import com.Timo.Timo.domain.todo.dto.response.SubtaskStatusChangeResponse;
 import com.Timo.Timo.domain.todo.dto.response.TodoCreateResponse;
 import com.Timo.Timo.domain.todo.dto.response.TodoDetailResponse;
@@ -38,6 +40,7 @@ import com.Timo.Timo.domain.todo.repository.SubtaskCompletionRepository;
 import com.Timo.Timo.domain.todo.repository.TodoInstanceRepository;
 import com.Timo.Timo.domain.todo.repository.TodoRepository;
 import com.Timo.Timo.domain.todo.vo.Duration;
+import com.Timo.Timo.domain.todo.vo.SubtaskStates;
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.exception.UserErrorCode;
 import com.Timo.Timo.domain.user.repository.UserRepository;
@@ -58,6 +61,7 @@ public class TodoService {
 	private final TodoDateCalculator todoDateCalculator;
 	private final TodoCapacityChecker todoCapacityChecker;
 	private final TodoInstanceReorderer todoInstanceReorderer;
+	private final SubtaskReorderer subtaskReorderer;
 	private final TimerService timerService;
 	private final AiHistoryCacheService aiHistoryCacheService;
 
@@ -112,19 +116,16 @@ public class TodoService {
 				? tagRepository.findById(todo.getTagId()).orElse(null)
 				: null;
 
-		Set<Long> completedSubtaskIds = resolveCompletedSubtaskIds(instance);
+		SubtaskStates subtaskStates = resolveSubtaskStates(instance);
 
-		return TodoDetailResponse.of(todo, instance, date, tag, completedSubtaskIds);
+		return TodoDetailResponse.of(todo, instance, date, tag, subtaskStates);
 	}
 
-	private Set<Long> resolveCompletedSubtaskIds(TodoInstance instance) {
+	private SubtaskStates resolveSubtaskStates(TodoInstance instance) {
 		if (instance == null) {
-			return Set.of();
+			return SubtaskStates.EMPTY;
 		}
-		return subtaskCompletionRepository.findByTodoInstance_IdIn(List.of(instance.getId())).stream()
-				.filter(SubtaskCompletion::isCompleted)
-				.map(completion -> completion.getSubtask().getId())
-				.collect(Collectors.toSet());
+		return SubtaskStates.from(subtaskCompletionRepository.findByTodoInstance_IdIn(List.of(instance.getId())));
 	}
 
 	@Transactional
@@ -161,14 +162,9 @@ public class TodoService {
 
 		requireOccurrence(todo, date);
 
-		TodoInstance instance = todoInstanceReorderer.materializeInstance(userId, todo, date);
-		SubtaskCompletion completion = subtaskCompletionRepository
-				.findByTodoInstance_IdAndSubtask_Id(instance.getId(), subtaskId)
-				.orElseGet(() -> subtaskCompletionRepository.save(
-						SubtaskCompletion.of(instance, subtask, false)));
-		completion.updateCompleted(request.isCompleted());
-
-		return new SubtaskStatusChangeResponse(subtaskId, request.isCompleted());
+		TodoInstance instance = lockInstance(userId, todo, date);
+		SubtaskCompletion completion = subtaskReorderer.applyCompletion(todo, instance, subtask, request.isCompleted());
+		return SubtaskStatusChangeResponse.from(completion);
 	}
 
 	@Transactional
@@ -181,6 +177,14 @@ public class TodoService {
 		// 메모는 생성 이후 항상 날짜별로 저장한다. 대상 인스턴스를 확정한 뒤 override를 설정.
 		TodoInstance instance = todoInstanceReorderer.materializeInstance(userId, todo, date);
 		instance.updateMemo(memo);
+	}
+
+	// 하위 태스크 완료·순서는 날짜별 인스턴스에 저장하므로 인스턴스를 확정한 뒤 잠근다.
+	// 같은 날짜의 요청이 겹쳐도 완료 레코드를 중복 생성하지 않도록 순서대로 처리한다.
+	private TodoInstance lockInstance(Long userId, Todo todo, LocalDate date) {
+		TodoInstance instance = todoInstanceReorderer.materializeInstance(userId, todo, date);
+		return todoInstanceRepository.findByIdForUpdate(instance.getId())
+				.orElseThrow(() -> new CustomException(TodoErrorCode.TODO_NOT_FOUND));
 	}
 
 	private void requireOccurrence(Todo todo, LocalDate date) {
@@ -202,6 +206,25 @@ public class TodoService {
 
 		TodoInstance instance = todoInstanceReorderer.applyReorder(userId, todo, date, request.newIndex());
 		return TodoReorderResponse.from(todoId, instance);
+	}
+
+	@Transactional
+	public SubtaskReorderResponse reorderSubtask(
+			Long userId, Long todoId, Long subtaskId, SubtaskReorderRequest request) {
+		Todo todo = todoRepository.findByIdAndUser_Id(todoId, userId)
+				.orElseThrow(() -> new CustomException(TodoErrorCode.TODO_NOT_FOUND));
+
+		Subtask subtask = todo.getSubtasks().stream()
+				.filter(it -> it.getId().equals(subtaskId))
+				.findFirst()
+				.orElseThrow(() -> new CustomException(TodoErrorCode.SUBTASK_NOT_FOUND));
+
+		LocalDate date = resolveDate(userId, request.date());
+		requireOccurrence(todo, date);
+
+		TodoInstance instance = lockInstance(userId, todo, date);
+		SubtaskCompletion completion = subtaskReorderer.applyReorder(todo, instance, subtask, request.newIndex());
+		return SubtaskReorderResponse.from(completion);
 	}
 
 	@Transactional
