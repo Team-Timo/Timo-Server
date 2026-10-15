@@ -30,6 +30,26 @@ public interface TimerRecordRepository extends JpaRepository<TimerRecord, Long> 
   @Query("delete from TimerRecord r where r.todo.id = :todoId")
   void deleteByTodoId(@Param("todoId") Long todoId);
 
+  @Query("""
+      select count(r) > 0
+      from TimerRecord r
+      where r.todo.id = :todoId
+        and r.status in :statuses
+        and r.targetDate >= :fromDate
+      """)
+  boolean existsByTodoIdAndTargetDateFromAndStatusIn(
+      @Param("todoId") Long todoId,
+      @Param("fromDate") LocalDate fromDate,
+      @Param("statuses") List<TimerStatus> statuses
+  );
+
+  @Modifying(clearAutomatically = true)
+  @Query("delete from TimerRecord r where r.todo.id = :todoId and r.targetDate >= :fromDate")
+  void deleteByTodoIdAndTargetDateFrom(
+      @Param("todoId") Long todoId,
+      @Param("fromDate") LocalDate fromDate
+  );
+
   @Modifying(flushAutomatically = true)
   @Query("""
       update TimerRecord r

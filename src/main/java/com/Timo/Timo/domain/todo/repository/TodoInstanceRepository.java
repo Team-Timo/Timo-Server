@@ -19,6 +19,10 @@ public interface TodoInstanceRepository extends JpaRepository<TodoInstance, Long
     @Query("delete from TodoInstance i where i.todo.id = :todoId")
     void deleteByTodoId(@Param("todoId") Long todoId);
 
+    @Modifying(clearAutomatically = true)
+    @Query("delete from TodoInstance i where i.todo.id = :todoId and i.date >= :fromDate")
+    void deleteByTodoIdAndDateFrom(@Param("todoId") Long todoId, @Param("fromDate") LocalDate fromDate);
+
     @Query("""
         select ti
         from TodoInstance ti

@@ -227,6 +227,16 @@ public class TimerService {
     timerRecordRepository.deleteByTodoId(todoId);
   }
 
+  public boolean hasActiveTimerFrom(Long todoId, LocalDate fromDate) {
+    return timerRecordRepository.existsByTodoIdAndTargetDateFromAndStatusIn(todoId, fromDate, ACTIVE_STATUS);
+  }
+
+  @Transactional
+  public void deleteTimersByTodoFrom(Long todoId, LocalDate fromDate) {
+    timerSessionRepository.deleteByTodoIdAndTargetDateFrom(todoId, fromDate);
+    timerRecordRepository.deleteByTodoIdAndTargetDateFrom(todoId, fromDate);
+  }
+
   @Transactional(propagation = Propagation.NOT_SUPPORTED)
   public TimerFinishResponse completeTimer(Long userId, Long timerId) {
     return finishTimer(userId, timerId, TimerStatus.COMPLETED);

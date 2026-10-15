@@ -254,6 +254,16 @@ public class Todo extends BaseTimeEntity {
 		this.repeatDayOfMonth = repeatType == RepeatType.MONTHLY ? repeatDayOfMonth : null;
 	}
 
+	public boolean isRepeating() {
+		return repeatType != RepeatType.NONE;
+	}
+
+	public void endRepeatBefore(LocalDate date) {
+		if (!date.isAfter(endDate)) {
+			this.endDate = date.minusDays(1);
+		}
+	}
+
 	public void replaceSubtasks(List<SubtaskEdit> edits) {
 		Map<Long, Subtask> existingById = subtasks.stream()
 				.filter(subtask -> subtask.getId() != null)
