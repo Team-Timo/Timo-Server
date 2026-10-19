@@ -65,6 +65,9 @@ ai:
     global-rpd: ${AI_GLOBAL_RPD}
     global-tpm: ${AI_GLOBAL_TPM}
 
+holiday:
+  api-key: ${HOLIDAY_API_KEY:}
+
 logging:
   level:
     root: INFO
