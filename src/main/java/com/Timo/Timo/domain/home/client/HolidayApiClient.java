@@ -70,6 +70,10 @@ public class HolidayApiClient {
 	}
 
 	private Set<LocalDate> extractHolidays(String response) {
+		if (response == null) {
+			throw new IllegalStateException("Holiday API returned an empty response.");
+		}
+
 		JsonNode responseNode = readTree(response).path("response");
 		String resultCode = responseNode.path("header").path("resultCode").asText();
 		if (!SUCCESS_CODE.equals(resultCode)) {
