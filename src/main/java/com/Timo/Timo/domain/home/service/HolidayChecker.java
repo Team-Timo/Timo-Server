@@ -11,6 +11,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -93,6 +94,10 @@ public class HolidayChecker {
 		}
 
 		LoadingYear loading = startLoading(year);
+		if (loading == null) {
+			return null;
+		}
+
 		long waitMillis = Duration.between(Instant.now(), loading.waitDeadline()).toMillis();
 		if (waitMillis <= 0) {
 			return null;
@@ -119,10 +124,15 @@ public class HolidayChecker {
 	}
 
 	private LoadingYear startLoading(int year) {
-		return loadingYears.computeIfAbsent(year, key -> new LoadingYear(
-				CompletableFuture.supplyAsync(() -> loadHolidays(key), holidayExecutor),
-				Instant.now().plus(LOAD_WAIT)
-		));
+		try {
+			return loadingYears.computeIfAbsent(year, key -> new LoadingYear(
+					CompletableFuture.supplyAsync(() -> loadHolidays(key), holidayExecutor),
+					Instant.now().plus(LOAD_WAIT)
+			));
+		} catch (RejectedExecutionException e) {
+			log.warn("Holiday loading task was rejected. year={}", year);
+			return null;
+		}
 	}
 
 	private Set<LocalDate> loadHolidays(int year) {
