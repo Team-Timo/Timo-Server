@@ -34,6 +34,8 @@ import com.Timo.Timo.domain.todo.entity.Todo;
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.exception.UserErrorCode;
 import com.Timo.Timo.domain.user.repository.UserRepository;
+import com.Timo.Timo.global.analytics.AnalyticsEvent;
+import com.Timo.Timo.global.analytics.AnalyticsEventSender;
 import com.Timo.Timo.global.exception.CustomException;
 
 import lombok.RequiredArgsConstructor;
@@ -51,9 +53,11 @@ public class StatisticsService {
 	private final StatisticsDateParser statisticsDateParser;
 	private final StatisticsOccurrenceCalculator statisticsOccurrenceCalculator;
 	private final UserRepository userRepository;
+	private final AnalyticsEventSender analyticsEventSender;
 
 	public StatisticsCalendarResponse getCalendar(Long userId, String yearMonthValue) {
 		ZoneId userZone = getUserZone(userId);
+		analyticsEventSender.send(userId, AnalyticsEvent.STATISTICS_VIEWED, Map.of("type", "calendar"));
 		YearMonth yearMonth = statisticsDateParser.parseYearMonth(yearMonthValue);
 		LocalDate today = LocalDate.now(userZone);
 		LocalDate startDate = yearMonth.atDay(1);
@@ -81,6 +85,7 @@ public class StatisticsService {
 
 	public StatisticsSummaryResponse getSummary(Long userId, String yearMonthValue) {
 		ZoneId userZone = getUserZone(userId);
+		analyticsEventSender.send(userId, AnalyticsEvent.STATISTICS_VIEWED, Map.of("type", "summary"));
 		YearMonth yearMonth = statisticsDateParser.parseYearMonth(yearMonthValue);
 		LocalDate startDate = yearMonth.atDay(1);
 		LocalDate endDate = yearMonth.atEndOfMonth();
@@ -120,6 +125,7 @@ public class StatisticsService {
 
 	public StatisticsDailyResponse getDaily(Long userId, String dateValue) {
 		ZoneId userZone = getUserZone(userId);
+		analyticsEventSender.send(userId, AnalyticsEvent.STATISTICS_VIEWED, Map.of("type", "daily"));
 		LocalDate date = statisticsDateParser.parseDate(dateValue);
 		LocalDate nextDate = date.plusDays(1);
 		LocalDateTime fromInclusive = toUtcStartOfDay(date, userZone);
