@@ -9,6 +9,7 @@ import com.Timo.Timo.domain.timer.repository.TimerRecordRepository;
 import com.Timo.Timo.domain.timer.service.TimerService;
 import com.Timo.Timo.domain.todo.entity.Todo;
 import com.Timo.Timo.domain.todo.entity.TodoInstance;
+import com.Timo.Timo.domain.todo.enums.CalendarSource;
 import com.Timo.Timo.domain.todo.repository.SubtaskCompletionRepository;
 import com.Timo.Timo.domain.todo.repository.TodoInstanceRepository;
 import com.Timo.Timo.domain.todo.repository.TodoRepository;
@@ -46,6 +47,7 @@ public class CalendarTodoSynchronizer {
   private static final int DATE_SUFFIX_LENGTH = 11;
   private static final String HASHED_ID_PREFIX = "sha256:";
   private static final String EMPTY_TITLE = "제목 없음";
+  private static final CalendarSource SOURCE = CalendarSource.GOOGLE;
 
   private final TodoRepository todoRepository;
   private final TodoInstanceRepository todoInstanceRepository;
@@ -61,7 +63,7 @@ public class CalendarTodoSynchronizer {
     userRepository.findByIdForUpdate(userId)
         .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
-    List<Todo> futureTodos = todoRepository.findGoogleEventsAfter(userId, today);
+    List<Todo> futureTodos = todoRepository.findCalendarEventsAfter(userId, SOURCE, today);
     if (!futureTodos.isEmpty()) {
       Set<Long> recordedTodoIds = new HashSet<>(timerRecordRepository.findTodoIdsHavingRecords(
           futureTodos.stream().map(Todo::getId).toList()
@@ -70,7 +72,7 @@ public class CalendarTodoSynchronizer {
       List<Long> deletableTodoIds = new ArrayList<>();
       for (Todo todo : futureTodos) {
         if (recordedTodoIds.contains(todo.getId())) {
-          todo.markDisconnectedFromGoogle();
+          todo.markDisconnectedFromCalendar();
           continue;
         }
         deletableTodoIds.add(todo.getId());
@@ -80,7 +82,7 @@ public class CalendarTodoSynchronizer {
       }
     }
 
-    todoRepository.markDisconnectedFromGoogleUpTo(userId, today, LocalDateTime.now());
+    todoRepository.markDisconnectedFromCalendarUpTo(userId, SOURCE, today, LocalDateTime.now());
   }
 
   @Transactional
@@ -154,7 +156,7 @@ public class CalendarTodoSynchronizer {
         .map(EventOccurrence::externalEventId)
         .collect(Collectors.toSet());
 
-    return todoRepository.findGoogleEventsInRange(userId, from, to).stream()
+    return todoRepository.findCalendarEventsInRange(userId, SOURCE, from, to).stream()
         .filter(todo -> !currentExternalEventIds.contains(todo.getExternalEventId()))
         .sorted(Comparator.comparing(Todo::getStartDate))
         .toList();
@@ -202,7 +204,7 @@ public class CalendarTodoSynchronizer {
     EventOccurrence occurrence = move.occurrence();
     LocalDate previousDate = todo.getStartDate();
 
-    todo.moveGoogleEvent(occurrence.date(), occurrence.externalEventId());
+    todo.moveCalendarEvent(occurrence.date(), occurrence.externalEventId());
     timerRecordRepository.moveTargetDate(todo.getId(), previousDate, occurrence.date());
     boolean titleChanged = !todo.getTitle().equals(occurrence.title());
     if (titleChanged) {
@@ -249,16 +251,16 @@ public class CalendarTodoSynchronizer {
     for (EventOccurrence occurrence : newestFirst) {
       Todo existing = existingByExternalEventId.get(occurrence.externalEventId());
       if (existing == null) {
-        todoRepository.save(Todo.createFromGoogleEvent(
-            user, occurrence.title(), occurrence.date(), occurrence.externalEventId()
+        todoRepository.save(Todo.createFromCalendarEvent(
+            user, SOURCE, occurrence.title(), occurrence.date(), occurrence.externalEventId()
         ));
         continue;
       }
-      if (existing.isDeletedFromGoogle()) {
-        existing.unmarkDeletedFromGoogle();
+      if (existing.isDeletedFromCalendar()) {
+        existing.unmarkDeletedFromCalendar();
       }
-      if (existing.isDisconnectedFromGoogle()) {
-        existing.unmarkDisconnectedFromGoogle();
+      if (existing.isDisconnectedFromCalendar()) {
+        existing.unmarkDisconnectedFromCalendar();
       }
       if (!existing.getTitle().equals(occurrence.title())) {
         existing.updateFields(null, occurrence.title(), null, null, null);
@@ -280,7 +282,7 @@ public class CalendarTodoSynchronizer {
     List<Long> deletableTodoIds = new ArrayList<>();
     for (Todo todo : missingTodos) {
       if (recordedTodoIds.contains(todo.getId())) {
-        todo.markDeletedFromGoogle();
+        todo.markDeletedFromCalendar();
         continue;
       }
       deletableTodoIds.add(todo.getId());

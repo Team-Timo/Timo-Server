@@ -8,6 +8,7 @@ import com.Timo.Timo.domain.calendar.entity.CalendarRevocationOutbox;
 import com.Timo.Timo.domain.calendar.exception.CalendarErrorCode;
 import com.Timo.Timo.domain.calendar.repository.CalendarConnectionRepository;
 import com.Timo.Timo.domain.calendar.repository.CalendarRevocationOutboxRepository;
+import com.Timo.Timo.domain.todo.enums.CalendarSource;
 import com.Timo.Timo.domain.todo.repository.TodoRepository;
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.global.exception.CustomException;
@@ -51,7 +52,7 @@ public class CalendarConnectionCommandService {
       throw new CustomException(CalendarErrorCode.CALENDAR_ALREADY_CONNECTED);
     }
 
-    todoRepository.clearDisconnectedFromGoogleByUserId(user.getId(), LocalDateTime.now());
+    todoRepository.clearDisconnectedFromCalendar(user.getId(), CalendarSource.GOOGLE, LocalDateTime.now());
 
     return CalendarConnectResponse.builder()
         .calendarConnected(true)

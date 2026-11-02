@@ -21,6 +21,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import com.Timo.Timo.domain.todo.entity.Todo;
+import com.Timo.Timo.domain.todo.enums.CalendarSource;
 import com.Timo.Timo.domain.todo.enums.RepeatType;
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.enums.Provider;
@@ -50,78 +51,89 @@ class TodoRepositoryCalendarEventTest {
 	}
 
 	@Test
-	@DisplayName("기간 내 외부 일정 투두는 해당 사용자의 외부 일정 투두만 조회한다")
-	void findGoogleEventsInRange() {
+	@DisplayName("기간 내 캘린더 일정 투두는 해당 사용자·출처의 투두만 조회한다")
+	void findCalendarEventsInRange() {
 		Todo inRange = em.persist(googleTodo(owner, date(15), "evt1_2026-10-15"));
 		em.persist(googleTodo(owner, date(25), "evt2_2026-10-25"));
 		em.persist(normalTodo(owner, date(15)));
+		em.persist(appleTodo(owner, date(15), "apple1_2026-10-15"));
 		em.persist(googleTodo(otherUser, date(15), "evt3_2026-10-15"));
 		em.flush();
 		em.clear();
 
-		List<Todo> result = todoRepository.findGoogleEventsInRange(owner.getId(), date(10), date(20));
+		List<Todo> result = todoRepository.findCalendarEventsInRange(
+				owner.getId(), CalendarSource.GOOGLE, date(10), date(20));
 
 		assertThat(result).extracting(Todo::getId).containsExactly(inRange.getId());
 	}
 
 	@Test
-	@DisplayName("기준일 이후 외부 일정 투두는 기준일 당일을 제외하고 조회한다")
-	void findGoogleEventsAfter() {
+	@DisplayName("기준일 이후 캘린더 일정 투두는 기준일 당일을 제외하고 해당 출처만 조회한다")
+	void findCalendarEventsAfter() {
 		em.persist(googleTodo(owner, date(15), "evt1_2026-10-15"));
 		Todo after = em.persist(googleTodo(owner, date(16), "evt2_2026-10-16"));
 		em.persist(normalTodo(owner, date(16)));
+		em.persist(appleTodo(owner, date(16), "apple1_2026-10-16"));
 		em.persist(googleTodo(otherUser, date(16), "evt3_2026-10-16"));
 		em.flush();
 		em.clear();
 
-		List<Todo> result = todoRepository.findGoogleEventsAfter(owner.getId(), date(15));
+		List<Todo> result = todoRepository.findCalendarEventsAfter(owner.getId(), CalendarSource.GOOGLE, date(15));
 
 		assertThat(result).extracting(Todo::getId).containsExactly(after.getId());
 	}
 
 	@Test
-	@DisplayName("기준일까지의 외부 일정 투두 중 아직 표시되지 않은 투두만 연동 해제됨으로 표시한다")
-	void markDisconnectedFromGoogleUpTo() {
+	@DisplayName("기준일까지의 해당 출처 투두 중 아직 표시되지 않은 투두만 연동 해제됨으로 표시한다")
+	void markDisconnectedFromCalendarUpTo() {
 		Todo past = em.persist(googleTodo(owner, date(14), "evt1_2026-10-14"));
 		Todo today = em.persist(googleTodo(owner, date(15), "evt2_2026-10-15"));
 		Todo alreadyMarked = googleTodo(owner, date(13), "evt3_2026-10-13");
-		alreadyMarked.markDisconnectedFromGoogle();
+		alreadyMarked.markDisconnectedFromCalendar();
 		em.persist(alreadyMarked);
 		Todo future = em.persist(googleTodo(owner, date(16), "evt4_2026-10-16"));
 		Todo normal = em.persist(normalTodo(owner, date(14)));
+		Todo apple = em.persist(appleTodo(owner, date(14), "apple1_2026-10-14"));
 		Todo otherUsers = em.persist(googleTodo(otherUser, date(14), "evt5_2026-10-14"));
 		em.flush();
 		em.clear();
 
-		int updated = todoRepository.markDisconnectedFromGoogleUpTo(owner.getId(), date(15), LocalDateTime.now());
+		int updated = todoRepository.markDisconnectedFromCalendarUpTo(
+				owner.getId(), CalendarSource.GOOGLE, date(15), LocalDateTime.now());
 		em.clear();
 
 		assertThat(updated).isEqualTo(2);
-		assertThat(reload(past).isDisconnectedFromGoogle()).isTrue();
-		assertThat(reload(today).isDisconnectedFromGoogle()).isTrue();
-		assertThat(reload(future).isDisconnectedFromGoogle()).isFalse();
-		assertThat(reload(normal).isDisconnectedFromGoogle()).isFalse();
-		assertThat(reload(otherUsers).isDisconnectedFromGoogle()).isFalse();
+		assertThat(reload(past).isDisconnectedFromCalendar()).isTrue();
+		assertThat(reload(today).isDisconnectedFromCalendar()).isTrue();
+		assertThat(reload(future).isDisconnectedFromCalendar()).isFalse();
+		assertThat(reload(normal).isDisconnectedFromCalendar()).isFalse();
+		assertThat(reload(apple).isDisconnectedFromCalendar()).isFalse();
+		assertThat(reload(otherUsers).isDisconnectedFromCalendar()).isFalse();
 	}
 
 	@Test
-	@DisplayName("재연동 시 해당 사용자의 연동 해제됨 표시만 일괄 해제한다")
-	void clearDisconnectedFromGoogleByUserId() {
+	@DisplayName("재연동 시 해당 사용자·출처의 연동 해제됨 표시만 일괄 해제한다")
+	void clearDisconnectedFromCalendar() {
 		Todo mine = googleTodo(owner, date(14), "evt1_2026-10-14");
-		mine.markDisconnectedFromGoogle();
+		mine.markDisconnectedFromCalendar();
 		em.persist(mine);
+		Todo apple = appleTodo(owner, date(14), "apple1_2026-10-14");
+		apple.markDisconnectedFromCalendar();
+		em.persist(apple);
 		Todo others = googleTodo(otherUser, date(14), "evt2_2026-10-14");
-		others.markDisconnectedFromGoogle();
+		others.markDisconnectedFromCalendar();
 		em.persist(others);
 		em.flush();
 		em.clear();
 
-		int updated = todoRepository.clearDisconnectedFromGoogleByUserId(owner.getId(), LocalDateTime.now());
+		int updated = todoRepository.clearDisconnectedFromCalendar(
+				owner.getId(), CalendarSource.GOOGLE, LocalDateTime.now());
 		em.clear();
 
 		assertThat(updated).isEqualTo(1);
-		assertThat(reload(mine).isDisconnectedFromGoogle()).isFalse();
-		assertThat(reload(others).isDisconnectedFromGoogle()).isTrue();
+		assertThat(reload(mine).isDisconnectedFromCalendar()).isFalse();
+		assertThat(reload(apple).isDisconnectedFromCalendar()).isTrue();
+		assertThat(reload(others).isDisconnectedFromCalendar()).isTrue();
 	}
 
 	@Test
@@ -162,7 +174,11 @@ class TodoRepositoryCalendarEventTest {
 	}
 
 	private Todo googleTodo(User user, LocalDate date, String externalEventId) {
-		return Todo.createFromGoogleEvent(user, "구글 일정", date, externalEventId);
+		return Todo.createFromCalendarEvent(user, CalendarSource.GOOGLE, "구글 일정", date, externalEventId);
+	}
+
+	private Todo appleTodo(User user, LocalDate date, String externalEventId) {
+		return Todo.createFromCalendarEvent(user, CalendarSource.APPLE, "애플 일정", date, externalEventId);
 	}
 
 	private Todo normalTodo(User user, LocalDate date) {

@@ -20,6 +20,7 @@ import com.Timo.Timo.domain.timer.repository.TimerRecordRepository;
 import com.Timo.Timo.domain.timer.service.TimerService;
 import com.Timo.Timo.domain.todo.entity.Todo;
 import com.Timo.Timo.domain.todo.entity.TodoInstance;
+import com.Timo.Timo.domain.todo.enums.CalendarSource;
 import com.Timo.Timo.domain.todo.repository.SubtaskCompletionRepository;
 import com.Timo.Timo.domain.todo.repository.TodoInstanceRepository;
 import com.Timo.Timo.domain.todo.repository.TodoRepository;
@@ -88,7 +89,7 @@ class CalendarTodoSynchronizerTest {
     when(userRepository.findByIdForUpdate(USER_ID)).thenReturn(Optional.of(user));
     when(calendarConnectionRepository.existsByUserId(USER_ID)).thenReturn(true);
     when(todoRepository.findByUser_IdAndExternalEventIdIn(eq(USER_ID), anyCollection())).thenReturn(List.of());
-    when(todoRepository.findGoogleEventsInRange(USER_ID, FROM, TO)).thenReturn(List.of());
+    when(todoRepository.findCalendarEventsInRange(USER_ID, CalendarSource.GOOGLE, FROM, TO)).thenReturn(List.of());
     when(timerRecordRepository.findTodoIdsHavingRecords(anyCollection())).thenReturn(List.of());
     when(timerService.hasActiveTimer(anyLong())).thenReturn(false);
   }
@@ -119,7 +120,7 @@ class CalendarTodoSynchronizerTest {
       assertThat(saved.getEndDate()).isEqualTo(date(15));
       assertThat(saved.getExternalEventId()).isEqualTo("evt1_2026-10-15");
       assertThat(saved.getDurationSeconds()).isZero();
-      assertThat(saved.isGoogleEvent()).isTrue();
+      assertThat(saved.getCalendarSource()).isEqualTo(CalendarSource.GOOGLE);
     }
 
     @Test
@@ -167,7 +168,7 @@ class CalendarTodoSynchronizerTest {
       Todo existing = googleTodo(10L, "이전 제목", date(15), "evt1_2026-10-15");
       when(todoRepository.findByUser_IdAndExternalEventIdIn(eq(USER_ID), anyCollection()))
           .thenReturn(List.of(existing));
-      when(todoRepository.findGoogleEventsInRange(USER_ID, FROM, TO)).thenReturn(List.of(existing));
+      when(todoRepository.findCalendarEventsInRange(USER_ID, CalendarSource.GOOGLE, FROM, TO)).thenReturn(List.of(existing));
 
       synchronize(List.of(allDayEvent("evt1", "새 제목", date(15), date(16))));
 
@@ -182,7 +183,7 @@ class CalendarTodoSynchronizerTest {
       Todo existing = googleTodo(10L, "팀 회의", date(15), "evt1_2026-10-15");
       when(todoRepository.findByUser_IdAndExternalEventIdIn(eq(USER_ID), anyCollection()))
           .thenReturn(List.of(existing));
-      when(todoRepository.findGoogleEventsInRange(USER_ID, FROM, TO)).thenReturn(List.of(existing));
+      when(todoRepository.findCalendarEventsInRange(USER_ID, CalendarSource.GOOGLE, FROM, TO)).thenReturn(List.of(existing));
 
       synchronize(List.of(allDayEvent("evt1", "팀 회의", date(15), date(16))));
 
@@ -193,23 +194,23 @@ class CalendarTodoSynchronizerTest {
     @DisplayName("다시 조회된 일정은 삭제됨·연동 해제됨 표시가 해제된다")
     void unmarkReappearedEvent() {
       Todo existing = googleTodo(10L, "팀 회의", date(15), "evt1_2026-10-15");
-      existing.markDeletedFromGoogle();
-      existing.markDisconnectedFromGoogle();
+      existing.markDeletedFromCalendar();
+      existing.markDisconnectedFromCalendar();
       when(todoRepository.findByUser_IdAndExternalEventIdIn(eq(USER_ID), anyCollection()))
           .thenReturn(List.of(existing));
-      when(todoRepository.findGoogleEventsInRange(USER_ID, FROM, TO)).thenReturn(List.of(existing));
+      when(todoRepository.findCalendarEventsInRange(USER_ID, CalendarSource.GOOGLE, FROM, TO)).thenReturn(List.of(existing));
 
       synchronize(List.of(allDayEvent("evt1", "팀 회의", date(15), date(16))));
 
-      assertThat(existing.isDeletedFromGoogle()).isFalse();
-      assertThat(existing.isDisconnectedFromGoogle()).isFalse();
+      assertThat(existing.isDeletedFromCalendar()).isFalse();
+      assertThat(existing.isDisconnectedFromCalendar()).isFalse();
     }
 
     @Test
     @DisplayName("캘린더에서 사라진 일정은 타이머 기록이 없으면 투두와 관련 데이터를 삭제한다")
     void deleteMissingEventWithoutRecord() {
       Todo missing = googleTodo(10L, "취소된 회의", date(15), "evt1_2026-10-15");
-      when(todoRepository.findGoogleEventsInRange(USER_ID, FROM, TO)).thenReturn(List.of(missing));
+      when(todoRepository.findCalendarEventsInRange(USER_ID, CalendarSource.GOOGLE, FROM, TO)).thenReturn(List.of(missing));
 
       synchronize(List.of());
 
@@ -223,12 +224,12 @@ class CalendarTodoSynchronizerTest {
     @DisplayName("캘린더에서 사라진 일정은 타이머 기록이 있으면 삭제하지 않고 삭제됨으로 표시한다")
     void markMissingEventWithRecord() {
       Todo missing = googleTodo(10L, "취소된 회의", date(15), "evt1_2026-10-15");
-      when(todoRepository.findGoogleEventsInRange(USER_ID, FROM, TO)).thenReturn(List.of(missing));
+      when(todoRepository.findCalendarEventsInRange(USER_ID, CalendarSource.GOOGLE, FROM, TO)).thenReturn(List.of(missing));
       when(timerRecordRepository.findTodoIdsHavingRecords(anyCollection())).thenReturn(List.of(10L));
 
       synchronize(List.of());
 
-      assertThat(missing.isDeletedFromGoogle()).isTrue();
+      assertThat(missing.isDeletedFromCalendar()).isTrue();
       verify(todoRepository, never()).deleteAllById(any());
     }
 
@@ -236,7 +237,7 @@ class CalendarTodoSynchronizerTest {
     @DisplayName("날짜만 바뀐 하루짜리 일정은 기존 투두를 새 날짜로 옮긴다")
     void moveSingleDayEvent() {
       Todo moved = googleTodo(10L, "팀 회의", date(15), "evt1_2026-10-15");
-      when(todoRepository.findGoogleEventsInRange(USER_ID, FROM, TO)).thenReturn(List.of(moved));
+      when(todoRepository.findCalendarEventsInRange(USER_ID, CalendarSource.GOOGLE, FROM, TO)).thenReturn(List.of(moved));
       TodoInstance instance = TodoInstance.of(moved, date(15), 3);
       TodoInstance other = TodoInstance.of(googleTodo(11L, "다른 일", date(17), "evt2_2026-10-17"), date(17), 0);
       when(todoInstanceRepository.findByTodo_IdAndDate(10L, date(17))).thenReturn(Optional.empty());
@@ -260,7 +261,7 @@ class CalendarTodoSynchronizerTest {
     @DisplayName("날짜 이동 대상 투두의 타이머가 실행 중이면 옮기지도, 새로 저장하지도, 삭제하지도 않는다")
     void skipMoveWhenTimerActive() {
       Todo moving = googleTodo(10L, "팀 회의", date(15), "evt1_2026-10-15");
-      when(todoRepository.findGoogleEventsInRange(USER_ID, FROM, TO)).thenReturn(List.of(moving));
+      when(todoRepository.findCalendarEventsInRange(USER_ID, CalendarSource.GOOGLE, FROM, TO)).thenReturn(List.of(moving));
       when(timerService.hasActiveTimer(10L)).thenReturn(true);
 
       synchronize(List.of(allDayEvent("evt1", "팀 회의", date(17), date(18))));
@@ -275,7 +276,7 @@ class CalendarTodoSynchronizerTest {
     @DisplayName("여러 날에 걸친 일정은 날짜 이동으로 처리하지 않고 새로 저장·삭제한다")
     void doNotMoveMultiDayEvent() {
       Todo previous = googleTodo(10L, "여행", date(15), "evt1_2026-10-15");
-      when(todoRepository.findGoogleEventsInRange(USER_ID, FROM, TO)).thenReturn(List.of(previous));
+      when(todoRepository.findCalendarEventsInRange(USER_ID, CalendarSource.GOOGLE, FROM, TO)).thenReturn(List.of(previous));
 
       synchronize(List.of(allDayEvent("evt1", "여행", date(17), date(19))));
 
@@ -297,26 +298,26 @@ class CalendarTodoSynchronizerTest {
       LocalDate today = date(15);
       Todo withRecord = googleTodo(10L, "기록 있는 일정", date(16), "evt1_2026-10-16");
       Todo withoutRecord = googleTodo(11L, "기록 없는 일정", date(17), "evt2_2026-10-17");
-      when(todoRepository.findGoogleEventsAfter(USER_ID, today)).thenReturn(List.of(withRecord, withoutRecord));
+      when(todoRepository.findCalendarEventsAfter(USER_ID, CalendarSource.GOOGLE, today)).thenReturn(List.of(withRecord, withoutRecord));
       when(timerRecordRepository.findTodoIdsHavingRecords(anyCollection())).thenReturn(List.of(10L));
 
       synchronizer.handleDisconnect(USER_ID, today);
 
-      assertThat(withRecord.isDisconnectedFromGoogle()).isTrue();
+      assertThat(withRecord.isDisconnectedFromCalendar()).isTrue();
       verify(todoRepository).deleteAllById(List.of(11L));
-      verify(todoRepository).markDisconnectedFromGoogleUpTo(eq(USER_ID), eq(today), any());
+      verify(todoRepository).markDisconnectedFromCalendarUpTo(eq(USER_ID), eq(CalendarSource.GOOGLE), eq(today), any());
     }
 
     @Test
     @DisplayName("오늘 이후 투두가 없어도 오늘까지의 투두는 연동 해제됨으로 표시한다")
     void noFutureTodos() {
       LocalDate today = date(15);
-      when(todoRepository.findGoogleEventsAfter(USER_ID, today)).thenReturn(List.of());
+      when(todoRepository.findCalendarEventsAfter(USER_ID, CalendarSource.GOOGLE, today)).thenReturn(List.of());
 
       synchronizer.handleDisconnect(USER_ID, today);
 
       verify(todoRepository, never()).deleteAllById(any());
-      verify(todoRepository).markDisconnectedFromGoogleUpTo(eq(USER_ID), eq(today), any());
+      verify(todoRepository).markDisconnectedFromCalendarUpTo(eq(USER_ID), eq(CalendarSource.GOOGLE), eq(today), any());
     }
   }
 
@@ -331,7 +332,7 @@ class CalendarTodoSynchronizerTest {
   }
 
   private Todo googleTodo(Long id, String title, LocalDate date, String externalEventId) {
-    Todo todo = Todo.createFromGoogleEvent(user, title, date, externalEventId);
+    Todo todo = Todo.createFromCalendarEvent(user, CalendarSource.GOOGLE, title, date, externalEventId);
     ReflectionTestUtils.setField(todo, "id", id);
     return todo;
   }

@@ -236,7 +236,7 @@ public class TodoService {
 		Todo todo = todoRepository.findByIdAndUser_Id(todoId, userId)
 				.orElseThrow(() -> new CustomException(TodoErrorCode.TODO_NOT_FOUND));
 
-		validateGoogleEventUpdatable(todo, request);
+		validateCalendarEventUpdatable(todo, request);
 
 		boolean changesTimerSensitiveFields = request.durationSeconds() != null || isScheduleChanged(todo, request);
 		if (changesTimerSensitiveFields && timerService.hasActiveTimer(todoId)) {
@@ -286,8 +286,8 @@ public class TodoService {
 		Todo todo = todoRepository.findByIdAndUser_Id(todoId, userId)
 				.orElseThrow(() -> new CustomException(TodoErrorCode.TODO_NOT_FOUND));
 
-		if (todo.isGoogleEvent() && !todo.isDeletedFromGoogle() && !todo.isDisconnectedFromGoogle()) {
-			throw new CustomException(TodoErrorCode.GOOGLE_EVENT_NOT_DELETABLE);
+		if (todo.isCalendarEvent() && !todo.isDeletedFromCalendar() && !todo.isDisconnectedFromCalendar()) {
+			throw new CustomException(TodoErrorCode.CALENDAR_EVENT_NOT_DELETABLE);
 		}
 
 		if (date != null && todo.isRepeating() && todoDateCalculator.occursBefore(todo, date)) {
@@ -326,8 +326,8 @@ public class TodoService {
 		todoRepository.delete(todo);
 	}
 
-	private void validateGoogleEventUpdatable(Todo todo, TodoUpdateRequest request) {
-		if (!todo.isGoogleEvent()) {
+	private void validateCalendarEventUpdatable(Todo todo, TodoUpdateRequest request) {
+		if (!todo.isCalendarEvent()) {
 			return;
 		}
 
@@ -335,7 +335,7 @@ public class TodoService {
 		boolean changesSchedule = isScheduleChanged(todo, request);
 
 		if (changesTitle || changesSchedule) {
-			throw new CustomException(TodoErrorCode.GOOGLE_EVENT_NOT_MODIFIABLE);
+			throw new CustomException(TodoErrorCode.CALENDAR_EVENT_NOT_MODIFIABLE);
 		}
 	}
 
