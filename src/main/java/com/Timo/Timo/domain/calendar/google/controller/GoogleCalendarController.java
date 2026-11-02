@@ -39,7 +39,7 @@ public class GoogleCalendarController implements GoogleCalendarControllerDocs {
   ) {
     String url = googleCalendarService.buildAuthorizationUrl(userDetails.getUserId(), redirectOrigin);
     return ResponseEntity.ok(
-        BaseResponse.onSuccess(CalendarSuccessCode.CALENDAR_AUTHORIZE_URL_ISSUED,
+        BaseResponse.onSuccess(CalendarSuccessCode.GOOGLE_CALENDAR_AUTHORIZE_URL_ISSUED,
             new GoogleCalendarAuthorizeResponse(url))
     );
   }
@@ -54,7 +54,7 @@ public class GoogleCalendarController implements GoogleCalendarControllerDocs {
     GoogleCalendarConnectResponse response = googleCalendarService.connect(userId, request);
 
     return ResponseEntity.status(HttpStatus.CREATED).body(
-        BaseResponse.onSuccess(CalendarSuccessCode.CALENDAR_CONNECTED, response)
+        BaseResponse.onSuccess(CalendarSuccessCode.GOOGLE_CALENDAR_CONNECTED, response)
     );
   }
 
@@ -67,7 +67,7 @@ public class GoogleCalendarController implements GoogleCalendarControllerDocs {
     CalendarDisconnectResponse response = googleCalendarService.disconnect(userId);
 
     return ResponseEntity.ok(
-        BaseResponse.onSuccess(CalendarSuccessCode.CALENDAR_DISCONNECTED, response)
+        BaseResponse.onSuccess(CalendarSuccessCode.GOOGLE_CALENDAR_DISCONNECTED, response)
     );
   }
 }

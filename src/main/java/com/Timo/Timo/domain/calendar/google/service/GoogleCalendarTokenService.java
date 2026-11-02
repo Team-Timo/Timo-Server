@@ -22,7 +22,7 @@ public class GoogleCalendarTokenService {
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public String ensureValidAccessToken(Long userId) {
     GoogleCalendarConnection connection = calendarConnectionRepository.findByUserId(userId)
-        .orElseThrow(() -> new CustomException(CalendarErrorCode.CALENDAR_NOT_CONNECTED));
+        .orElseThrow(() -> new CustomException(CalendarErrorCode.GOOGLE_CALENDAR_NOT_CONNECTED));
 
     LocalDateTime expiresAt = connection.getTokenExpiresAt();
     boolean expiringSoon = expiresAt == null || expiresAt.isBefore(LocalDateTime.now().plusMinutes(2));
@@ -33,7 +33,7 @@ public class GoogleCalendarTokenService {
 
     String refreshToken = connection.getRefreshToken();
     if (refreshToken == null) {
-      throw new CustomException(CalendarErrorCode.CALENDAR_AUTH_FAILED);
+      throw new CustomException(CalendarErrorCode.GOOGLE_CALENDAR_AUTH_FAILED);
     }
 
     GoogleTokenResponse refreshed = googleOAuthClient.refreshAccessToken(refreshToken);

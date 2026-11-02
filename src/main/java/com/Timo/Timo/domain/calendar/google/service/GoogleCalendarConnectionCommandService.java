@@ -50,7 +50,7 @@ public class GoogleCalendarConnectionCommandService {
     try {
       calendarConnectionRepository.saveAndFlush(calendarConnection);
     } catch (DataIntegrityViolationException e) {
-      throw new CustomException(CalendarErrorCode.CALENDAR_ALREADY_CONNECTED);
+      throw new CustomException(CalendarErrorCode.GOOGLE_CALENDAR_ALREADY_CONNECTED);
     }
 
     todoRepository.clearDisconnectedFromCalendar(user.getId(), CalendarSource.GOOGLE, LocalDateTime.now());

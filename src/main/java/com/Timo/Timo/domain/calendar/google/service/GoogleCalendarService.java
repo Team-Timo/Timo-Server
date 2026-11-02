@@ -89,7 +89,7 @@ public class GoogleCalendarService {
     String tokenRedirectUri = savedRedirectUri != null ? savedRedirectUri : redirectUri;
 
     if (calendarConnectionRepository.existsByUserId(userId)) {
-      throw new CustomException(CalendarErrorCode.CALENDAR_ALREADY_CONNECTED);
+      throw new CustomException(CalendarErrorCode.GOOGLE_CALENDAR_ALREADY_CONNECTED);
     }
 
     User user = userRepository.findById(userId)
@@ -104,13 +104,13 @@ public class GoogleCalendarService {
 
   private void validateSameAccount(User user, GoogleUserInfoResponse userInfo) {
     if (!user.getEmail().equalsIgnoreCase(userInfo.email())) {
-      throw new CustomException(CalendarErrorCode.CALENDAR_EMAIL_MISMATCH);
+      throw new CustomException(CalendarErrorCode.GOOGLE_CALENDAR_EMAIL_MISMATCH);
     }
   }
 
   public CalendarDisconnectResponse disconnect(Long userId) {
     GoogleCalendarConnection calendarConnection = calendarConnectionRepository.findByUserId(userId)
-        .orElseThrow(() -> new CustomException(CalendarErrorCode.CALENDAR_NOT_CONNECTED));
+        .orElseThrow(() -> new CustomException(CalendarErrorCode.GOOGLE_CALENDAR_NOT_CONNECTED));
 
     ZoneId userZone = ZoneId.of(calendarConnection.getUser().getZoneId());
     commandService.deleteConnection(calendarConnection, LocalDate.now(userZone));

@@ -60,11 +60,11 @@ public class GoogleOAuthClient {
           .retrieve()
           .body(GoogleTokenResponse.class);
     } catch (ResourceAccessException e) {
-      throw new CustomException(CalendarErrorCode.CALENDAR_TIMEOUT);
+      throw new CustomException(CalendarErrorCode.GOOGLE_CALENDAR_TIMEOUT);
     } catch (RestClientResponseException e) {
-      throw new CustomException(CalendarErrorCode.CALENDAR_AUTH_FAILED);
+      throw new CustomException(CalendarErrorCode.GOOGLE_CALENDAR_AUTH_FAILED);
     } catch (Exception e) {
-      throw new CustomException(CalendarErrorCode.CALENDAR_AUTH_FAILED);
+      throw new CustomException(CalendarErrorCode.GOOGLE_CALENDAR_AUTH_FAILED);
     }
   }
 
@@ -82,19 +82,19 @@ public class GoogleOAuthClient {
           .retrieve()
           .body(GoogleTokenResponse.class);
     } catch (ResourceAccessException e) {
-      throw new CustomException(CalendarErrorCode.CALENDAR_TIMEOUT);
+      throw new CustomException(CalendarErrorCode.GOOGLE_CALENDAR_TIMEOUT);
     } catch (RestClientResponseException e) {
       HttpStatusCode status = e.getStatusCode();
       if (status.value() == 401 || status.value() == 403) {
-        throw new CustomException(CalendarErrorCode.CALENDAR_AUTH_FAILED);
+        throw new CustomException(CalendarErrorCode.GOOGLE_CALENDAR_AUTH_FAILED);
       }
       if (status.value() == 429) {
-        throw new CustomException(CalendarErrorCode.CALENDAR_RATE_LIMITED);
+        throw new CustomException(CalendarErrorCode.GOOGLE_CALENDAR_RATE_LIMITED);
       }
       if (status.is5xxServerError()) {
-        throw new CustomException(CalendarErrorCode.CALENDAR_UPSTREAM_ERROR);
+        throw new CustomException(CalendarErrorCode.GOOGLE_CALENDAR_UPSTREAM_ERROR);
       }
-      throw new CustomException(CalendarErrorCode.CALENDAR_UPSTREAM_ERROR);
+      throw new CustomException(CalendarErrorCode.GOOGLE_CALENDAR_UPSTREAM_ERROR);
     } catch (CustomException e) {
       throw e;
     } catch (Exception e) {
@@ -139,19 +139,19 @@ public class GoogleOAuthClient {
           .retrieve()
           .body(GoogleCalendarEventsResponse.class);
     } catch (ResourceAccessException e) {
-      throw new CustomException(CalendarErrorCode.CALENDAR_TIMEOUT);
+      throw new CustomException(CalendarErrorCode.GOOGLE_CALENDAR_TIMEOUT);
     } catch (RestClientResponseException e) {
       HttpStatusCode status = e.getStatusCode();
       if (status.value() == 401 || status.value() == 403) {
-        throw new CustomException(CalendarErrorCode.CALENDAR_AUTH_FAILED);
+        throw new CustomException(CalendarErrorCode.GOOGLE_CALENDAR_AUTH_FAILED);
       }
       if (status.value() == 429) {
-        throw new CustomException(CalendarErrorCode.CALENDAR_RATE_LIMITED);
+        throw new CustomException(CalendarErrorCode.GOOGLE_CALENDAR_RATE_LIMITED);
       }
       if (status.is5xxServerError()) {
-        throw new CustomException(CalendarErrorCode.CALENDAR_UPSTREAM_ERROR);
+        throw new CustomException(CalendarErrorCode.GOOGLE_CALENDAR_UPSTREAM_ERROR);
       }
-      throw new CustomException(CalendarErrorCode.CALENDAR_UPSTREAM_ERROR);
+      throw new CustomException(CalendarErrorCode.GOOGLE_CALENDAR_UPSTREAM_ERROR);
     } catch (CustomException e) {
       throw e;
     } catch (Exception e) {
@@ -167,11 +167,11 @@ public class GoogleOAuthClient {
           .retrieve()
           .body(GoogleUserInfoResponse.class);
     } catch (ResourceAccessException e) {
-      throw new CustomException(CalendarErrorCode.CALENDAR_TIMEOUT);
+      throw new CustomException(CalendarErrorCode.GOOGLE_CALENDAR_TIMEOUT);
     } catch (RestClientResponseException e) {
-      throw new CustomException(CalendarErrorCode.CALENDAR_AUTH_FAILED);
+      throw new CustomException(CalendarErrorCode.GOOGLE_CALENDAR_AUTH_FAILED);
     } catch (Exception e) {
-      throw new CustomException(CalendarErrorCode.CALENDAR_AUTH_FAILED);
+      throw new CustomException(CalendarErrorCode.GOOGLE_CALENDAR_AUTH_FAILED);
     }
   }
 
@@ -187,9 +187,9 @@ public class GoogleOAuthClient {
           .retrieve()
           .toBodilessEntity();
     } catch (ResourceAccessException e) {
-      throw new CustomException(CalendarErrorCode.CALENDAR_TIMEOUT);
+      throw new CustomException(CalendarErrorCode.GOOGLE_CALENDAR_TIMEOUT);
     } catch (Exception e) {
-      throw new CustomException(CalendarErrorCode.CALENDAR_REVOKE_FAILED);
+      throw new CustomException(CalendarErrorCode.GOOGLE_CALENDAR_REVOKE_FAILED);
     }
   }
 }
