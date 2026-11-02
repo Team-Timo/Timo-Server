@@ -2,7 +2,7 @@
 
 Prometheus가 수집한 서버 메트릭을 Grafana Alerting으로 평가하고, 임계치를 넘으면 Slack과 Discord로 알린다. 
 알림 구성을 이해하거나 Grafana에 접속할 때 읽는다. 
-규칙별 기준은 [alert-rules.md](alert-rules.md), 알림을 받은 뒤의 대응은 `runbook.md`를 본다.
+규칙별 기준은 [alert-rules.md](alert-rules.md), 알림을 받은 뒤의 대응은 [runbook.md](runbook.md)를 본다.
 
 ## 구성 범위
 
