@@ -84,9 +84,9 @@ public interface GoogleCalendarControllerDocs {
       @ApiResponse(responseCode = "201", description = "연동 성공", useReturnTypeSchema = true),
       @ApiResponse(responseCode = "400", description = "authorizationCode 누락",
           content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class))),
-      @ApiResponse(responseCode = "401", description = "구글 인증 실패, 토큰 없음/만료, 또는 가입 이메일과 다른 계정으로 연동 시도",
+      @ApiResponse(responseCode = "401", description = "토큰 없음/만료(COMMON_401), 구글 인증 실패·state 불일치·가입 이메일과 다른 계정으로 연동 시도(GOOGLE_CALENDAR_401)",
           content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class))),
-      @ApiResponse(responseCode = "409", description = "이미 캘린더가 연동된 상태",
+      @ApiResponse(responseCode = "409", description = "이미 구글 캘린더가 연동된 상태(GOOGLE_CALENDAR_409)",
           content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class))),
       @ApiResponse(responseCode = "500", description = "서버 내부 오류",
           content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class)))
@@ -103,8 +103,9 @@ public interface GoogleCalendarControllerDocs {
 
           해제 시점 기준 오늘 이후의 구글 일정 투두 중 타이머 기록이 없는 투두는 삭제됩니다.
           타이머 기록이 있거나 타이머가 실행 중인 투두는 삭제되지 않고 남으며, 오늘과 지난 구글 일정 투두도 유지됩니다.
-          남은 구글 일정 투두는 isDisconnectedFromGoogle=true로 표시되어 삭제할 수 있게 됩니다.
-          다시 연동하여 동기화하면 구글에 남아 있는 일정은 다시 isDisconnectedFromGoogle=false로 표시됩니다.
+          남은 구글 일정 투두는 isDisconnectedFromCalendar=true로 표시되어 삭제할 수 있게 됩니다.
+          다시 연동하여 동기화하면 구글에 남아 있는 일정은 다시 isDisconnectedFromCalendar=false로 표시됩니다.
+          애플 등 다른 캘린더에서 가져온 투두에는 영향을 주지 않습니다.
           """,
       security = @SecurityRequirement(name = "bearerAuth")
   )
@@ -112,7 +113,7 @@ public interface GoogleCalendarControllerDocs {
       @ApiResponse(responseCode = "200", description = "연동 해제 성공", useReturnTypeSchema = true),
       @ApiResponse(responseCode = "401", description = "토큰 없음/만료/유효하지 않음",
           content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class))),
-      @ApiResponse(responseCode = "404", description = "연동된 캘린더가 없는 경우",
+      @ApiResponse(responseCode = "404", description = "연동된 구글 캘린더가 없는 경우(GOOGLE_CALENDAR_404)",
           content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class))),
       @ApiResponse(responseCode = "500", description = "서버 내부 오류",
           content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class)))
