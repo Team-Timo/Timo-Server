@@ -3,6 +3,7 @@ package com.Timo.Timo.domain.terms.docs;
 import org.springframework.http.ResponseEntity;
 
 import com.Timo.Timo.domain.terms.dto.response.TermsDetailResponse;
+import com.Timo.Timo.global.auth.principal.CustomUserDetails;
 import com.Timo.Timo.global.exception.dto.ErrorDto;
 import com.Timo.Timo.global.response.BaseResponse;
 
@@ -44,6 +45,7 @@ public interface TermsControllerDocs {
 		)
 	})
 	ResponseEntity<BaseResponse<TermsDetailResponse>> getTermsByCondition(
+		@Parameter(hidden = true) CustomUserDetails userDetails,
 		@Parameter(description = "약관 타입", example = "SERVICE") String type,
 		@Parameter(description = "약관 언어", example = "KO") String language
 	);

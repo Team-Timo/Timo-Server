@@ -8,6 +8,8 @@ import com.Timo.Timo.domain.terms.entity.Terms;
 import com.Timo.Timo.domain.terms.enums.TermsLanguage;
 import com.Timo.Timo.domain.terms.enums.TermsType;
 import com.Timo.Timo.domain.terms.repository.TermsRepository;
+import com.Timo.Timo.global.analytics.AnalyticsEvent;
+import com.Timo.Timo.global.analytics.AnalyticsEventSender;
 
 import lombok.RequiredArgsConstructor;
 
@@ -16,13 +18,16 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 public class TermsService {
 	private final TermsRepository termsRepository;
+	private final AnalyticsEventSender analyticsEventSender;
 
-	public TermsDetailResponse getTermsByCondition(String type, String language) {
+	public TermsDetailResponse getTermsByCondition(Long userId, String type, String language) {
 		Terms terms = termsRepository.findFirstByTypeAndLanguageOrderByIdDesc(
 				TermsType.from(type),
 				TermsLanguage.from(language)
 			)
 			.orElse(null);
+
+		analyticsEventSender.send(userId, AnalyticsEvent.TERMS_VIEWED);
 
 		if (terms == null) {
 			return null;
