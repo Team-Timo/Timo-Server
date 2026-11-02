@@ -51,6 +51,9 @@ dependencies {
 	// Sentry
 	implementation 'io.sentry:sentry-spring-boot-starter-jakarta:8.48.0'
 
+	// Mixpanel
+	implementation 'com.mixpanel:mixpanel-java:1.5.3'
+
 	// Lombok
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
