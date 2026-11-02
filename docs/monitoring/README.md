@@ -2,7 +2,7 @@
 
 Prometheus가 수집한 서버 메트릭을 Grafana Alerting으로 평가하고, 임계치를 넘으면 Slack과 Discord로 알린다. 
 알림 구성을 이해하거나 Grafana에 접속할 때 읽는다. 
-규칙별 기준은 `alert-rules.md`, 알림을 받은 뒤의 대응은 `runbook.md`를 본다.
+규칙별 기준은 [alert-rules.md](alert-rules.md), 알림을 받은 뒤의 대응은 `runbook.md`를 본다.
 
 ## 구성 범위
 
@@ -12,7 +12,7 @@ Prometheus가 수집한 서버 메트릭을 Grafana Alerting으로 평가하고,
 ## 알림 전송 경로
 
 1. `deploy/prometheus/prometheus.yml`이 `timo-server`의 `/actuator/prometheus`를 15초마다 수집한다. blue·green 두 컨테이너를 모두 수집한다.
-2. Grafana의 알림 규칙이 Prometheus 데이터를 1분마다 평가한다. 조건이 지속 시간 동안 유지되면 알림이 발생(Firing)하고, 조건이 풀리면 복구(Resolved)된다.
+2. Grafana의 알림 규칙이 Prometheus 데이터를 1분마다 평가한다. 조건이 규칙별 지속 시간(1~5분) 동안 유지되면 알림이 발생(Firing)하고, 조건이 풀리면 복구(Resolved)된다. 규칙별 지속 시간은 [alert-rules.md](alert-rules.md)에 있다.
 3. 알림 정책이 알림을 Contact Point로 보낸다. Contact Point 하나에 Slack과 Discord 연동이 함께 들어 있어 두 채널에 같은 메시지가 간다.
 4. 메시지 본문은 Grafana 알림 템플릿(`timo.message`)으로 만든다. 요약, 설명, 환경, 상태만 담는다.
 
