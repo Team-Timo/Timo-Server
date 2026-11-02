@@ -1,7 +1,7 @@
 package com.Timo.Timo.domain.calendar.service;
 
 import com.Timo.Timo.domain.ai.service.AiHistoryCacheService;
-import com.Timo.Timo.domain.calendar.dto.client.CalendarEventItem;
+import com.Timo.Timo.domain.calendar.dto.event.ExternalCalendarEvent;
 import com.Timo.Timo.domain.calendar.exception.CalendarErrorCode;
 import com.Timo.Timo.domain.calendar.repository.CalendarConnectionRepository;
 import com.Timo.Timo.domain.calendar.utils.CalendarEventDateResolver;
@@ -87,7 +87,7 @@ public class CalendarTodoSynchronizer {
 
   @Transactional
   public void synchronize(
-      Long userId, List<CalendarEventItem> items, LocalDate from, LocalDate to, ZoneId userZone
+      Long userId, List<ExternalCalendarEvent> events, LocalDate from, LocalDate to, ZoneId userZone
   ) {
     User user = userRepository.findByIdForUpdate(userId)
         .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
@@ -96,13 +96,13 @@ public class CalendarTodoSynchronizer {
       throw new CustomException(CalendarErrorCode.CALENDAR_NOT_CONNECTED);
     }
 
-    registerEvents(user, items, from, to, userZone);
+    registerEvents(user, events, from, to, userZone);
   }
 
   private void registerEvents(
-      User user, List<CalendarEventItem> items, LocalDate from, LocalDate to, ZoneId userZone
+      User user, List<ExternalCalendarEvent> events, LocalDate from, LocalDate to, ZoneId userZone
   ) {
-    List<EventOccurrence> occurrences = toOccurrences(items, from, to, userZone);
+    List<EventOccurrence> occurrences = toOccurrences(events, from, to, userZone);
     Map<String, Todo> existingByExternalEventId = findExisting(user.getId(), occurrences);
 
     List<EventOccurrence> newOccurrences = occurrences.stream()
@@ -305,22 +305,22 @@ public class CalendarTodoSynchronizer {
   }
 
   private List<EventOccurrence> toOccurrences(
-      List<CalendarEventItem> items, LocalDate from, LocalDate to, ZoneId userZone
+      List<ExternalCalendarEvent> events, LocalDate from, LocalDate to, ZoneId userZone
   ) {
     Map<String, EventOccurrence> occurrencesByExternalEventId = new LinkedHashMap<>();
 
-    for (CalendarEventItem item : items) {
-      if (item.id() == null) {
+    for (ExternalCalendarEvent event : events) {
+      if (event.eventId() == null) {
         continue;
       }
-      String title = toTitle(item.summary());
-      for (LocalDate date : CalendarEventDateResolver.resolveDates(item, userZone)) {
+      String title = toTitle(event.title());
+      for (LocalDate date : CalendarEventDateResolver.resolveDates(event, userZone)) {
         if (date.isBefore(from) || date.isAfter(to)) {
           continue;
         }
-        String externalEventId = toExternalEventId(item.id(), date);
+        String externalEventId = toExternalEventId(event.eventId(), date);
         occurrencesByExternalEventId.putIfAbsent(
-            externalEventId, new EventOccurrence(item.id(), externalEventId, title, date)
+            externalEventId, new EventOccurrence(event.eventId(), externalEventId, title, date)
         );
       }
     }

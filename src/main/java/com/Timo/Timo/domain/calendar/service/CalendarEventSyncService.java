@@ -2,6 +2,7 @@ package com.Timo.Timo.domain.calendar.service;
 
 import com.Timo.Timo.domain.calendar.client.GoogleOAuthClient;
 import com.Timo.Timo.domain.calendar.dto.client.CalendarEventItem;
+import com.Timo.Timo.domain.calendar.dto.event.ExternalCalendarEvent;
 import com.Timo.Timo.domain.calendar.exception.CalendarErrorCode;
 import com.Timo.Timo.domain.home.enums.HomeFilter;
 import com.Timo.Timo.domain.user.entity.User;
@@ -39,9 +40,11 @@ public class CalendarEventSyncService {
 
     Instant timeMin = from.atStartOfDay(userZone).toInstant();
     Instant timeMax = to.plusDays(1).atStartOfDay(userZone).toInstant();
-    List<CalendarEventItem> items = googleOAuthClient.fetchEvents(accessToken, timeMin, timeMax);
+    List<ExternalCalendarEvent> events = googleOAuthClient.fetchEvents(accessToken, timeMin, timeMax).stream()
+        .map(CalendarEventItem::toExternalEvent)
+        .toList();
 
-    calendarTodoSynchronizer.synchronize(userId, items, from, to, userZone);
+    calendarTodoSynchronizer.synchronize(userId, events, from, to, userZone);
   }
 
   private HomeFilter parseFilter(String filterValue) {

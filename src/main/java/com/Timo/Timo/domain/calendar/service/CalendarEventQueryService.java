@@ -2,6 +2,7 @@ package com.Timo.Timo.domain.calendar.service;
 
 import com.Timo.Timo.domain.calendar.client.GoogleOAuthClient;
 import com.Timo.Timo.domain.calendar.dto.client.CalendarEventItem;
+import com.Timo.Timo.domain.calendar.dto.event.ExternalCalendarEvent;
 import com.Timo.Timo.domain.calendar.dto.response.CalendarDayResponse;
 import com.Timo.Timo.domain.calendar.dto.response.CalendarEventResponse;
 import com.Timo.Timo.domain.calendar.dto.response.CalendarEventsResponse;
@@ -47,9 +48,11 @@ public class CalendarEventQueryService {
 
     Instant timeMin = from.atStartOfDay(userZone).toInstant();
     Instant timeMax = to.plusDays(1).atStartOfDay(userZone).toInstant();
-    List<CalendarEventItem> items = googleOAuthClient.fetchEvents(accessToken, timeMin, timeMax);
+    List<ExternalCalendarEvent> events = googleOAuthClient.fetchEvents(accessToken, timeMin, timeMax).stream()
+        .map(CalendarEventItem::toExternalEvent)
+        .toList();
 
-    Map<LocalDate, List<CalendarEventResponse>> eventsByDate = groupByDate(items, from, to, userZone);
+    Map<LocalDate, List<CalendarEventResponse>> eventsByDate = groupByDate(events, from, to, userZone);
 
     List<CalendarDayResponse> days = from.datesUntil(to.plusDays(1))
         .map(date -> CalendarDayResponse.of(date, eventsByDate.getOrDefault(date, List.of())))
@@ -75,18 +78,18 @@ public class CalendarEventQueryService {
   }
 
   private Map<LocalDate, List<CalendarEventResponse>> groupByDate(
-      List<CalendarEventItem> items, LocalDate from, LocalDate to, ZoneId userZone
+      List<ExternalCalendarEvent> events, LocalDate from, LocalDate to, ZoneId userZone
   ) {
     Map<LocalDate, List<CalendarEventResponse>> eventsByDate = new LinkedHashMap<>();
 
-    for (CalendarEventItem item : items) {
-      for (LocalDate date : CalendarEventDateResolver.resolveDates(item, userZone)) {
+    for (ExternalCalendarEvent event : events) {
+      for (LocalDate date : CalendarEventDateResolver.resolveDates(event, userZone)) {
         if (date.isBefore(from) || date.isAfter(to)) {
           continue;
         }
         eventsByDate
             .computeIfAbsent(date, key -> new ArrayList<>())
-            .add(CalendarEventResponse.of(item.summary()));
+            .add(CalendarEventResponse.of(event.title()));
       }
     }
     return eventsByDate;

@@ -12,8 +12,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.Timo.Timo.domain.ai.service.AiHistoryCacheService;
-import com.Timo.Timo.domain.calendar.dto.client.CalendarEventItem;
-import com.Timo.Timo.domain.calendar.dto.client.GoogleEventDateTime;
+import com.Timo.Timo.domain.calendar.dto.event.ExternalCalendarEvent;
+import com.Timo.Timo.domain.calendar.dto.event.ExternalEventDateTime;
 import com.Timo.Timo.domain.calendar.exception.CalendarErrorCode;
 import com.Timo.Timo.domain.calendar.repository.CalendarConnectionRepository;
 import com.Timo.Timo.domain.timer.repository.TimerRecordRepository;
@@ -28,6 +28,7 @@ import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.enums.Provider;
 import com.Timo.Timo.domain.user.repository.UserRepository;
 import com.Timo.Timo.global.exception.CustomException;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
@@ -126,13 +127,13 @@ class CalendarTodoSynchronizerTest {
     @Test
     @DisplayName("시간이 정해진 일정은 사용자 시간대 기준 날짜로 저장된다")
     void saveTimedEventInUserZone() {
-      CalendarEventItem item = new CalendarEventItem(
+      ExternalCalendarEvent event = new ExternalCalendarEvent(
           "evt1", "밤 회의",
-          new GoogleEventDateTime(null, "2026-10-14T16:00:00Z"),
-          new GoogleEventDateTime(null, "2026-10-14T17:00:00Z")
+          ExternalEventDateTime.ofDateTime(Instant.parse("2026-10-14T16:00:00Z")),
+          ExternalEventDateTime.ofDateTime(Instant.parse("2026-10-14T17:00:00Z"))
       );
 
-      synchronize(List.of(item));
+      synchronize(List.of(event));
 
       assertThat(captureSavedTodos().get(0).getStartDate()).isEqualTo(date(15));
     }
@@ -321,8 +322,8 @@ class CalendarTodoSynchronizerTest {
     }
   }
 
-  private void synchronize(List<CalendarEventItem> items) {
-    synchronizer.synchronize(USER_ID, items, FROM, TO, ZONE);
+  private void synchronize(List<ExternalCalendarEvent> events) {
+    synchronizer.synchronize(USER_ID, events, FROM, TO, ZONE);
   }
 
   private List<Todo> captureSavedTodos() {
@@ -337,11 +338,11 @@ class CalendarTodoSynchronizerTest {
     return todo;
   }
 
-  private CalendarEventItem allDayEvent(String id, String title, LocalDate start, LocalDate endExclusive) {
-    return new CalendarEventItem(
+  private ExternalCalendarEvent allDayEvent(String id, String title, LocalDate start, LocalDate endExclusive) {
+    return new ExternalCalendarEvent(
         id, title,
-        new GoogleEventDateTime(start.toString(), null),
-        new GoogleEventDateTime(endExclusive.toString(), null)
+        ExternalEventDateTime.ofDate(start),
+        ExternalEventDateTime.ofDate(endExclusive)
     );
   }
 
