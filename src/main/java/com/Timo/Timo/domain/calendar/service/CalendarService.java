@@ -12,6 +12,8 @@ import com.Timo.Timo.domain.calendar.repository.CalendarConnectionRepository;
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.exception.UserErrorCode;
 import com.Timo.Timo.domain.user.repository.UserRepository;
+import com.Timo.Timo.global.analytics.AnalyticsEvent;
+import com.Timo.Timo.global.analytics.AnalyticsEventSender;
 import com.Timo.Timo.global.exception.CustomException;
 import com.Timo.Timo.global.exception.code.ErrorCode;
 import java.net.URLEncoder;
@@ -44,6 +46,7 @@ public class CalendarService {
   private final CalendarConnectionCommandService commandService;
   private final StringRedisTemplate redisTemplate;
   private final CalendarStateValidator calendarStateValidator;
+  private final AnalyticsEventSender analyticsEventSender;
 
   @Value("${spring.security.oauth2.client.registration.google.client-id}")
   private String clientId;
@@ -99,7 +102,9 @@ public class CalendarService {
     GoogleUserInfoResponse userInfo = googleOAuthClient.fetchUserInfo(tokenResponse.accessToken());
     validateSameAccount(user, userInfo);
 
-    return commandService.saveConnection(user, tokenResponse, userInfo);
+    CalendarConnectResponse response = commandService.saveConnection(user, tokenResponse, userInfo);
+    analyticsEventSender.send(userId, AnalyticsEvent.CALENDAR_CONNECTED);
+    return response;
   }
 
   private void validateSameAccount(User user, GoogleUserInfoResponse userInfo) {
@@ -114,6 +119,7 @@ public class CalendarService {
 
     ZoneId userZone = ZoneId.of(calendarConnection.getUser().getZoneId());
     commandService.deleteConnection(calendarConnection, LocalDate.now(userZone));
+    analyticsEventSender.send(userId, AnalyticsEvent.CALENDAR_DISCONNECTED);
 
     return CalendarDisconnectResponse.builder()
         .calendarConnected(false)
