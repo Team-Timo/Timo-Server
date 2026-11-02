@@ -1,8 +1,8 @@
 package com.Timo.Timo.global.auth.service;
 
-import com.Timo.Timo.domain.calendar.entity.CalendarRevocationOutbox;
-import com.Timo.Timo.domain.calendar.repository.CalendarConnectionRepository;
-import com.Timo.Timo.domain.calendar.repository.CalendarRevocationOutboxRepository;
+import com.Timo.Timo.domain.calendar.google.entity.GoogleTokenRevocationOutbox;
+import com.Timo.Timo.domain.calendar.google.repository.GoogleCalendarConnectionRepository;
+import com.Timo.Timo.domain.calendar.google.repository.GoogleTokenRevocationOutboxRepository;
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.exception.UserErrorCode;
 import com.Timo.Timo.domain.user.repository.UserRepository;
@@ -29,8 +29,8 @@ public class AuthService {
   private final UserRepository userRepository;
   private final RefreshTokenService refreshTokenService;
   private final BlackListService blacklistService;
-  private final CalendarConnectionRepository calendarConnectionRepository;
-  private final CalendarRevocationOutboxRepository calendarRevocationOutboxRepository;
+  private final GoogleCalendarConnectionRepository calendarConnectionRepository;
+  private final GoogleTokenRevocationOutboxRepository calendarRevocationOutboxRepository;
 
   public AuthTokenResponse exchangeCodeForToken(String code) {
 
@@ -129,7 +129,7 @@ public class AuthService {
     calendarConnectionRepository.findTokenToRevokeByUserId(userId)
         .ifPresent(tokenToRevoke ->
             calendarRevocationOutboxRepository.save(
-                CalendarRevocationOutbox.builder()
+                GoogleTokenRevocationOutbox.builder()
                     .token(tokenToRevoke)
                     .build()
             )

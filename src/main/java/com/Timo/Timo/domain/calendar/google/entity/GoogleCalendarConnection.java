@@ -1,4 +1,4 @@
-package com.Timo.Timo.domain.calendar.entity;
+package com.Timo.Timo.domain.calendar.google.entity;
 
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.global.crypto.AesGcmConverter;
@@ -24,7 +24,7 @@ import org.hibernate.annotations.OnDeleteAction;
 @Table(name = "calendar_connections")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class CalendarConnection {
+public class GoogleCalendarConnection {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -61,7 +61,7 @@ public class CalendarConnection {
   private LocalDateTime connectedAt;
 
   @Builder
-  private CalendarConnection(
+  private GoogleCalendarConnection(
       User user,
       String calendarEmail,
       String accessToken,

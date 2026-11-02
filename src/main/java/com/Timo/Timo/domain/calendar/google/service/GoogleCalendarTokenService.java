@@ -1,10 +1,10 @@
-package com.Timo.Timo.domain.calendar.service;
+package com.Timo.Timo.domain.calendar.google.service;
 
-import com.Timo.Timo.domain.calendar.client.GoogleOAuthClient;
-import com.Timo.Timo.domain.calendar.dto.client.GoogleTokenResponse;
-import com.Timo.Timo.domain.calendar.entity.CalendarConnection;
 import com.Timo.Timo.domain.calendar.exception.CalendarErrorCode;
-import com.Timo.Timo.domain.calendar.repository.CalendarConnectionRepository;
+import com.Timo.Timo.domain.calendar.google.client.GoogleOAuthClient;
+import com.Timo.Timo.domain.calendar.google.dto.client.GoogleTokenResponse;
+import com.Timo.Timo.domain.calendar.google.entity.GoogleCalendarConnection;
+import com.Timo.Timo.domain.calendar.google.repository.GoogleCalendarConnectionRepository;
 import com.Timo.Timo.global.exception.CustomException;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
@@ -14,14 +14,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-public class CalendarTokenService {
+public class GoogleCalendarTokenService {
 
   private final GoogleOAuthClient googleOAuthClient;
-  private final CalendarConnectionRepository calendarConnectionRepository;
+  private final GoogleCalendarConnectionRepository calendarConnectionRepository;
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public String ensureValidAccessToken(Long userId) {
-    CalendarConnection connection = calendarConnectionRepository.findByUserId(userId)
+    GoogleCalendarConnection connection = calendarConnectionRepository.findByUserId(userId)
         .orElseThrow(() -> new CustomException(CalendarErrorCode.CALENDAR_NOT_CONNECTED));
 
     LocalDateTime expiresAt = connection.getTokenExpiresAt();

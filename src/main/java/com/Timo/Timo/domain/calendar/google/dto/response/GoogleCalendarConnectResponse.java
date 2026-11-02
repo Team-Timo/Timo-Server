@@ -1,4 +1,4 @@
-package com.Timo.Timo.domain.calendar.dto.response;
+package com.Timo.Timo.domain.calendar.google.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 import lombok.Builder;
 
 @Builder
-public record CalendarConnectResponse(
+public record GoogleCalendarConnectResponse(
     boolean calendarConnected,
     String calendarEmail,
 

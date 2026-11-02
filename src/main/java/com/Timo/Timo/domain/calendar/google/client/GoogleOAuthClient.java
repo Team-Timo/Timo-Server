@@ -1,10 +1,10 @@
-package com.Timo.Timo.domain.calendar.client;
+package com.Timo.Timo.domain.calendar.google.client;
 
-import com.Timo.Timo.domain.calendar.dto.client.CalendarEventItem;
-import com.Timo.Timo.domain.calendar.dto.client.GoogleCalendarEventsResponse;
-import com.Timo.Timo.domain.calendar.dto.client.GoogleTokenResponse;
-import com.Timo.Timo.domain.calendar.dto.client.GoogleUserInfoResponse;
 import com.Timo.Timo.domain.calendar.exception.CalendarErrorCode;
+import com.Timo.Timo.domain.calendar.google.dto.client.GoogleCalendarEventItem;
+import com.Timo.Timo.domain.calendar.google.dto.client.GoogleCalendarEventsResponse;
+import com.Timo.Timo.domain.calendar.google.dto.client.GoogleTokenResponse;
+import com.Timo.Timo.domain.calendar.google.dto.client.GoogleUserInfoResponse;
 import com.Timo.Timo.global.exception.CustomException;
 import java.time.Duration;
 import java.time.Instant;
@@ -102,8 +102,8 @@ public class GoogleOAuthClient {
     }
   }
 
-  public List<CalendarEventItem> fetchEvents(String accessToken, Instant timeMin, Instant timeMax) {
-    List<CalendarEventItem> allItems = new ArrayList<>();
+  public List<GoogleCalendarEventItem> fetchEvents(String accessToken, Instant timeMin, Instant timeMax) {
+    List<GoogleCalendarEventItem> allItems = new ArrayList<>();
     String pageToken = null;
 
     do {

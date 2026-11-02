@@ -1,4 +1,4 @@
-package com.Timo.Timo.domain.calendar.dto.client;
+package com.Timo.Timo.domain.calendar.google.dto.client;
 
 import com.Timo.Timo.domain.calendar.dto.event.ExternalEventDateTime;
 import java.time.LocalDate;

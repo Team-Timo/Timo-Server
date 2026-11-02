@@ -1,6 +1,6 @@
 package com.Timo.Timo.domain.user.service;
 
-import com.Timo.Timo.domain.calendar.repository.CalendarConnectionRepository;
+import com.Timo.Timo.domain.calendar.google.repository.GoogleCalendarConnectionRepository;
 import jakarta.persistence.Column;
 import java.time.DateTimeException;
 import java.time.ZoneId;
@@ -26,7 +26,7 @@ import lombok.RequiredArgsConstructor;
 public class UserService {
 
 	private final UserRepository userRepository;
-  private final CalendarConnectionRepository calendarConnectionRepository;
+  private final GoogleCalendarConnectionRepository calendarConnectionRepository;
 
 	public UserProfileResponse getMyProfile(Long userId) {
     User user = userRepository.findById(userId)

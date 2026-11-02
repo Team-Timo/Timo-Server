@@ -1,6 +1,6 @@
-package com.Timo.Timo.domain.calendar.entity;
+package com.Timo.Timo.domain.calendar.google.entity;
 
-import com.Timo.Timo.domain.calendar.enums.RevocationStatus;
+import com.Timo.Timo.domain.calendar.google.enums.RevocationStatus;
 import com.Timo.Timo.global.common.BaseTimeEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -19,7 +19,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "calendar_revocation_outbox")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class CalendarRevocationOutbox extends BaseTimeEntity {
+public class GoogleTokenRevocationOutbox extends BaseTimeEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -37,7 +37,7 @@ public class CalendarRevocationOutbox extends BaseTimeEntity {
   private int retryCount;
 
   @Builder
-  private CalendarRevocationOutbox(String token) {
+  private GoogleTokenRevocationOutbox(String token) {
     this.token = token;
     this.status = RevocationStatus.PENDING;
     this.retryCount = 0;

@@ -1,13 +1,14 @@
-package com.Timo.Timo.domain.calendar.service;
+package com.Timo.Timo.domain.calendar.google.service;
 
-import com.Timo.Timo.domain.calendar.dto.response.CalendarConnectResponse;
-import com.Timo.Timo.domain.calendar.dto.client.GoogleTokenResponse;
-import com.Timo.Timo.domain.calendar.dto.client.GoogleUserInfoResponse;
-import com.Timo.Timo.domain.calendar.entity.CalendarConnection;
-import com.Timo.Timo.domain.calendar.entity.CalendarRevocationOutbox;
 import com.Timo.Timo.domain.calendar.exception.CalendarErrorCode;
-import com.Timo.Timo.domain.calendar.repository.CalendarConnectionRepository;
-import com.Timo.Timo.domain.calendar.repository.CalendarRevocationOutboxRepository;
+import com.Timo.Timo.domain.calendar.google.dto.client.GoogleTokenResponse;
+import com.Timo.Timo.domain.calendar.google.dto.client.GoogleUserInfoResponse;
+import com.Timo.Timo.domain.calendar.google.dto.response.GoogleCalendarConnectResponse;
+import com.Timo.Timo.domain.calendar.google.entity.GoogleCalendarConnection;
+import com.Timo.Timo.domain.calendar.google.entity.GoogleTokenRevocationOutbox;
+import com.Timo.Timo.domain.calendar.google.repository.GoogleCalendarConnectionRepository;
+import com.Timo.Timo.domain.calendar.google.repository.GoogleTokenRevocationOutboxRepository;
+import com.Timo.Timo.domain.calendar.service.CalendarTodoSynchronizer;
 import com.Timo.Timo.domain.todo.enums.CalendarSource;
 import com.Timo.Timo.domain.todo.repository.TodoRepository;
 import com.Timo.Timo.domain.user.entity.User;
@@ -25,20 +26,20 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-public class CalendarConnectionCommandService {
+public class GoogleCalendarConnectionCommandService {
 
-  private final CalendarConnectionRepository calendarConnectionRepository;
-  private final CalendarRevocationOutboxRepository calendarRevocationOutboxRepository;
+  private final GoogleCalendarConnectionRepository calendarConnectionRepository;
+  private final GoogleTokenRevocationOutboxRepository calendarRevocationOutboxRepository;
   private final CalendarTodoSynchronizer calendarTodoSynchronizer;
   private final TodoRepository todoRepository;
 
   @Transactional
-  public CalendarConnectResponse saveConnection(
+  public GoogleCalendarConnectResponse saveConnection(
       User user,
       GoogleTokenResponse tokenResponse,
       GoogleUserInfoResponse userInfo
   ) {
-    CalendarConnection calendarConnection = CalendarConnection.builder()
+    GoogleCalendarConnection calendarConnection = GoogleCalendarConnection.builder()
         .user(user)
         .calendarEmail(userInfo.email())
         .accessToken(tokenResponse.accessToken())
@@ -54,7 +55,7 @@ public class CalendarConnectionCommandService {
 
     todoRepository.clearDisconnectedFromCalendar(user.getId(), CalendarSource.GOOGLE, LocalDateTime.now());
 
-    return CalendarConnectResponse.builder()
+    return GoogleCalendarConnectResponse.builder()
         .calendarConnected(true)
         .calendarEmail(calendarConnection.getCalendarEmail())
         .connectedAt(resolveConnectedAt(calendarConnection, user))
@@ -62,14 +63,14 @@ public class CalendarConnectionCommandService {
   }
 
   @Transactional
-  public void deleteConnection(CalendarConnection calendarConnection, LocalDate today) {
+  public void deleteConnection(GoogleCalendarConnection calendarConnection, LocalDate today) {
     calendarTodoSynchronizer.handleDisconnect(calendarConnection.getUser().getId(), CalendarSource.GOOGLE, today);
 
     String tokenToRevoke = calendarConnection.getRefreshToken() != null
         ? calendarConnection.getRefreshToken()
         : calendarConnection.getAccessToken();
     calendarRevocationOutboxRepository.save(
-        CalendarRevocationOutbox.builder()
+        GoogleTokenRevocationOutbox.builder()
             .token(tokenToRevoke)
             .build()
     );
@@ -77,7 +78,7 @@ public class CalendarConnectionCommandService {
     calendarConnectionRepository.delete(calendarConnection);
   }
 
-  private String resolveConnectedAt(CalendarConnection calendarConnection, User user) {
+  private String resolveConnectedAt(GoogleCalendarConnection calendarConnection, User user) {
     ZoneId userZone = ZoneId.of(user.getZoneId());
     ZonedDateTime zoned = calendarConnection.getConnectedAt()
         .atZone(ZoneOffset.UTC)

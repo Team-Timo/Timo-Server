@@ -1,4 +1,4 @@
-package com.Timo.Timo.domain.calendar.dto.client;
+package com.Timo.Timo.domain.calendar.google.dto.client;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

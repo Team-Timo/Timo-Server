@@ -1,14 +1,14 @@
-package com.Timo.Timo.domain.calendar.service;
+package com.Timo.Timo.domain.calendar.google.service;
 
-import com.Timo.Timo.domain.calendar.client.GoogleOAuthClient;
-import com.Timo.Timo.domain.calendar.dto.request.CalendarConnectRequest;
-import com.Timo.Timo.domain.calendar.dto.response.CalendarConnectResponse;
 import com.Timo.Timo.domain.calendar.dto.response.CalendarDisconnectResponse;
-import com.Timo.Timo.domain.calendar.dto.client.GoogleTokenResponse;
-import com.Timo.Timo.domain.calendar.dto.client.GoogleUserInfoResponse;
-import com.Timo.Timo.domain.calendar.entity.CalendarConnection;
 import com.Timo.Timo.domain.calendar.exception.CalendarErrorCode;
-import com.Timo.Timo.domain.calendar.repository.CalendarConnectionRepository;
+import com.Timo.Timo.domain.calendar.google.client.GoogleOAuthClient;
+import com.Timo.Timo.domain.calendar.google.dto.client.GoogleTokenResponse;
+import com.Timo.Timo.domain.calendar.google.dto.client.GoogleUserInfoResponse;
+import com.Timo.Timo.domain.calendar.google.dto.request.GoogleCalendarConnectRequest;
+import com.Timo.Timo.domain.calendar.google.dto.response.GoogleCalendarConnectResponse;
+import com.Timo.Timo.domain.calendar.google.entity.GoogleCalendarConnection;
+import com.Timo.Timo.domain.calendar.google.repository.GoogleCalendarConnectionRepository;
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.exception.UserErrorCode;
 import com.Timo.Timo.domain.user.repository.UserRepository;
@@ -31,19 +31,19 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class CalendarService {
+public class GoogleCalendarService {
 
   private static final String GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
   private static final String CALENDAR_SCOPE = "https://www.googleapis.com/auth/calendar.readonly email";
   private static final String CALLBACK_PATH = "/oauth/calendar/callback";
   private static final Duration STATE_TTL = Duration.ofMinutes(5);
 
-  private final CalendarConnectionRepository calendarConnectionRepository;
+  private final GoogleCalendarConnectionRepository calendarConnectionRepository;
   private final UserRepository userRepository;
   private final GoogleOAuthClient googleOAuthClient;
-  private final CalendarConnectionCommandService commandService;
+  private final GoogleCalendarConnectionCommandService commandService;
   private final StringRedisTemplate redisTemplate;
-  private final CalendarStateValidator calendarStateValidator;
+  private final GoogleOAuthStateValidator calendarStateValidator;
 
   @Value("${spring.security.oauth2.client.registration.google.client-id}")
   private String clientId;
@@ -58,8 +58,8 @@ public class CalendarService {
     String resolvedRedirectUri = resolveRedirectUri(redirectOrigin);
     String state = UUID.randomUUID().toString();
     redisTemplate.opsForValue().set(
-        CalendarStateValidator.STATE_KEY_PREFIX + state,
-        userId + CalendarStateValidator.VALUE_DELIMITER + resolvedRedirectUri,
+        GoogleOAuthStateValidator.STATE_KEY_PREFIX + state,
+        userId + GoogleOAuthStateValidator.VALUE_DELIMITER + resolvedRedirectUri,
         STATE_TTL
     );
 
@@ -84,7 +84,7 @@ public class CalendarService {
     return redirectOrigin + CALLBACK_PATH;
   }
 
-  public CalendarConnectResponse connect(Long userId, CalendarConnectRequest request) {
+  public GoogleCalendarConnectResponse connect(Long userId, GoogleCalendarConnectRequest request) {
     String savedRedirectUri = calendarStateValidator.validateState(userId, request.state());
     String tokenRedirectUri = savedRedirectUri != null ? savedRedirectUri : redirectUri;
 
@@ -109,7 +109,7 @@ public class CalendarService {
   }
 
   public CalendarDisconnectResponse disconnect(Long userId) {
-    CalendarConnection calendarConnection = calendarConnectionRepository.findByUserId(userId)
+    GoogleCalendarConnection calendarConnection = calendarConnectionRepository.findByUserId(userId)
         .orElseThrow(() -> new CustomException(CalendarErrorCode.CALENDAR_NOT_CONNECTED));
 
     ZoneId userZone = ZoneId.of(calendarConnection.getUser().getZoneId());
@@ -121,7 +121,7 @@ public class CalendarService {
   }
 
   @Transactional
-  public void deleteConnection(CalendarConnection calendarConnection) {
+  public void deleteConnection(GoogleCalendarConnection calendarConnection) {
     calendarConnectionRepository.delete(calendarConnection);
   }
 }

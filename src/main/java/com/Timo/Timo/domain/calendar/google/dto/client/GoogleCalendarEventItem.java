@@ -1,8 +1,8 @@
-package com.Timo.Timo.domain.calendar.dto.client;
+package com.Timo.Timo.domain.calendar.google.dto.client;
 
 import com.Timo.Timo.domain.calendar.dto.event.ExternalCalendarEvent;
 
-public record CalendarEventItem (
+public record GoogleCalendarEventItem (
     String id,
     String summary,
     GoogleEventDateTime start,

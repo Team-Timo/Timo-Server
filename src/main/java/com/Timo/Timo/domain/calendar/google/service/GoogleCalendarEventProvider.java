@@ -1,9 +1,10 @@
-package com.Timo.Timo.domain.calendar.service;
+package com.Timo.Timo.domain.calendar.google.service;
 
-import com.Timo.Timo.domain.calendar.client.GoogleOAuthClient;
-import com.Timo.Timo.domain.calendar.dto.client.CalendarEventItem;
 import com.Timo.Timo.domain.calendar.dto.event.ExternalCalendarEvent;
-import com.Timo.Timo.domain.calendar.repository.CalendarConnectionRepository;
+import com.Timo.Timo.domain.calendar.google.client.GoogleOAuthClient;
+import com.Timo.Timo.domain.calendar.google.dto.client.GoogleCalendarEventItem;
+import com.Timo.Timo.domain.calendar.google.repository.GoogleCalendarConnectionRepository;
+import com.Timo.Timo.domain.calendar.service.CalendarEventProvider;
 import com.Timo.Timo.domain.todo.enums.CalendarSource;
 import java.time.Instant;
 import java.util.List;
@@ -14,8 +15,8 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class GoogleCalendarEventProvider implements CalendarEventProvider {
 
-  private final CalendarConnectionRepository calendarConnectionRepository;
-  private final CalendarTokenService calendarTokenService;
+  private final GoogleCalendarConnectionRepository calendarConnectionRepository;
+  private final GoogleCalendarTokenService calendarTokenService;
   private final GoogleOAuthClient googleOAuthClient;
 
   @Override
@@ -32,7 +33,7 @@ public class GoogleCalendarEventProvider implements CalendarEventProvider {
   public List<ExternalCalendarEvent> fetchEvents(Long userId, Instant timeMin, Instant timeMax) {
     String accessToken = calendarTokenService.ensureValidAccessToken(userId);
     return googleOAuthClient.fetchEvents(accessToken, timeMin, timeMax).stream()
-        .map(CalendarEventItem::toExternalEvent)
+        .map(GoogleCalendarEventItem::toExternalEvent)
         .toList();
   }
 }

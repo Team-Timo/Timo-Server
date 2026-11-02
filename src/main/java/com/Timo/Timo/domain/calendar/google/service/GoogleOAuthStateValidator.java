@@ -1,4 +1,4 @@
-package com.Timo.Timo.domain.calendar.service;
+package com.Timo.Timo.domain.calendar.google.service;
 
 import com.Timo.Timo.domain.calendar.exception.CalendarErrorCode;
 import com.Timo.Timo.global.exception.CustomException;
@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class CalendarStateValidator {
+public class GoogleOAuthStateValidator {
 
   public static final String STATE_KEY_PREFIX = "calendar:oauth:state:";
   public static final String VALUE_DELIMITER = "|";

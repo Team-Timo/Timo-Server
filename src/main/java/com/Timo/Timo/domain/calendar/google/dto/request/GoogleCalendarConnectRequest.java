@@ -1,9 +1,9 @@
-package com.Timo.Timo.domain.calendar.dto.request;
+package com.Timo.Timo.domain.calendar.google.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 
-public record CalendarConnectRequest(
+public record GoogleCalendarConnectRequest(
     @NotBlank(message = "authorizationCode는 필수입니다.")
     @Schema(description = "구글 OAuth 동의 완료 후 발급된 authorization code", requiredMode = Schema.RequiredMode.REQUIRED)
     String authorizationCode,
