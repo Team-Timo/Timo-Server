@@ -6,6 +6,7 @@ import java.util.List;
 import com.Timo.Timo.domain.home.dto.response.HomeResponse.SubtaskResponse;
 import com.Timo.Timo.domain.home.dto.response.HomeResponse.TagResponse;
 import com.Timo.Timo.domain.home.dto.response.HomeResponse.TodoResponse;
+import com.Timo.Timo.domain.todo.enums.CalendarSource;
 import com.Timo.Timo.domain.todo.enums.TodoTimerStatus;
 import com.Timo.Timo.domain.todo.enums.Weekday;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -68,6 +69,17 @@ public record TodayResponse(
 			@JsonProperty("isDisconnectedFromGoogle")
 			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 			boolean isDisconnectedFromGoogle,
+			@JsonProperty("isCalendarEvent")
+			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+			boolean isCalendarEvent,
+			@Schema(description = "일정 출처 (GOOGLE/APPLE), 티모에서 만든 투두는 null")
+			CalendarSource calendarSource,
+			@JsonProperty("isDeletedFromCalendar")
+			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+			boolean isDeletedFromCalendar,
+			@JsonProperty("isDisconnectedFromCalendar")
+			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+			boolean isDisconnectedFromCalendar,
 			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 			boolean hasMemo,
 			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
@@ -90,6 +102,10 @@ public record TodayResponse(
 					todo.isGoogleEvent(),
 					todo.isDeletedFromGoogle(),
 					todo.isDisconnectedFromGoogle(),
+					todo.isCalendarEvent(),
+					todo.calendarSource(),
+					todo.isDeletedFromCalendar(),
+					todo.isDisconnectedFromCalendar(),
 					todo.hasMemo(),
 					todo.timerStatus(),
 					todo.sortOrder(),

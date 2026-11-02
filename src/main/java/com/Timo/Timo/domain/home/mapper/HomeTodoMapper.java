@@ -36,6 +36,10 @@ public class HomeTodoMapper {
 				todo.isFrom(CalendarSource.GOOGLE),
 				todo.isFrom(CalendarSource.GOOGLE) && todo.isDeletedFromCalendar(),
 				todo.isFrom(CalendarSource.GOOGLE) && todo.isDisconnectedFromCalendar(),
+				todo.isCalendarEvent(),
+				todo.getCalendarSource(),
+				todo.isDeletedFromCalendar(),
+				todo.isDisconnectedFromCalendar(),
 				resolveTimerStatus(instance),
 				instance != null ? instance.getSortOrder() : context.defaultSortOrder(),
 				mapSubtasks(todo.getSubtasks(), context.subtaskStates())

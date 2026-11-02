@@ -44,6 +44,17 @@ public record TodoDetailResponse(
 		@JsonProperty("isDisconnectedFromGoogle")
 		@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 		boolean isDisconnectedFromGoogle,
+		@JsonProperty("isCalendarEvent")
+		@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+		boolean isCalendarEvent,
+		@Schema(description = "일정 출처 (GOOGLE/APPLE), 티모에서 만든 투두는 null")
+		CalendarSource calendarSource,
+		@JsonProperty("isDeletedFromCalendar")
+		@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+		boolean isDeletedFromCalendar,
+		@JsonProperty("isDisconnectedFromCalendar")
+		@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+		boolean isDisconnectedFromCalendar,
 		@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 		TodoTimerStatus timerStatus,
 		String memo,
@@ -68,6 +79,10 @@ public record TodoDetailResponse(
 				todo.isFrom(CalendarSource.GOOGLE),
 				todo.isFrom(CalendarSource.GOOGLE) && todo.isDeletedFromCalendar(),
 				todo.isFrom(CalendarSource.GOOGLE) && todo.isDisconnectedFromCalendar(),
+				todo.isCalendarEvent(),
+				todo.getCalendarSource(),
+				todo.isDeletedFromCalendar(),
+				todo.isDisconnectedFromCalendar(),
 				instance != null ? instance.getTimerStatus() : TodoTimerStatus.STOPPED,
 				instance != null ? instance.resolveMemo() : todo.getMemo(),
 				instance != null ? instance.getSortOrder() : null,

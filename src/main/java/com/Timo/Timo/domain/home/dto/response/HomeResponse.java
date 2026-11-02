@@ -7,6 +7,7 @@ import java.util.Objects;
 import com.Timo.Timo.domain.home.enums.HomeFilter;
 import com.Timo.Timo.domain.tag.entity.Tag;
 import com.Timo.Timo.domain.todo.entity.Subtask;
+import com.Timo.Timo.domain.todo.enums.CalendarSource;
 import com.Timo.Timo.domain.todo.enums.TodoTimerStatus;
 import com.Timo.Timo.domain.todo.enums.Weekday;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -87,6 +88,17 @@ public record HomeResponse(
 			@JsonProperty("isDisconnectedFromGoogle")
 			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 			boolean isDisconnectedFromGoogle,
+			@JsonProperty("isCalendarEvent")
+			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+			boolean isCalendarEvent,
+			@Schema(description = "일정 출처 (GOOGLE/APPLE), 티모에서 만든 투두는 null")
+			CalendarSource calendarSource,
+			@JsonProperty("isDeletedFromCalendar")
+			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+			boolean isDeletedFromCalendar,
+			@JsonProperty("isDisconnectedFromCalendar")
+			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+			boolean isDisconnectedFromCalendar,
 			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 			TodoTimerStatus timerStatus,
 			Integer sortOrder,
