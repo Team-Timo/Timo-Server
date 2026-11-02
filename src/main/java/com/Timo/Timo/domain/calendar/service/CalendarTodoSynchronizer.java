@@ -3,7 +3,6 @@ package com.Timo.Timo.domain.calendar.service;
 import com.Timo.Timo.domain.ai.service.AiHistoryCacheService;
 import com.Timo.Timo.domain.calendar.dto.event.ExternalCalendarEvent;
 import com.Timo.Timo.domain.calendar.exception.CalendarErrorCode;
-import com.Timo.Timo.domain.calendar.repository.CalendarConnectionRepository;
 import com.Timo.Timo.domain.calendar.utils.CalendarEventDateResolver;
 import com.Timo.Timo.domain.timer.repository.TimerRecordRepository;
 import com.Timo.Timo.domain.timer.service.TimerService;
@@ -47,7 +46,6 @@ public class CalendarTodoSynchronizer {
   private static final int DATE_SUFFIX_LENGTH = 11;
   private static final String HASHED_ID_PREFIX = "sha256:";
   private static final String EMPTY_TITLE = "제목 없음";
-  private static final CalendarSource SOURCE = CalendarSource.GOOGLE;
 
   private final TodoRepository todoRepository;
   private final TodoInstanceRepository todoInstanceRepository;
@@ -55,15 +53,14 @@ public class CalendarTodoSynchronizer {
   private final TimerRecordRepository timerRecordRepository;
   private final UserRepository userRepository;
   private final TimerService timerService;
-  private final CalendarConnectionRepository calendarConnectionRepository;
   private final AiHistoryCacheService aiHistoryCacheService;
 
   @Transactional
-  public void handleDisconnect(Long userId, LocalDate today) {
+  public void handleDisconnect(Long userId, CalendarSource source, LocalDate today) {
     userRepository.findByIdForUpdate(userId)
         .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
-    List<Todo> futureTodos = todoRepository.findCalendarEventsAfter(userId, SOURCE, today);
+    List<Todo> futureTodos = todoRepository.findCalendarEventsAfter(userId, source, today);
     if (!futureTodos.isEmpty()) {
       Set<Long> recordedTodoIds = new HashSet<>(timerRecordRepository.findTodoIdsHavingRecords(
           futureTodos.stream().map(Todo::getId).toList()
@@ -82,25 +79,35 @@ public class CalendarTodoSynchronizer {
       }
     }
 
-    todoRepository.markDisconnectedFromCalendarUpTo(userId, SOURCE, today, LocalDateTime.now());
+    todoRepository.markDisconnectedFromCalendarUpTo(userId, source, today, LocalDateTime.now());
   }
 
   @Transactional
   public void synchronize(
-      Long userId, List<ExternalCalendarEvent> events, LocalDate from, LocalDate to, ZoneId userZone
+      Long userId,
+      CalendarEventProvider provider,
+      List<ExternalCalendarEvent> events,
+      LocalDate from,
+      LocalDate to,
+      ZoneId userZone
   ) {
     User user = userRepository.findByIdForUpdate(userId)
         .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
-    if (!calendarConnectionRepository.existsByUserId(userId)) {
+    if (!provider.isConnected(userId)) {
       throw new CustomException(CalendarErrorCode.CALENDAR_NOT_CONNECTED);
     }
 
-    registerEvents(user, events, from, to, userZone);
+    registerEvents(user, provider.source(), events, from, to, userZone);
   }
 
   private void registerEvents(
-      User user, List<ExternalCalendarEvent> events, LocalDate from, LocalDate to, ZoneId userZone
+      User user,
+      CalendarSource source,
+      List<ExternalCalendarEvent> events,
+      LocalDate from,
+      LocalDate to,
+      ZoneId userZone
   ) {
     List<EventOccurrence> occurrences = toOccurrences(events, from, to, userZone);
     Map<String, Todo> existingByExternalEventId = findExisting(user.getId(), occurrences);
@@ -108,7 +115,7 @@ public class CalendarTodoSynchronizer {
     List<EventOccurrence> newOccurrences = occurrences.stream()
         .filter(occurrence -> !existingByExternalEventId.containsKey(occurrence.externalEventId()))
         .toList();
-    List<Todo> missingTodos = findMissing(user.getId(), occurrences, from, to);
+    List<Todo> missingTodos = findMissing(user.getId(), source, occurrences, from, to);
 
     boolean titleChanged = false;
     Set<Long> movedTodoIds = new HashSet<>();
@@ -128,7 +135,7 @@ public class CalendarTodoSynchronizer {
         .filter(todo -> !movedTodoIds.contains(todo.getId()))
         .toList();
 
-    titleChanged |= saveOrUpdate(user, remainingOccurrences, existingByExternalEventId);
+    titleChanged |= saveOrUpdate(user, source, remainingOccurrences, existingByExternalEventId);
     removeMissing(remainingMissingTodos);
 
     if (titleChanged) {
@@ -150,13 +157,13 @@ public class CalendarTodoSynchronizer {
   }
 
   private List<Todo> findMissing(
-      Long userId, List<EventOccurrence> occurrences, LocalDate from, LocalDate to
+      Long userId, CalendarSource source, List<EventOccurrence> occurrences, LocalDate from, LocalDate to
   ) {
     Set<String> currentExternalEventIds = occurrences.stream()
         .map(EventOccurrence::externalEventId)
         .collect(Collectors.toSet());
 
-    return todoRepository.findCalendarEventsInRange(userId, SOURCE, from, to).stream()
+    return todoRepository.findCalendarEventsInRange(userId, source, from, to).stream()
         .filter(todo -> !currentExternalEventIds.contains(todo.getExternalEventId()))
         .sorted(Comparator.comparing(Todo::getStartDate))
         .toList();
@@ -165,33 +172,33 @@ public class CalendarTodoSynchronizer {
   private List<EventMove> matchMoves(
       List<Todo> missingTodos, List<EventOccurrence> occurrences, List<EventOccurrence> newOccurrences
   ) {
-    Map<String, Long> occurrenceCountByGoogleEventId = occurrences.stream()
-        .collect(Collectors.groupingBy(EventOccurrence::googleEventId, Collectors.counting()));
+    Map<String, Long> occurrenceCountByEventId = occurrences.stream()
+        .collect(Collectors.groupingBy(EventOccurrence::eventId, Collectors.counting()));
 
-    Map<String, List<Todo>> missingByGoogleEventId = new LinkedHashMap<>();
+    Map<String, List<Todo>> missingByEventId = new LinkedHashMap<>();
     for (Todo todo : missingTodos) {
-      String googleEventId = toGoogleEventId(todo.getExternalEventId());
-      if (googleEventId != null) {
-        missingByGoogleEventId.computeIfAbsent(googleEventId, key -> new ArrayList<>()).add(todo);
+      String eventId = toEventId(todo.getExternalEventId());
+      if (eventId != null) {
+        missingByEventId.computeIfAbsent(eventId, key -> new ArrayList<>()).add(todo);
       }
     }
 
-    Map<String, List<EventOccurrence>> newByGoogleEventId = new LinkedHashMap<>();
+    Map<String, List<EventOccurrence>> newByEventId = new LinkedHashMap<>();
     for (EventOccurrence occurrence : newOccurrences) {
-      newByGoogleEventId
-          .computeIfAbsent(occurrence.googleEventId(), key -> new ArrayList<>())
+      newByEventId
+          .computeIfAbsent(occurrence.eventId(), key -> new ArrayList<>())
           .add(occurrence);
     }
 
     List<EventMove> moves = new ArrayList<>();
-    missingByGoogleEventId.forEach((googleEventId, todos) -> {
-      List<EventOccurrence> candidates = newByGoogleEventId.get(googleEventId);
+    missingByEventId.forEach((eventId, todos) -> {
+      List<EventOccurrence> candidates = newByEventId.get(eventId);
       if (candidates == null) {
         return;
       }
       boolean singleDayEvent = todos.size() == 1
           && candidates.size() == 1
-          && occurrenceCountByGoogleEventId.getOrDefault(googleEventId, 0L) == 1L;
+          && occurrenceCountByEventId.getOrDefault(eventId, 0L) == 1L;
       if (singleDayEvent) {
         moves.add(new EventMove(todos.get(0), candidates.get(0)));
       }
@@ -225,7 +232,7 @@ public class CalendarTodoSynchronizer {
     instance.updateSortOrder(0);
   }
 
-  private String toGoogleEventId(String externalEventId) {
+  private String toEventId(String externalEventId) {
     if (externalEventId.startsWith(HASHED_ID_PREFIX)) {
       return null;
     }
@@ -238,7 +245,10 @@ public class CalendarTodoSynchronizer {
   }
 
   private boolean saveOrUpdate(
-      User user, List<EventOccurrence> occurrences, Map<String, Todo> existingByExternalEventId
+      User user,
+      CalendarSource source,
+      List<EventOccurrence> occurrences,
+      Map<String, Todo> existingByExternalEventId
   ) {
     boolean titleChanged = false;
     if (occurrences.isEmpty()) {
@@ -252,7 +262,7 @@ public class CalendarTodoSynchronizer {
       Todo existing = existingByExternalEventId.get(occurrence.externalEventId());
       if (existing == null) {
         todoRepository.save(Todo.createFromCalendarEvent(
-            user, SOURCE, occurrence.title(), occurrence.date(), occurrence.externalEventId()
+            user, source, occurrence.title(), occurrence.date(), occurrence.externalEventId()
         ));
         continue;
       }
@@ -330,8 +340,8 @@ public class CalendarTodoSynchronizer {
         .toList();
   }
 
-  private String toExternalEventId(String googleEventId, LocalDate date) {
-    String externalEventId = googleEventId + "_" + date;
+  private String toExternalEventId(String eventId, LocalDate date) {
+    String externalEventId = eventId + "_" + date;
     if (externalEventId.length() <= MAX_EXTERNAL_EVENT_ID_LENGTH) {
       return externalEventId;
     }
@@ -361,7 +371,7 @@ public class CalendarTodoSynchronizer {
   }
 
   private record EventOccurrence(
-      String googleEventId, String externalEventId, String title, LocalDate date
+      String eventId, String externalEventId, String title, LocalDate date
   ) {
 
   }

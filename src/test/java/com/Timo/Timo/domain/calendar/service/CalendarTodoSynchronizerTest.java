@@ -15,7 +15,6 @@ import com.Timo.Timo.domain.ai.service.AiHistoryCacheService;
 import com.Timo.Timo.domain.calendar.dto.event.ExternalCalendarEvent;
 import com.Timo.Timo.domain.calendar.dto.event.ExternalEventDateTime;
 import com.Timo.Timo.domain.calendar.exception.CalendarErrorCode;
-import com.Timo.Timo.domain.calendar.repository.CalendarConnectionRepository;
 import com.Timo.Timo.domain.timer.repository.TimerRecordRepository;
 import com.Timo.Timo.domain.timer.service.TimerService;
 import com.Timo.Timo.domain.todo.entity.Todo;
@@ -68,7 +67,7 @@ class CalendarTodoSynchronizerTest {
   @Mock
   private TimerService timerService;
   @Mock
-  private CalendarConnectionRepository calendarConnectionRepository;
+  private CalendarEventProvider provider;
   @Mock
   private AiHistoryCacheService aiHistoryCacheService;
 
@@ -88,7 +87,8 @@ class CalendarTodoSynchronizerTest {
     ReflectionTestUtils.setField(user, "id", USER_ID);
 
     when(userRepository.findByIdForUpdate(USER_ID)).thenReturn(Optional.of(user));
-    when(calendarConnectionRepository.existsByUserId(USER_ID)).thenReturn(true);
+    when(provider.source()).thenReturn(CalendarSource.GOOGLE);
+    when(provider.isConnected(USER_ID)).thenReturn(true);
     when(todoRepository.findByUser_IdAndExternalEventIdIn(eq(USER_ID), anyCollection())).thenReturn(List.of());
     when(todoRepository.findCalendarEventsInRange(USER_ID, CalendarSource.GOOGLE, FROM, TO)).thenReturn(List.of());
     when(timerRecordRepository.findTodoIdsHavingRecords(anyCollection())).thenReturn(List.of());
@@ -102,7 +102,7 @@ class CalendarTodoSynchronizerTest {
     @Test
     @DisplayName("캘린더 연동이 없으면 예외가 발생한다")
     void notConnected() {
-      when(calendarConnectionRepository.existsByUserId(USER_ID)).thenReturn(false);
+      when(provider.isConnected(USER_ID)).thenReturn(false);
 
       assertThatThrownBy(() -> synchronize(List.of()))
           .isInstanceOf(CustomException.class)
@@ -122,6 +122,17 @@ class CalendarTodoSynchronizerTest {
       assertThat(saved.getExternalEventId()).isEqualTo("evt1_2026-10-15");
       assertThat(saved.getDurationSeconds()).isZero();
       assertThat(saved.getCalendarSource()).isEqualTo(CalendarSource.GOOGLE);
+    }
+
+    @Test
+    @DisplayName("공급자의 출처로 투두를 저장하고, 같은 출처의 투두만 기존 일정으로 비교한다")
+    void useProviderSource() {
+      when(provider.source()).thenReturn(CalendarSource.APPLE);
+
+      synchronize(List.of(allDayEvent("evt1", "팀 회의", date(15), date(16))));
+
+      assertThat(captureSavedTodos().get(0).getCalendarSource()).isEqualTo(CalendarSource.APPLE);
+      verify(todoRepository).findCalendarEventsInRange(USER_ID, CalendarSource.APPLE, FROM, TO);
     }
 
     @Test
@@ -302,7 +313,7 @@ class CalendarTodoSynchronizerTest {
       when(todoRepository.findCalendarEventsAfter(USER_ID, CalendarSource.GOOGLE, today)).thenReturn(List.of(withRecord, withoutRecord));
       when(timerRecordRepository.findTodoIdsHavingRecords(anyCollection())).thenReturn(List.of(10L));
 
-      synchronizer.handleDisconnect(USER_ID, today);
+      synchronizer.handleDisconnect(USER_ID, CalendarSource.GOOGLE, today);
 
       assertThat(withRecord.isDisconnectedFromCalendar()).isTrue();
       verify(todoRepository).deleteAllById(List.of(11L));
@@ -315,7 +326,7 @@ class CalendarTodoSynchronizerTest {
       LocalDate today = date(15);
       when(todoRepository.findCalendarEventsAfter(USER_ID, CalendarSource.GOOGLE, today)).thenReturn(List.of());
 
-      synchronizer.handleDisconnect(USER_ID, today);
+      synchronizer.handleDisconnect(USER_ID, CalendarSource.GOOGLE, today);
 
       verify(todoRepository, never()).deleteAllById(any());
       verify(todoRepository).markDisconnectedFromCalendarUpTo(eq(USER_ID), eq(CalendarSource.GOOGLE), eq(today), any());
@@ -323,7 +334,7 @@ class CalendarTodoSynchronizerTest {
   }
 
   private void synchronize(List<ExternalCalendarEvent> events) {
-    synchronizer.synchronize(USER_ID, events, FROM, TO, ZONE);
+    synchronizer.synchronize(USER_ID, provider, events, FROM, TO, ZONE);
   }
 
   private List<Todo> captureSavedTodos() {

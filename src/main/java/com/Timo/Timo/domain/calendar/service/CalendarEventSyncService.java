@@ -1,7 +1,5 @@
 package com.Timo.Timo.domain.calendar.service;
 
-import com.Timo.Timo.domain.calendar.client.GoogleOAuthClient;
-import com.Timo.Timo.domain.calendar.dto.client.CalendarEventItem;
 import com.Timo.Timo.domain.calendar.dto.event.ExternalCalendarEvent;
 import com.Timo.Timo.domain.calendar.exception.CalendarErrorCode;
 import com.Timo.Timo.domain.home.enums.HomeFilter;
@@ -22,8 +20,7 @@ import org.springframework.stereotype.Service;
 public class CalendarEventSyncService {
 
   private final UserRepository userRepository;
-  private final CalendarTokenService calendarTokenService;
-  private final GoogleOAuthClient googleOAuthClient;
+  private final CalendarEventProviders calendarEventProviders;
   private final CalendarTodoSynchronizer calendarTodoSynchronizer;
 
   public void syncEvents(Long userId, String filterValue, String baseDateValue) {
@@ -36,15 +33,13 @@ public class CalendarEventSyncService {
     LocalDate from = filter.rangeStart(baseDate);
     LocalDate to = filter.rangeEnd(baseDate);
 
-    String accessToken = calendarTokenService.ensureValidAccessToken(userId);
-
     Instant timeMin = from.atStartOfDay(userZone).toInstant();
     Instant timeMax = to.plusDays(1).atStartOfDay(userZone).toInstant();
-    List<ExternalCalendarEvent> events = googleOAuthClient.fetchEvents(accessToken, timeMin, timeMax).stream()
-        .map(CalendarEventItem::toExternalEvent)
-        .toList();
 
-    calendarTodoSynchronizer.synchronize(userId, events, from, to, userZone);
+    for (CalendarEventProvider provider : calendarEventProviders.findConnected(userId)) {
+      List<ExternalCalendarEvent> events = provider.fetchEvents(userId, timeMin, timeMax);
+      calendarTodoSynchronizer.synchronize(userId, provider, events, from, to, userZone);
+    }
   }
 
   private HomeFilter parseFilter(String filterValue) {

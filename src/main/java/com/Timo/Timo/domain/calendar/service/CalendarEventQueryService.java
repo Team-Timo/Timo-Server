@@ -1,16 +1,13 @@
 package com.Timo.Timo.domain.calendar.service;
 
-import com.Timo.Timo.domain.calendar.client.GoogleOAuthClient;
-import com.Timo.Timo.domain.calendar.dto.client.CalendarEventItem;
 import com.Timo.Timo.domain.calendar.dto.event.ExternalCalendarEvent;
 import com.Timo.Timo.domain.calendar.dto.response.CalendarDayResponse;
 import com.Timo.Timo.domain.calendar.dto.response.CalendarEventResponse;
 import com.Timo.Timo.domain.calendar.dto.response.CalendarEventsResponse;
-import com.Timo.Timo.domain.calendar.entity.CalendarConnection;
 import com.Timo.Timo.domain.calendar.enums.CalendarFilter;
 import com.Timo.Timo.domain.calendar.exception.CalendarErrorCode;
-import com.Timo.Timo.domain.calendar.repository.CalendarConnectionRepository;
 import com.Timo.Timo.domain.calendar.utils.CalendarEventDateResolver;
+import com.Timo.Timo.domain.todo.enums.CalendarSource;
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.exception.UserErrorCode;
 import com.Timo.Timo.domain.user.repository.UserRepository;
@@ -32,8 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class CalendarEventQueryService {
 
   private final UserRepository userRepository;
-  private final CalendarTokenService calendarTokenService;
-  private final GoogleOAuthClient googleOAuthClient;
+  private final CalendarEventProviders calendarEventProviders;
 
   public CalendarEventsResponse getEvents(Long userId, String filterValue, String baseDateValue) {
     User user = getUser(userId);
@@ -44,15 +40,14 @@ public class CalendarEventQueryService {
     LocalDate from = filter.rangeStart(baseDate);
     LocalDate to = filter.rangeEnd(baseDate);
 
-    String accessToken = calendarTokenService.ensureValidAccessToken(userId);
-
     Instant timeMin = from.atStartOfDay(userZone).toInstant();
     Instant timeMax = to.plusDays(1).atStartOfDay(userZone).toInstant();
-    List<ExternalCalendarEvent> events = googleOAuthClient.fetchEvents(accessToken, timeMin, timeMax).stream()
-        .map(CalendarEventItem::toExternalEvent)
-        .toList();
 
-    Map<LocalDate, List<CalendarEventResponse>> eventsByDate = groupByDate(events, from, to, userZone);
+    Map<LocalDate, List<CalendarEventResponse>> eventsByDate = new LinkedHashMap<>();
+    for (CalendarEventProvider provider : calendarEventProviders.findConnected(userId)) {
+      List<ExternalCalendarEvent> events = provider.fetchEvents(userId, timeMin, timeMax);
+      groupByDate(eventsByDate, provider.source(), events, from, to, userZone);
+    }
 
     List<CalendarDayResponse> days = from.datesUntil(to.plusDays(1))
         .map(date -> CalendarDayResponse.of(date, eventsByDate.getOrDefault(date, List.of())))
@@ -77,11 +72,14 @@ public class CalendarEventQueryService {
     }
   }
 
-  private Map<LocalDate, List<CalendarEventResponse>> groupByDate(
-      List<ExternalCalendarEvent> events, LocalDate from, LocalDate to, ZoneId userZone
+  private void groupByDate(
+      Map<LocalDate, List<CalendarEventResponse>> eventsByDate,
+      CalendarSource source,
+      List<ExternalCalendarEvent> events,
+      LocalDate from,
+      LocalDate to,
+      ZoneId userZone
   ) {
-    Map<LocalDate, List<CalendarEventResponse>> eventsByDate = new LinkedHashMap<>();
-
     for (ExternalCalendarEvent event : events) {
       for (LocalDate date : CalendarEventDateResolver.resolveDates(event, userZone)) {
         if (date.isBefore(from) || date.isAfter(to)) {
@@ -89,9 +87,8 @@ public class CalendarEventQueryService {
         }
         eventsByDate
             .computeIfAbsent(date, key -> new ArrayList<>())
-            .add(CalendarEventResponse.of(event.title()));
+            .add(CalendarEventResponse.of(event.title(), source));
       }
     }
-    return eventsByDate;
   }
 }

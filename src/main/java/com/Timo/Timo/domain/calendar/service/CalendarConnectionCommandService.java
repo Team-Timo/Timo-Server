@@ -63,7 +63,7 @@ public class CalendarConnectionCommandService {
 
   @Transactional
   public void deleteConnection(CalendarConnection calendarConnection, LocalDate today) {
-    calendarTodoSynchronizer.handleDisconnect(calendarConnection.getUser().getId(), today);
+    calendarTodoSynchronizer.handleDisconnect(calendarConnection.getUser().getId(), CalendarSource.GOOGLE, today);
 
     String tokenToRevoke = calendarConnection.getRefreshToken() != null
         ? calendarConnection.getRefreshToken()
