@@ -37,13 +37,24 @@ public class AnalyticsEventSender {
   }
 
   public void send(Long userId, AnalyticsEvent event, Map<String, ?> properties) {
-    if (messageBuilder == null || userId == null) {
+    if (userId == null) {
+      return;
+    }
+    publish(String.valueOf(userId), event, properties);
+  }
+
+  public void sendAnonymous(AnalyticsEvent event) {
+    publish("", event, Map.of());
+  }
+
+  private void publish(String distinctId, AnalyticsEvent event, Map<String, ?> properties) {
+    if (messageBuilder == null) {
       return;
     }
 
     JSONObject message;
     try {
-      message = messageBuilder.event(String.valueOf(userId), event.getEventName(), new JSONObject(properties));
+      message = messageBuilder.event(distinctId, event.getEventName(), new JSONObject(properties));
     } catch (RuntimeException exception) {
       log.warn("Failed to build analytics event. event={}", event.getEventName(), exception);
       return;
