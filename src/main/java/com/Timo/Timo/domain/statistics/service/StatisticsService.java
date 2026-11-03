@@ -137,9 +137,7 @@ public class StatisticsService {
 			).stream()
 			.collect(Collectors.toMap(TimerDailyTodoStats::getTodoId, TimerDailyTodoStats::getActualSeconds));
 
-		List<Todo> dailyTodos = statisticsOccurrenceCalculator.findDailyTodos(
-			userId, date, actualSecondsByTodoId.keySet()
-		);
+		List<Todo> dailyTodos = statisticsOccurrenceCalculator.findDailyCompletedTodos(userId, date);
 		Map<Long, String> tagNamesById = findTagNames(dailyTodos);
 		List<DailyTodoResponse> todos = dailyTodos.stream()
 			.map(todo -> toDailyTodoResponse(todo, actualSecondsByTodoId, tagNamesById))
