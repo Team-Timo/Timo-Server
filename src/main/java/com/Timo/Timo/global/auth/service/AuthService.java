@@ -29,8 +29,8 @@ public class AuthService {
   private final UserRepository userRepository;
   private final RefreshTokenService refreshTokenService;
   private final BlackListService blacklistService;
-  private final GoogleCalendarConnectionRepository calendarConnectionRepository;
-  private final GoogleTokenRevocationOutboxRepository calendarRevocationOutboxRepository;
+  private final GoogleCalendarConnectionRepository googleCalendarConnectionRepository;
+  private final GoogleTokenRevocationOutboxRepository googleTokenRevocationOutboxRepository;
 
   public AuthTokenResponse exchangeCodeForToken(String code) {
 
@@ -126,9 +126,9 @@ public class AuthService {
   }
 
   private void revokeCalendarConnectionIfExists(Long userId) {
-    calendarConnectionRepository.findTokenToRevokeByUserId(userId)
+    googleCalendarConnectionRepository.findTokenToRevokeByUserId(userId)
         .ifPresent(tokenToRevoke ->
-            calendarRevocationOutboxRepository.save(
+            googleTokenRevocationOutboxRepository.save(
                 GoogleTokenRevocationOutbox.builder()
                     .token(tokenToRevoke)
                     .build()
