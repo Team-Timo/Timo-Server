@@ -127,4 +127,30 @@ public interface TimerRecordRepository extends JpaRepository<TimerRecord, Long> 
       @Param("fromInclusive") LocalDateTime fromInclusive,
       @Param("toExclusive") LocalDateTime toExclusive
   );
+
+  @Query("""
+      select
+        tr.todo.id as todoId,
+        tr.targetDate as targetDate,
+        tr.startedAt as startedAt,
+        tr.actualSeconds as actualSeconds
+      from TimerRecord tr
+      where tr.user.id = :userId
+        and tr.actualSeconds is not null
+        and (
+          (tr.targetDate >= :fromDate and tr.targetDate <= :toDate)
+          or (
+            tr.targetDate is null
+            and tr.startedAt >= :fromInclusive
+            and tr.startedAt < :toExclusive
+          )
+        )
+      """)
+  List<TimerStatisticsRecord> findStatisticsRecords(
+      @Param("userId") Long userId,
+      @Param("fromDate") LocalDate fromDate,
+      @Param("toDate") LocalDate toDate,
+      @Param("fromInclusive") LocalDateTime fromInclusive,
+      @Param("toExclusive") LocalDateTime toExclusive
+  );
 }
