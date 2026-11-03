@@ -29,7 +29,7 @@ class HomeTodoMapperTest {
 			.build();
 
 	@Test
-	@DisplayName("구글 일정 투두는 공통 필드와 기존 구글 필드를 함께 채운다")
+	@DisplayName("구글 일정 투두는 출처와 상태를 캘린더 공통 필드로 내려준다")
 	void googleEventTodo() {
 		Todo todo = Todo.createFromCalendarEvent(user, CalendarSource.GOOGLE, "구글 회의", DATE, "evt1_2026-10-15");
 		todo.markDeletedFromCalendar();
@@ -40,13 +40,10 @@ class HomeTodoMapperTest {
 		assertThat(response.calendarSource()).isEqualTo(CalendarSource.GOOGLE);
 		assertThat(response.isDeletedFromCalendar()).isTrue();
 		assertThat(response.isDisconnectedFromCalendar()).isFalse();
-		assertThat(response.isGoogleEvent()).isTrue();
-		assertThat(response.isDeletedFromGoogle()).isTrue();
-		assertThat(response.isDisconnectedFromGoogle()).isFalse();
 	}
 
 	@Test
-	@DisplayName("애플 일정 투두는 공통 필드만 채우고 기존 구글 필드는 false로 둔다")
+	@DisplayName("애플 일정 투두는 출처를 APPLE로 내려준다")
 	void appleEventTodo() {
 		Todo todo = Todo.createFromCalendarEvent(user, CalendarSource.APPLE, "애플 약속", DATE, "apple1_2026-10-15");
 		todo.markDisconnectedFromCalendar();
@@ -56,8 +53,6 @@ class HomeTodoMapperTest {
 		assertThat(response.isCalendarEvent()).isTrue();
 		assertThat(response.calendarSource()).isEqualTo(CalendarSource.APPLE);
 		assertThat(response.isDisconnectedFromCalendar()).isTrue();
-		assertThat(response.isGoogleEvent()).isFalse();
-		assertThat(response.isDisconnectedFromGoogle()).isFalse();
 	}
 
 	@Test
@@ -70,7 +65,6 @@ class HomeTodoMapperTest {
 
 		assertThat(response.isCalendarEvent()).isFalse();
 		assertThat(response.calendarSource()).isNull();
-		assertThat(response.isGoogleEvent()).isFalse();
 	}
 
 	private TodoResponse map(Todo todo) {

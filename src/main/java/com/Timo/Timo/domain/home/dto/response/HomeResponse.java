@@ -79,15 +79,6 @@ public record HomeResponse(
 			@JsonProperty("isRepeated")
 			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 			boolean isRepeated,
-			@JsonProperty("isGoogleEvent")
-			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
-			boolean isGoogleEvent,
-			@JsonProperty("isDeletedFromGoogle")
-			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
-			boolean isDeletedFromGoogle,
-			@JsonProperty("isDisconnectedFromGoogle")
-			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
-			boolean isDisconnectedFromGoogle,
 			@JsonProperty("isCalendarEvent")
 			@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 			boolean isCalendarEvent,

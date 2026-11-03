@@ -331,10 +331,6 @@ public class Todo extends BaseTimeEntity {
 		return calendarSource != null;
 	}
 
-	public boolean isFrom(CalendarSource source) {
-		return calendarSource == source;
-	}
-
 	public void markDeletedFromCalendar() {
 		this.deletedFromCalendar = true;
 	}

@@ -11,7 +11,6 @@ import com.Timo.Timo.domain.tag.entity.Tag;
 import com.Timo.Timo.domain.todo.entity.Subtask;
 import com.Timo.Timo.domain.todo.entity.Todo;
 import com.Timo.Timo.domain.todo.entity.TodoInstance;
-import com.Timo.Timo.domain.todo.enums.CalendarSource;
 import com.Timo.Timo.domain.todo.enums.RepeatType;
 import com.Timo.Timo.domain.todo.enums.TodoTimerStatus;
 import com.Timo.Timo.domain.todo.vo.SubtaskStates;
@@ -33,9 +32,6 @@ public class HomeTodoMapper {
 				mapTag(context.tag()),
 				hasMemo(todo, instance),
 				todo.getRepeatType() != RepeatType.NONE,
-				todo.isFrom(CalendarSource.GOOGLE),
-				todo.isFrom(CalendarSource.GOOGLE) && todo.isDeletedFromCalendar(),
-				todo.isFrom(CalendarSource.GOOGLE) && todo.isDisconnectedFromCalendar(),
 				todo.isCalendarEvent(),
 				todo.getCalendarSource(),
 				todo.isDeletedFromCalendar(),

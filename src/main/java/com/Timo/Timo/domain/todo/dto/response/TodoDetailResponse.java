@@ -35,15 +35,6 @@ public record TodoDetailResponse(
 		TagResponse tag,
 		@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 		RepeatResponse repeat,
-		@JsonProperty("isGoogleEvent")
-		@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
-		boolean isGoogleEvent,
-		@JsonProperty("isDeletedFromGoogle")
-		@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
-		boolean isDeletedFromGoogle,
-		@JsonProperty("isDisconnectedFromGoogle")
-		@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
-		boolean isDisconnectedFromGoogle,
 		@JsonProperty("isCalendarEvent")
 		@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 		boolean isCalendarEvent,
@@ -76,9 +67,6 @@ public record TodoDetailResponse(
 				todo.getPriority() != null ? todo.getPriority().name() : null,
 				TagResponse.from(tag),
 				RepeatResponse.from(todo),
-				todo.isFrom(CalendarSource.GOOGLE),
-				todo.isFrom(CalendarSource.GOOGLE) && todo.isDeletedFromCalendar(),
-				todo.isFrom(CalendarSource.GOOGLE) && todo.isDisconnectedFromCalendar(),
 				todo.isCalendarEvent(),
 				todo.getCalendarSource(),
 				todo.isDeletedFromCalendar(),
