@@ -69,67 +69,6 @@ public interface TimerRecordRepository extends JpaRepository<TimerRecord, Long> 
 
   @Query("""
       select
-        coalesce(sum(tr.actualSeconds), 0) as totalRecordSeconds,
-        count(distinct function('date', coalesce(tr.endedAt, tr.startedAt))) as timerRecordedDayCount
-      from TimerRecord tr
-      where tr.user.id = :userId
-        and tr.actualSeconds is not null
-        and coalesce(tr.endedAt, tr.startedAt) >= :fromInclusive
-        and coalesce(tr.endedAt, tr.startedAt) < :toExclusive
-      """)
-  TimerMonthlyRecordStats findMonthlyRecordStats(
-      @Param("userId") Long userId,
-      @Param("fromInclusive") LocalDateTime fromInclusive,
-      @Param("toExclusive") LocalDateTime toExclusive
-  );
-
-  @Query("""
-      select coalesce(sum(tr.actualSeconds), 0)
-      from TimerRecord tr
-      where tr.user.id = :userId
-        and tr.actualSeconds is not null
-        and coalesce(tr.endedAt, tr.startedAt) >= :fromInclusive
-        and coalesce(tr.endedAt, tr.startedAt) < :toExclusive
-      """)
-  Long sumActualSeconds(
-      @Param("userId") Long userId,
-      @Param("fromInclusive") LocalDateTime fromInclusive,
-      @Param("toExclusive") LocalDateTime toExclusive
-  );
-
-  @Query("""
-      select
-        tr.todo.id as todoId,
-        coalesce(sum(tr.actualSeconds), 0) as actualSeconds
-      from TimerRecord tr
-      where tr.user.id = :userId
-        and tr.actualSeconds is not null
-        and coalesce(tr.endedAt, tr.startedAt) >= :fromInclusive
-        and coalesce(tr.endedAt, tr.startedAt) < :toExclusive
-      group by tr.todo.id
-      """)
-  List<TimerDailyTodoStats> findDailyTodoStats(
-      @Param("userId") Long userId,
-      @Param("fromInclusive") LocalDateTime fromInclusive,
-      @Param("toExclusive") LocalDateTime toExclusive
-  );
-
-  @Query("""
-      select coalesce(tr.endedAt, tr.startedAt)
-      from TimerRecord tr
-      where tr.user.id = :userId
-        and tr.actualSeconds is not null
-        and coalesce(tr.endedAt, tr.startedAt) >= :fromInclusive
-        and coalesce(tr.endedAt, tr.startedAt) < :toExclusive
-      """)
-  List<LocalDateTime> findMonthlyRecordedAtTimes(
-      @Param("userId") Long userId,
-      @Param("fromInclusive") LocalDateTime fromInclusive,
-      @Param("toExclusive") LocalDateTime toExclusive
-  );
-
-  @Query("""
-      select
         tr.todo.id as todoId,
         tr.targetDate as targetDate,
         tr.startedAt as startedAt,

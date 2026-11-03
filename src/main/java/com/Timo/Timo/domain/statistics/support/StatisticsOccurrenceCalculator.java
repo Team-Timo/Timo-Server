@@ -2,8 +2,10 @@ package com.Timo.Timo.domain.statistics.support;
 
 import java.time.LocalDate;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -54,7 +56,7 @@ public class StatisticsOccurrenceCalculator {
 
 	private DailyOccurrence summarizeDate(List<Todo> rules, Map<InstanceKey, TodoInstance> instancesByKey, LocalDate date) {
 		int totalCount = 0;
-		int completedCount = 0;
+		Set<Long> completedTodoIds = new HashSet<>();
 
 		for (Todo rule : rules) {
 			TodoInstance instance = instancesByKey.get(new InstanceKey(rule.getId(), date));
@@ -64,11 +66,11 @@ public class StatisticsOccurrenceCalculator {
 			}
 			totalCount++;
 			if (instance != null && instance.isCompleted()) {
-				completedCount++;
+				completedTodoIds.add(rule.getId());
 			}
 		}
 
-		return new DailyOccurrence(date, totalCount, completedCount);
+		return new DailyOccurrence(date, totalCount, completedTodoIds.size(), completedTodoIds);
 	}
 
 	private Map<InstanceKey, TodoInstance> loadInstances(List<Todo> rules, LocalDate from, LocalDate to) {
@@ -84,7 +86,7 @@ public class StatisticsOccurrenceCalculator {
 			));
 	}
 
-	public record DailyOccurrence(LocalDate date, int totalCount, int completedCount) {
+	public record DailyOccurrence(LocalDate date, int totalCount, int completedCount, Set<Long> completedTodoIds) {
 	}
 
 	private record InstanceKey(Long todoId, LocalDate date) {
