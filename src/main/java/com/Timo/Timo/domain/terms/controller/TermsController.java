@@ -1,7 +1,6 @@
 package com.Timo.Timo.domain.terms.controller;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -11,7 +10,6 @@ import com.Timo.Timo.domain.terms.docs.TermsControllerDocs;
 import com.Timo.Timo.domain.terms.dto.response.TermsDetailResponse;
 import com.Timo.Timo.domain.terms.exception.TermsSuccessCode;
 import com.Timo.Timo.domain.terms.service.TermsService;
-import com.Timo.Timo.global.auth.principal.CustomUserDetails;
 import com.Timo.Timo.global.response.BaseResponse;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -28,12 +26,10 @@ public class TermsController implements TermsControllerDocs {
 	@Override
 	@GetMapping
 	public ResponseEntity<BaseResponse<TermsDetailResponse>> getTermsByCondition(
-		@AuthenticationPrincipal CustomUserDetails userDetails,
 		@RequestParam String type,
 		@RequestParam String language
 	) {
-		Long userId = userDetails != null ? userDetails.getUserId() : null;
-		TermsDetailResponse response = termsService.getTermsByCondition(userId, type, language);
+		TermsDetailResponse response = termsService.getTermsByCondition(type, language);
 
 		return ResponseEntity.ok(
 			BaseResponse.onSuccess(TermsSuccessCode.TERMS_RETRIEVED, response)

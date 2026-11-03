@@ -20,14 +20,14 @@ public class TermsService {
 	private final TermsRepository termsRepository;
 	private final AnalyticsEventSender analyticsEventSender;
 
-	public TermsDetailResponse getTermsByCondition(Long userId, String type, String language) {
+	public TermsDetailResponse getTermsByCondition(String type, String language) {
 		Terms terms = termsRepository.findFirstByTypeAndLanguageOrderByIdDesc(
 				TermsType.from(type),
 				TermsLanguage.from(language)
 			)
 			.orElse(null);
 
-		analyticsEventSender.send(userId, AnalyticsEvent.TERMS_VIEWED);
+		analyticsEventSender.sendAnonymous(AnalyticsEvent.TERMS_VIEWED);
 
 		if (terms == null) {
 			return null;
