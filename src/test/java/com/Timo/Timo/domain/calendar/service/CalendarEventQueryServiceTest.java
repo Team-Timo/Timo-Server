@@ -18,6 +18,7 @@ import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.enums.Provider;
 import com.Timo.Timo.domain.user.repository.UserRepository;
 import com.Timo.Timo.global.exception.CustomException;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -89,6 +90,50 @@ class CalendarEventQueryServiceTest {
         CalendarSourceFailureResponse.of(CalendarSource.GOOGLE, CalendarErrorCode.GOOGLE_CALENDAR_UPSTREAM_ERROR));
   }
 
+  @Test
+  @DisplayName("같은 날짜의 일정은 공급자 순서와 관계없이 종일 일정 먼저, 나머지는 시작 시각순으로 정렬한다")
+  void sortByStartWithinDay() {
+    when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user()));
+    CalendarEventProvider google = provider(CalendarSource.GOOGLE, true, List.of(
+        timedEvent("g1", "팀 회의", "2026-10-15T05:00:00Z"),
+        timedEvent("g2", "점심", "2026-10-15T03:00:00Z")
+    ));
+    CalendarEventProvider apple = provider(CalendarSource.APPLE, true, List.of(
+        timedEvent("a1", "병원", "2026-10-15T00:00:00Z"),
+        allDayEvent("a2", "생일", date(15))
+    ));
+    CalendarEventQueryService service = new CalendarEventQueryService(
+        userRepository, new CalendarEventProviders(List.of(google, apple)));
+
+    CalendarEventsResponse response = service.getEvents(USER_ID, "DAY", "2026-10-15");
+
+    assertThat(response.days().get(0).events()).containsExactly(
+        CalendarEventResponse.of("생일", CalendarSource.APPLE),
+        CalendarEventResponse.of("병원", CalendarSource.APPLE),
+        CalendarEventResponse.of("점심", CalendarSource.GOOGLE),
+        CalendarEventResponse.of("팀 회의", CalendarSource.GOOGLE)
+    );
+  }
+
+  @Test
+  @DisplayName("시작 시각이 같으면 구글 일정이 애플 일정보다 먼저 온다")
+  void keepSourceOrderForSameStart() {
+    when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user()));
+    CalendarEventProvider apple = provider(CalendarSource.APPLE, true,
+        List.of(timedEvent("a1", "애플 회의", "2026-10-15T01:00:00Z")));
+    CalendarEventProvider google = provider(CalendarSource.GOOGLE, true,
+        List.of(timedEvent("g1", "구글 회의", "2026-10-15T01:00:00Z")));
+    CalendarEventQueryService service = new CalendarEventQueryService(
+        userRepository, new CalendarEventProviders(List.of(apple, google)));
+
+    CalendarEventsResponse response = service.getEvents(USER_ID, "DAY", "2026-10-15");
+
+    assertThat(response.days().get(0).events()).containsExactly(
+        CalendarEventResponse.of("구글 회의", CalendarSource.GOOGLE),
+        CalendarEventResponse.of("애플 회의", CalendarSource.APPLE)
+    );
+  }
+
   private CalendarEventProvider provider(
       CalendarSource source, boolean connected, List<ExternalCalendarEvent> events
   ) {
@@ -102,6 +147,12 @@ class CalendarEventQueryServiceTest {
   private ExternalCalendarEvent allDayEvent(String id, String title, LocalDate date) {
     return new ExternalCalendarEvent(
         id, title, ExternalEventDateTime.ofDate(date), ExternalEventDateTime.ofDate(date.plusDays(1)));
+  }
+
+  private ExternalCalendarEvent timedEvent(String id, String title, String startUtc) {
+    Instant start = Instant.parse(startUtc);
+    return new ExternalCalendarEvent(
+        id, title, ExternalEventDateTime.ofDateTime(start), ExternalEventDateTime.ofDateTime(start.plusSeconds(3600)));
   }
 
   private User user() {

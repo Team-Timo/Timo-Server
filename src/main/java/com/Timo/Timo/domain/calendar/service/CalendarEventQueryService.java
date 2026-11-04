@@ -18,6 +18,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +29,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class CalendarEventQueryService {
+
+  private static final Comparator<SourcedEvent> START_ORDER = Comparator
+      .comparing((SourcedEvent sourced) -> sourced.event().start().dateTime() != null)
+      .thenComparing(sourced -> sourced.event().start().dateTime(),
+          Comparator.nullsFirst(Comparator.naturalOrder()));
 
   private final UserRepository userRepository;
   private final CalendarEventProviders calendarEventProviders;
@@ -44,14 +50,14 @@ public class CalendarEventQueryService {
     Instant timeMin = from.atStartOfDay(userZone).toInstant();
     Instant timeMax = to.plusDays(1).atStartOfDay(userZone).toInstant();
 
-    Map<LocalDate, List<CalendarEventResponse>> eventsByDate = new LinkedHashMap<>();
+    Map<LocalDate, List<SourcedEvent>> eventsByDate = new LinkedHashMap<>();
     List<CalendarSourceFailureResponse> failedSources = calendarEventProviders.forEachConnected(userId, provider -> {
       List<ExternalCalendarEvent> events = provider.fetchEvents(userId, timeMin, timeMax);
       groupByDate(eventsByDate, provider.source(), events, from, to, userZone);
     });
 
     List<CalendarDayResponse> days = from.datesUntil(to.plusDays(1))
-        .map(date -> CalendarDayResponse.of(date, eventsByDate.getOrDefault(date, List.of())))
+        .map(date -> CalendarDayResponse.of(date, toSortedResponses(eventsByDate.getOrDefault(date, List.of()))))
         .toList();
 
     return CalendarEventsResponse.of(filter, baseDate, days, failedSources);
@@ -74,7 +80,7 @@ public class CalendarEventQueryService {
   }
 
   private void groupByDate(
-      Map<LocalDate, List<CalendarEventResponse>> eventsByDate,
+      Map<LocalDate, List<SourcedEvent>> eventsByDate,
       CalendarSource source,
       List<ExternalCalendarEvent> events,
       LocalDate from,
@@ -88,8 +94,20 @@ public class CalendarEventQueryService {
         }
         eventsByDate
             .computeIfAbsent(date, key -> new ArrayList<>())
-            .add(CalendarEventResponse.of(event.title(), source));
+            .add(new SourcedEvent(event, source));
       }
     }
+  }
+
+  // 공급자 순서와 관계없이 같은 날짜 안에서는 종일 일정 먼저, 나머지는 시작 시각순으로 내려준다.
+  private List<CalendarEventResponse> toSortedResponses(List<SourcedEvent> events) {
+    return events.stream()
+        .sorted(START_ORDER)
+        .map(sourced -> CalendarEventResponse.of(sourced.event().title(), sourced.source()))
+        .toList();
+  }
+
+  private record SourcedEvent(ExternalCalendarEvent event, CalendarSource source) {
+
   }
 }
