@@ -8,6 +8,7 @@ import com.Timo.Timo.domain.tag.entity.Tag;
 import com.Timo.Timo.domain.todo.entity.Subtask;
 import com.Timo.Timo.domain.todo.entity.Todo;
 import com.Timo.Timo.domain.todo.entity.TodoInstance;
+import com.Timo.Timo.domain.todo.enums.CalendarSource;
 import com.Timo.Timo.domain.todo.enums.RepeatType;
 import com.Timo.Timo.domain.todo.enums.TodoTimerStatus;
 import com.Timo.Timo.domain.todo.enums.Weekday;
@@ -34,15 +35,17 @@ public record TodoDetailResponse(
 		TagResponse tag,
 		@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 		RepeatResponse repeat,
-		@JsonProperty("isGoogleEvent")
+		@JsonProperty("isCalendarEvent")
 		@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
-		boolean isGoogleEvent,
-		@JsonProperty("isDeletedFromGoogle")
+		boolean isCalendarEvent,
+		@Schema(description = "일정 출처 (GOOGLE/APPLE), 티모에서 만든 투두는 null")
+		CalendarSource calendarSource,
+		@JsonProperty("isDeletedFromCalendar")
 		@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
-		boolean isDeletedFromGoogle,
-		@JsonProperty("isDisconnectedFromGoogle")
+		boolean isDeletedFromCalendar,
+		@JsonProperty("isDisconnectedFromCalendar")
 		@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
-		boolean isDisconnectedFromGoogle,
+		boolean isDisconnectedFromCalendar,
 		@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 		TodoTimerStatus timerStatus,
 		String memo,
@@ -64,9 +67,10 @@ public record TodoDetailResponse(
 				todo.getPriority() != null ? todo.getPriority().name() : null,
 				TagResponse.from(tag),
 				RepeatResponse.from(todo),
-				todo.isGoogleEvent(),
-				todo.isDeletedFromGoogle(),
-				todo.isDisconnectedFromGoogle(),
+				todo.isCalendarEvent(),
+				todo.getCalendarSource(),
+				todo.isDeletedFromCalendar(),
+				todo.isDisconnectedFromCalendar(),
 				instance != null ? instance.getTimerStatus() : TodoTimerStatus.STOPPED,
 				instance != null ? instance.resolveMemo() : todo.getMemo(),
 				instance != null ? instance.getSortOrder() : null,
