@@ -1,6 +1,6 @@
 # 알림 대응 Runbook
 
-Slack·Discord로 알림을 받았을 때 확인할 순서를 정리한다. 알림 구성은 [README.md](README.md), 규칙별 기준은 [alert-rules.md](alert-rules.md)를 본다.
+Discord로 알림을 받았을 때 확인할 순서를 정리한다. 알림 구성은 [README.md](README.md), 규칙별 기준은 [alert-rules.md](alert-rules.md)를 본다.
 
 ## 공통 순서
 

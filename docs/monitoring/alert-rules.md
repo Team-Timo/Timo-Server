@@ -12,7 +12,7 @@ Grafana에 구성한 알림 규칙의 쿼리·임계치·지속 시간·메시�
 | 폴더 / 평가 그룹 | `timo` / `timo-app`                      |
 | 평가 주기 | 1분                                       |
 | 라벨 | `env = prod`                             |
-| Contact Point | `monitoring-alert` (Slack·Discord)       |
+| Contact Point | `monitoring-alert` (Discord)             |
 | 알림 조건 | Reduce(`B`, Last)한 값에 Threshold(`C`)를 적용 |
 
 - 지속 시간(Pending period)은 조건이 이 시간 동안 계속되어야 알림을 보내는 오탐 방지 설정이다. 규칙별로 다르다.
@@ -87,7 +87,7 @@ Grafana에 구성한 알림 규칙의 쿼리·임계치·지속 시간·메시�
 
 ## 메시지 템플릿
 
-알림 템플릿 `timo-message`에 `timo.message`를 정의하고, Contact Point의 Slack(Text Body)·Discord(Message Content) 본문에서 `{{ template "timo.message" . }}`로 사용한다.
+알림 템플릿 `timo-message`에 `timo.message`를 정의하고, Contact Point의 Discord(Message Content) 본문에서 `{{ template "timo.message" . }}`로 사용한다.
 
 ```
 {{ define "timo.message" }}
@@ -105,7 +105,7 @@ Grafana에 구성한 알림 규칙의 쿼리·임계치·지속 시간·메시�
 ## 규칙 변경과 검증
 
 1. 규칙을 수정하고 저장한다. 변경한 값을 이 문서에 반영한다.
-2. 임계치를 임시로 낮추고 지속 시간을 `0s`로 해서 알림과 복구(Resolved) 메시지가 Slack·Discord에 오는지 확인한다.
+2. 임계치를 임시로 낮추고 지속 시간을 `0s`로 해서 알림과 복구(Resolved) 메시지가 Discord에 오는지 확인한다.
 3. 반드시 임계치와 지속 시간을 원래 값으로 되돌리고, 알림 상태가 `Normal`로 돌아왔는지 확인한다.
 
 ## Grafana 설정을 다시 만드는 순서
@@ -114,9 +114,9 @@ Grafana에 구성한 알림 규칙의 쿼리·임계치·지속 시간·메시�
 
 1. 서버의 Grafana 컨테이너가 실행 중인지 확인하고 SSH 터널로 접속한다.
 2. `Connections → Data sources`에서 Prometheus가 연결되어 있는지 확인한다. 저장소의 `deploy/grafana/provisioning/datasources/datasource.yml`이 자동으로 등록한다.
-3. Slack·Discord Webhook URL을 준비한다(Webhook을 새로 발급받는다).
-4. `Alerting → Contact points`에서 `monitoring-alert`를 만들고 Slack과 Discord 연동을 추가한다. **Test**로 두 채널 수신을 확인한다.
-5. `Notification Templates`에 `timo-message` 템플릿을 만들고, 두 연동의 본문에 `{{ template "timo.message" . }}`를 넣는다.
+3. Discord Webhook URL을 준비한다(Webhook을 새로 발급받는다).
+4. `Alerting → Contact points`에서 `monitoring-alert`를 만들고 Discord 연동을 추가한다. **Test**로 수신을 확인한다.
+5. `Notification Templates`에 `timo-message` 템플릿을 만들고, Discord 연동의 본문에 `{{ template "timo.message" . }}`를 넣는다.
 6. `Notification policies`의 Default policy를 위 표대로 설정한다.
 7. 폴더 `timo`와 평가 그룹 `timo-app`(평가 주기 1분)을 만든다.
 8. 규칙 4개를 위 표와 설명대로 만든다. 라벨 `env = prod`를 빠뜨리지 않는다.

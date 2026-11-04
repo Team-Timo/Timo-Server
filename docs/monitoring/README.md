@@ -1,7 +1,7 @@
 # Timo Server 모니터링 알림
 
-Prometheus가 수집한 서버 메트릭을 Grafana Alerting으로 평가하고, 임계치를 넘으면 Slack과 Discord로 알린다. 
-알림 구성을 이해하거나 Grafana에 접속할 때 읽는다. 
+Prometheus가 수집한 서버 메트릭을 Grafana Alerting으로 평가하고, 임계치를 넘으면 Discord로 알린다.
+알림 구성을 이해하거나 Grafana에 접속할 때 읽는다.
 규칙별 기준은 [alert-rules.md](alert-rules.md), 알림을 받은 뒤의 대응은 [runbook.md](runbook.md)를 본다.
 
 ## 구성 범위
@@ -13,7 +13,7 @@ Prometheus가 수집한 서버 메트릭을 Grafana Alerting으로 평가하고,
 
 1. `deploy/prometheus/prometheus.yml`이 `timo-server`의 `/actuator/prometheus`를 15초마다 수집한다. blue·green 두 컨테이너를 모두 수집한다.
 2. Grafana의 알림 규칙이 Prometheus 데이터를 1분마다 평가한다. 조건이 규칙별 지속 시간(1~5분) 동안 유지되면 알림이 발생(Firing)하고, 조건이 풀리면 복구(Resolved)된다. 규칙별 지속 시간은 [alert-rules.md](alert-rules.md)에 있다.
-3. 알림 정책이 알림을 Contact Point로 보낸다. Contact Point 하나에 Slack과 Discord 연동이 함께 들어 있어 두 채널에 같은 메시지가 간다.
+3. 알림 정책이 알림을 Contact Point로 보낸다. Contact Point `monitoring-alert`에는 Discord 연동만 있다.
 4. 메시지 본문은 Grafana 알림 템플릿(`timo.message`)으로 만든다. 요약, 설명, 환경, 상태만 담는다.
 
 Prometheus와 Grafana는 `deploy/docker-compose.prod.yml`로 운영 서버(EC2)에서 실행한다.
@@ -41,9 +41,9 @@ ssh -i <키 파일 경로> -L 3000:localhost:3000 ubuntu@<EC2_HOST>
 
 ## 비밀값 관리
 
-- Slack·Discord Webhook URL은 Grafana의 Contact Point에만 입력한다. 화면에서 다시 확인할 수 없는 보안 설정으로 저장된다.
+- Discord Webhook URL은 Grafana의 Contact Point에만 입력한다. 화면에서 다시 확인할 수 없는 보안 설정으로 저장된다.
 - Webhook URL, Grafana 계정 값, SSH 키를 저장소·문서·PR·채팅·이슈에 적지 않는다.
-- Webhook URL이 노출되면 Slack 앱 또는 Discord 채널 설정에서 해당 Webhook을 삭제·재발급하고 Contact Point의 URL을 교체한다.
+- Webhook URL이 노출되면 Discord 채널 설정에서 해당 Webhook을 삭제·재발급하고 Contact Point의 URL을 교체한다.
 - 알림 메시지에는 토큰·쿠키·요청 본문·개인정보를 넣지 않는다. 규칙의 Summary·Description에도 넣지 않는다.
 
 ## 알려진 한계
@@ -61,3 +61,4 @@ ssh -i <키 파일 경로> -L 3000:localhost:3000 ubuntu@<EC2_HOST>
 | 날짜 | 변경 | 이슈 |
 | --- | --- | --- |
 | 2026-11-02 | Grafana 알림 초기 구성(Slack·Discord Contact Point, 규칙 4개, 메시지 템플릿) | #244 |
+| 2026-11-04 | Slack 연동 제거(Discord만 사용) | #244 |
