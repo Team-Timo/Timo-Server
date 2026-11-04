@@ -40,9 +40,9 @@ Grafana에 구성한 알림 규칙의 쿼리·임계치·지속 시간·메시�
 
 - 쿼리: `sum(increase(http_server_requests_seconds_count{job="timo-server", status=~"5.."}[5m]))`
 - 조건: Threshold `IS ABOVE 5`
-- Summary: `5xx 급증: 5분간 {{ $values.B.Value }}건`
+- Summary: `5xx 급증: 5분간 {{ printf "%.0f" $values.B.Value }}건`
 - Description: `5분간 5xx 5건 초과 (평소 최대 약 4건)`
-- 근거: 요청이 적은 지금은 비율(%)이 의미가 없어 발생 건수로 판단한다. 5xx가 없으면 지표가 비므로 No data를 `NORMAL`로 둔다.
+- 근거: 요청이 적은 지금은 비율(%)이 의미가 없어 발생 건수로 판단한다. 5xx가 없으면 지표가 비므로 No data를 `NORMAL`로 둔다. `increase()`는 구간 끝을 보정해서 계산하므로 5.33처럼 소수가 나올 수 있어, 메시지에는 반올림한 정수로 표시한다. 그래서 5.33건이 "5건"으로 보여도 알림 조건은 "5건 초과"다.
 
 ### 3. DB 커넥션 풀 부족
 
