@@ -94,6 +94,7 @@ Grafana에 구성한 알림 규칙의 쿼리·임계치·지속 시간·메시�
 {{ range .Alerts }}
 **{{ .Annotations.summary }}**
 {{ .Annotations.description }}
+알림: {{ .Labels.alertname }}
 환경: {{ .Labels.env }}
 상태: {{ if eq .Status "firing" }}발생{{ else }}복구{{ end }}
 
