@@ -1,6 +1,8 @@
 package com.Timo.Timo.domain.calendar.service;
 
 import com.Timo.Timo.domain.calendar.dto.event.ExternalCalendarEvent;
+import com.Timo.Timo.domain.calendar.dto.response.CalendarSourceFailureResponse;
+import com.Timo.Timo.domain.calendar.dto.response.CalendarSyncResponse;
 import com.Timo.Timo.domain.calendar.exception.CalendarErrorCode;
 import com.Timo.Timo.domain.home.enums.HomeFilter;
 import com.Timo.Timo.domain.user.entity.User;
@@ -23,7 +25,7 @@ public class CalendarEventSyncService {
   private final CalendarEventProviders calendarEventProviders;
   private final CalendarTodoSynchronizer calendarTodoSynchronizer;
 
-  public void syncEvents(Long userId, String filterValue, String baseDateValue) {
+  public CalendarSyncResponse syncEvents(Long userId, String filterValue, String baseDateValue) {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
     ZoneId userZone = ZoneId.of(user.getZoneId());
@@ -36,10 +38,11 @@ public class CalendarEventSyncService {
     Instant timeMin = from.atStartOfDay(userZone).toInstant();
     Instant timeMax = to.plusDays(1).atStartOfDay(userZone).toInstant();
 
-    for (CalendarEventProvider provider : calendarEventProviders.findConnected(userId)) {
+    List<CalendarSourceFailureResponse> failedSources = calendarEventProviders.forEachConnected(userId, provider -> {
       List<ExternalCalendarEvent> events = provider.fetchEvents(userId, timeMin, timeMax);
       calendarTodoSynchronizer.synchronize(userId, provider, events, from, to, userZone);
-    }
+    });
+    return CalendarSyncResponse.of(failedSources);
   }
 
   private HomeFilter parseFilter(String filterValue) {

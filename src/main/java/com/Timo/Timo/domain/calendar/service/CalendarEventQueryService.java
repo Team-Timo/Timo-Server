@@ -4,6 +4,7 @@ import com.Timo.Timo.domain.calendar.dto.event.ExternalCalendarEvent;
 import com.Timo.Timo.domain.calendar.dto.response.CalendarDayResponse;
 import com.Timo.Timo.domain.calendar.dto.response.CalendarEventResponse;
 import com.Timo.Timo.domain.calendar.dto.response.CalendarEventsResponse;
+import com.Timo.Timo.domain.calendar.dto.response.CalendarSourceFailureResponse;
 import com.Timo.Timo.domain.calendar.enums.CalendarFilter;
 import com.Timo.Timo.domain.calendar.exception.CalendarErrorCode;
 import com.Timo.Timo.domain.calendar.utils.CalendarEventDateResolver;
@@ -44,16 +45,16 @@ public class CalendarEventQueryService {
     Instant timeMax = to.plusDays(1).atStartOfDay(userZone).toInstant();
 
     Map<LocalDate, List<CalendarEventResponse>> eventsByDate = new LinkedHashMap<>();
-    for (CalendarEventProvider provider : calendarEventProviders.findConnected(userId)) {
+    List<CalendarSourceFailureResponse> failedSources = calendarEventProviders.forEachConnected(userId, provider -> {
       List<ExternalCalendarEvent> events = provider.fetchEvents(userId, timeMin, timeMax);
       groupByDate(eventsByDate, provider.source(), events, from, to, userZone);
-    }
+    });
 
     List<CalendarDayResponse> days = from.datesUntil(to.plusDays(1))
         .map(date -> CalendarDayResponse.of(date, eventsByDate.getOrDefault(date, List.of())))
         .toList();
 
-    return CalendarEventsResponse.of(filter, baseDate, days);
+    return CalendarEventsResponse.of(filter, baseDate, days, failedSources);
   }
 
   private User getUser(Long userId) {

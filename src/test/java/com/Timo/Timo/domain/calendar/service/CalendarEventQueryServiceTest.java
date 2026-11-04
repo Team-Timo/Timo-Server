@@ -11,10 +11,13 @@ import com.Timo.Timo.domain.calendar.dto.event.ExternalEventDateTime;
 import com.Timo.Timo.domain.calendar.dto.response.CalendarDayResponse;
 import com.Timo.Timo.domain.calendar.dto.response.CalendarEventResponse;
 import com.Timo.Timo.domain.calendar.dto.response.CalendarEventsResponse;
+import com.Timo.Timo.domain.calendar.dto.response.CalendarSourceFailureResponse;
+import com.Timo.Timo.domain.calendar.exception.CalendarErrorCode;
 import com.Timo.Timo.domain.todo.enums.CalendarSource;
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.enums.Provider;
 import com.Timo.Timo.domain.user.repository.UserRepository;
+import com.Timo.Timo.global.exception.CustomException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -64,6 +67,26 @@ class CalendarEventQueryServiceTest {
 
     assertThat(response.days().get(0).events())
         .containsExactly(CalendarEventResponse.of("애플 약속", CalendarSource.APPLE));
+  }
+
+  @Test
+  @DisplayName("구글 조회가 실패해도 애플 일정은 반환하고, 실패한 구글을 응답에 담는다")
+  void continueWhenGoogleFails() {
+    when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user()));
+    CalendarEventProvider google = provider(CalendarSource.GOOGLE, true, List.of());
+    when(google.fetchEvents(eq(USER_ID), any(), any()))
+        .thenThrow(new CustomException(CalendarErrorCode.GOOGLE_CALENDAR_UPSTREAM_ERROR));
+    CalendarEventProvider apple = provider(CalendarSource.APPLE, true,
+        List.of(allDayEvent("a1", "애플 약속", date(15))));
+    CalendarEventQueryService service = new CalendarEventQueryService(
+        userRepository, new CalendarEventProviders(List.of(google, apple)));
+
+    CalendarEventsResponse response = service.getEvents(USER_ID, "DAY", "2026-10-15");
+
+    assertThat(response.days().get(0).events())
+        .containsExactly(CalendarEventResponse.of("애플 약속", CalendarSource.APPLE));
+    assertThat(response.failedSources()).containsExactly(
+        CalendarSourceFailureResponse.of(CalendarSource.GOOGLE, CalendarErrorCode.GOOGLE_CALENDAR_UPSTREAM_ERROR));
   }
 
   private CalendarEventProvider provider(

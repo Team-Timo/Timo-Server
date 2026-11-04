@@ -5,9 +5,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.Timo.Timo.domain.calendar.dto.response.CalendarSourceFailureResponse;
 import com.Timo.Timo.domain.calendar.exception.CalendarErrorCode;
 import com.Timo.Timo.domain.todo.enums.CalendarSource;
 import com.Timo.Timo.global.exception.CustomException;
+import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -46,6 +48,54 @@ class CalendarEventProvidersTest {
         .isInstanceOf(CustomException.class)
         .extracting("errorCode")
         .isEqualTo(CalendarErrorCode.CALENDAR_NOT_CONNECTED);
+  }
+
+  @Test
+  @DisplayName("한 캘린더가 실패해도 다음 캘린더를 계속 처리하고, 실패한 캘린더와 에러 코드를 반환한다")
+  void continueAfterFailure() {
+    CalendarEventProvider google = provider(CalendarSource.GOOGLE, true);
+    CalendarEventProvider apple = provider(CalendarSource.APPLE, true);
+    CalendarEventProviders providers = new CalendarEventProviders(List.of(google, apple));
+    List<CalendarSource> processed = new ArrayList<>();
+
+    List<CalendarSourceFailureResponse> failures = providers.forEachConnected(USER_ID, provider -> {
+      if (provider.source() == CalendarSource.GOOGLE) {
+        throw new CustomException(CalendarErrorCode.GOOGLE_CALENDAR_AUTH_FAILED);
+      }
+      processed.add(provider.source());
+    });
+
+    assertThat(processed).containsExactly(CalendarSource.APPLE);
+    assertThat(failures).containsExactly(
+        CalendarSourceFailureResponse.of(CalendarSource.GOOGLE, CalendarErrorCode.GOOGLE_CALENDAR_AUTH_FAILED));
+  }
+
+  @Test
+  @DisplayName("예상하지 못한 오류는 서버 내부 오류 코드로 기록하고 다음 캘린더를 계속 처리한다")
+  void continueAfterUnexpectedFailure() {
+    CalendarEventProvider google = provider(CalendarSource.GOOGLE, true);
+    CalendarEventProvider apple = provider(CalendarSource.APPLE, true);
+    CalendarEventProviders providers = new CalendarEventProviders(List.of(google, apple));
+    List<CalendarSource> processed = new ArrayList<>();
+
+    List<CalendarSourceFailureResponse> failures = providers.forEachConnected(USER_ID, provider -> {
+      if (provider.source() == CalendarSource.GOOGLE) {
+        throw new IllegalStateException("unexpected");
+      }
+      processed.add(provider.source());
+    });
+
+    assertThat(processed).containsExactly(CalendarSource.APPLE);
+    assertThat(failures).extracting(CalendarSourceFailureResponse::errorCode).containsExactly("CALENDAR_500");
+  }
+
+  @Test
+  @DisplayName("모든 캘린더가 성공하면 실패 목록은 비어 있다")
+  void noFailures() {
+    CalendarEventProviders providers = new CalendarEventProviders(
+        List.of(provider(CalendarSource.GOOGLE, true), provider(CalendarSource.APPLE, true)));
+
+    assertThat(providers.forEachConnected(USER_ID, provider -> { })).isEmpty();
   }
 
   private CalendarEventProvider provider(CalendarSource source, boolean connected) {

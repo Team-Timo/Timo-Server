@@ -2,6 +2,7 @@ package com.Timo.Timo.domain.calendar.docs;
 
 import com.Timo.Timo.domain.calendar.dto.request.CalendarSyncRequest;
 import com.Timo.Timo.domain.calendar.dto.response.CalendarEventsResponse;
+import com.Timo.Timo.domain.calendar.dto.response.CalendarSyncResponse;
 import com.Timo.Timo.global.auth.principal.CustomUserDetails;
 import com.Timo.Timo.global.exception.dto.ErrorDto;
 import com.Timo.Timo.global.response.BaseResponse;
@@ -31,20 +32,19 @@ public interface CalendarControllerDocs {
         baseDate 미입력 시 오늘 날짜가 기본값으로 사용됩니다.
         별도 저장 없이 매 요청마다 각 캘린더 API를 직접 호출하여 최신 상태를 반환합니다.
         한 캘린더만 연동되어 있으면 그 캘린더의 일정만 반환하고, 연동된 캘린더가 하나도 없으면 404(CALENDAR_404)를 반환합니다.
+
+        한 캘린더 조회가 실패해도(인증 만료, 캘린더 서버 장애 등) 나머지 캘린더는 계속 조회하며 응답은 200입니다.
+        실패한 캘린더는 failedSources에 calendarSource와 errorCode(예: GOOGLE_CALENDAR_401)로 담기며, 해당 캘린더의 일정은 응답에 포함되지 않습니다.
         """,
       security = @SecurityRequirement(name = "bearerAuth")
   )
   @ApiResponses({
-      @ApiResponse(responseCode = "200", description = "조회 성공", useReturnTypeSchema = true),
+      @ApiResponse(responseCode = "200", description = "조회 성공 (일부 캘린더가 실패하면 failedSources에 포함)", useReturnTypeSchema = true),
       @ApiResponse(responseCode = "400", description = "유효하지 않은 filter 값이거나 날짜 형식 오류",
           content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class))),
-      @ApiResponse(responseCode = "401", description = "Access Token 없음/만료/유효하지 않음(COMMON_401), 또는 구글 캘린더 인증 실패(GOOGLE_CALENDAR_401)",
+      @ApiResponse(responseCode = "401", description = "Access Token 없음/만료/유효하지 않음(COMMON_401)",
           content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class))),
       @ApiResponse(responseCode = "404", description = "연동된 캘린더가 하나도 없는 경우(CALENDAR_404)",
-          content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class))),
-      @ApiResponse(responseCode = "429", description = "구글 캘린더 API 요청이 일시적으로 제한된 경우(GOOGLE_CALENDAR_429)",
-          content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class))),
-      @ApiResponse(responseCode = "502", description = "구글 캘린더 서버와의 통신 중 오류가 발생한 경우(GOOGLE_CALENDAR_502)",
           content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class))),
       @ApiResponse(responseCode = "500", description = "서버 내부 오류",
           content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class)))
@@ -60,7 +60,9 @@ public interface CalendarControllerDocs {
       description = """
         filter(DEFAULT/WEEK)와 baseDate 범위의 연동된 모든 캘린더(구글·애플) 일정을 투두로 저장/갱신합니다.
         캘린더마다 따로 동기화하며, 각 투두는 calendarSource로 출처를 구분합니다.
-        한 캘린더 동기화가 실패하면 해당 캘린더의 오류를 반환하고, 먼저 끝난 다른 캘린더의 동기화 결과는 유지됩니다.
+        한 캘린더 동기화가 실패해도(인증 만료, 캘린더 서버 장애 등) 나머지 캘린더는 계속 동기화하며 응답은 200입니다.
+        실패한 캘린더는 failedSources에 calendarSource와 errorCode(예: GOOGLE_CALENDAR_401)로 담기며, 해당 캘린더의 투두는 변경되지 않습니다.
+        errorCode가 GOOGLE_CALENDAR_401이면 구글 캘린더 재연동을 안내해야 합니다.
 
         DEFAULT: baseDate-7일 ~ baseDate+7일 (총 15일)
 
@@ -79,21 +81,17 @@ public interface CalendarControllerDocs {
       security = @SecurityRequirement(name = "bearerAuth")
   )
   @ApiResponses({
-      @ApiResponse(responseCode = "200", description = "동기화 성공", useReturnTypeSchema = true),
+      @ApiResponse(responseCode = "200", description = "동기화 성공 (일부 캘린더가 실패하면 failedSources에 포함)", useReturnTypeSchema = true),
       @ApiResponse(responseCode = "400", description = "유효하지 않은 filter 값이거나 날짜 형식 오류",
           content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class))),
-      @ApiResponse(responseCode = "401", description = "Access Token 없음/만료/유효하지 않음(COMMON_401), 또는 구글 캘린더 인증 실패(GOOGLE_CALENDAR_401)",
+      @ApiResponse(responseCode = "401", description = "Access Token 없음/만료/유효하지 않음(COMMON_401)",
           content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class))),
       @ApiResponse(responseCode = "404", description = "연동된 캘린더가 하나도 없는 경우(CALENDAR_404)",
-          content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class))),
-      @ApiResponse(responseCode = "429", description = "구글 캘린더 API 요청이 일시적으로 제한된 경우(GOOGLE_CALENDAR_429)",
-          content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class))),
-      @ApiResponse(responseCode = "502", description = "구글 캘린더 서버와의 통신 중 오류가 발생한 경우(GOOGLE_CALENDAR_502)",
           content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class))),
       @ApiResponse(responseCode = "500", description = "서버 내부 오류",
           content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class)))
   })
-  ResponseEntity<BaseResponse<Object>> syncCalendarEvents(
+  ResponseEntity<BaseResponse<CalendarSyncResponse>> syncCalendarEvents(
       @Parameter(hidden = true) CustomUserDetails userDetails,
       CalendarSyncRequest request
   );

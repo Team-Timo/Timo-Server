@@ -3,6 +3,7 @@ package com.Timo.Timo.domain.calendar.controller;
 import com.Timo.Timo.domain.calendar.docs.CalendarControllerDocs;
 import com.Timo.Timo.domain.calendar.dto.request.CalendarSyncRequest;
 import com.Timo.Timo.domain.calendar.dto.response.CalendarEventsResponse;
+import com.Timo.Timo.domain.calendar.dto.response.CalendarSyncResponse;
 import com.Timo.Timo.domain.calendar.exception.CalendarSuccessCode;
 import com.Timo.Timo.domain.calendar.service.CalendarEventQueryService;
 import com.Timo.Timo.domain.calendar.service.CalendarEventSyncService;
@@ -10,7 +11,6 @@ import com.Timo.Timo.global.auth.principal.CustomUserDetails;
 import com.Timo.Timo.global.response.BaseResponse;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -48,7 +48,7 @@ public class CalendarController implements CalendarControllerDocs {
 
   @Override
   @PostMapping("/events/sync")
-  public ResponseEntity<BaseResponse<Object>> syncCalendarEvents(
+  public ResponseEntity<BaseResponse<CalendarSyncResponse>> syncCalendarEvents(
       @AuthenticationPrincipal CustomUserDetails userDetails,
       @RequestBody(required = false) CalendarSyncRequest request
   ) {
@@ -56,10 +56,10 @@ public class CalendarController implements CalendarControllerDocs {
     String filter = request != null ? request.filter() : null;
     String baseDate = request != null ? request.baseDate() : null;
 
-    calendarEventSyncService.syncEvents(userId, filter, baseDate);
+    CalendarSyncResponse response = calendarEventSyncService.syncEvents(userId, filter, baseDate);
 
     return ResponseEntity.ok(
-        BaseResponse.onSuccess(CalendarSuccessCode.CALENDAR_EVENTS_SYNCED, Map.of())
+        BaseResponse.onSuccess(CalendarSuccessCode.CALENDAR_EVENTS_SYNCED, response)
     );
   }
 }
