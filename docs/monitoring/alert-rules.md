@@ -92,15 +92,21 @@ Grafana에 구성한 알림 규칙의 쿼리·임계치·지속 시간·메시�
 ```
 {{ define "timo.message" }}
 {{ range .Alerts }}
-*{{ .Annotations.summary }}*
+**{{ .Annotations.summary }}**
 {{ .Annotations.description }}
 환경: {{ .Labels.env }}
-상태: {{ .Status }}
+상태: {{ if eq .Status "firing" }}발생{{ else }}복구{{ end }}
+
+[규칙 보기]({{ .GeneratorURL }})
+[알림 일시 중지]({{ .SilenceURL }}){{ if .DashboardURL }}
+[대시보드]({{ .DashboardURL }}){{ end }}{{ if .PanelURL }}
+[패널]({{ .PanelURL }}){{ end }}
 {{ end }}
 {{ end }}
 ```
 
-기본 템플릿이 붙이는 링크(Source, Silence 등)는 `localhost:3000`이라 열리지 않아 사용하지 않는다.
+- 링크는 Grafana가 만드는 값이라 `localhost:3000`으로 시작한다. 터널이 열려 있는 컴퓨터에서만 열린다([README.md](README.md)의 Grafana 접속).
+- 대시보드·패널 링크는 규칙에 대시보드를 연결한 경우에만 나온다.
 
 ## 규칙 변경과 검증
 

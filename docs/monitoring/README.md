@@ -14,7 +14,7 @@ Prometheus가 수집한 서버 메트릭을 Grafana Alerting으로 평가하고,
 1. `deploy/prometheus/prometheus.yml`이 `timo-server`의 `/actuator/prometheus`를 15초마다 수집한다. blue·green 두 컨테이너를 모두 수집한다.
 2. Grafana의 알림 규칙이 Prometheus 데이터를 1분마다 평가한다. 조건이 규칙별 지속 시간(1~5분) 동안 유지되면 알림이 발생(Firing)하고, 조건이 풀리면 복구(Resolved)된다. 규칙별 지속 시간은 [alert-rules.md](alert-rules.md)에 있다.
 3. 알림 정책이 알림을 Contact Point로 보낸다. Contact Point `monitoring-alert`에는 Discord 연동만 있다.
-4. 메시지 본문은 Grafana 알림 템플릿(`timo.message`)으로 만든다. 요약, 설명, 환경, 상태만 담는다.
+4. 메시지 본문은 Grafana 알림 템플릿(`timo.message`)으로 만든다. 요약, 설명, 환경, 상태와 Grafana 링크(규칙 보기·알림 일시 중지·대시보드·패널)를 담는다.
 
 Prometheus와 Grafana는 `deploy/docker-compose.prod.yml`로 운영 서버(EC2)에서 실행한다.
 
@@ -62,3 +62,4 @@ ssh -i <키 파일 경로> -L 3000:localhost:3000 ubuntu@<EC2_HOST>
 | --- | --- | --- |
 | 2026-11-02 | Grafana 알림 초기 구성(Slack·Discord Contact Point, 규칙 4개, 메시지 템플릿) | #244 |
 | 2026-11-04 | Slack 연동 제거(Discord만 사용) | #244 |
+| 2026-11-04 | 메시지 템플릿에 Grafana 링크를 한글 이름으로 추가 | #244 |
