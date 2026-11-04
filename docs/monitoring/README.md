@@ -63,3 +63,4 @@ ssh -i <키 파일 경로> -L 3000:localhost:3000 ubuntu@<EC2_HOST>
 | 2026-11-02 | Grafana 알림 초기 구성(Slack·Discord Contact Point, 규칙 4개, 메시지 템플릿) | #244 |
 | 2026-11-04 | Slack 연동 제거(Discord만 사용) | #244 |
 | 2026-11-04 | 메시지 템플릿에 Grafana 링크를 한글 이름으로 추가 | #244 |
+| 2026-11-04 | JVM 힙 알림을 GC 직후 사용률 지표(`jvm_memory_usage_after_gc`)로 변경 | #244 |

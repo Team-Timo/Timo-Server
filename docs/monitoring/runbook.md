@@ -68,11 +68,11 @@ HikariCP 사용률이 0.8을 넘은 상태다. 풀 최대 크기는 10이다.
 
 ### JVM 힙 사용률 높음
 
-`Tenured Gen` 사용률이 0.85를 5분 넘게 유지한 상태다.
+GC를 한 뒤에도 힙 사용률이 0.85를 5분 넘게 유지한 상태다.
 
 1. Explore에서 최근 며칠간의 추이를 확인한다.
    ```
-   max(jvm_memory_used_bytes{job="timo-server", id="Tenured Gen"} / jvm_memory_max_bytes{job="timo-server", id="Tenured Gen"})
+   max(jvm_memory_usage_after_gc{job="timo-server", area="heap"})
    ```
 2. 배포로 재시작한 뒤 천천히 계속 오르는 모양이면 메모리가 해제되지 않는 문제를 의심한다.
 3. 요청이 급증한 시점과 겹치는지, 같은 시간에 5xx나 응답 지연이 있는지 확인한다.

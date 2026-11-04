@@ -26,7 +26,7 @@ Grafana에 구성한 알림 규칙의 쿼리·임계치·지속 시간·메시�
 | 서버 다운 | 활성 인스턴스 수 1 미만 | 1분 | Alerting | Alerting |
 | 5xx 급증 | 5분간 5xx 5건 초과 | 1분 | NORMAL   | Error |
 | DB 커넥션 풀 부족 | 풀 사용률 0.8 초과 | 2분 | NORMAL   | Error |
-| JVM 힙 사용률 높음 | Tenured Gen 사용률 0.85 초과 | 5분 | NORMAL   | Error |
+| JVM 힙 사용률 높음 | GC 직후 힙 사용률 0.85 초과 | 5분 | NORMAL   | Error |
 
 ### 1. 서버 다운
 
@@ -54,11 +54,11 @@ Grafana에 구성한 알림 규칙의 쿼리·임계치·지속 시간·메시�
 
 ### 4. JVM 힙 사용률 높음
 
-- 쿼리: `max(jvm_memory_used_bytes{job="timo-server", id="Tenured Gen"} / jvm_memory_max_bytes{job="timo-server", id="Tenured Gen"})`
+- 쿼리: `max(jvm_memory_usage_after_gc{job="timo-server", area="heap"})`
 - 조건: Threshold `IS ABOVE 0.85`
 - Summary: `JVM 힙 메모리 사용률 높음: {{ humanizePercentage $values.B.Value }}`
-- Description: `오래 유지되는 객체 영역(Tenured Gen) 사용률 85% 초과, 5분 이상 지속`
-- 근거: 서버가 Serial GC를 사용해 힙 영역 `id`가 `Eden Space`·`Survivor Space`·`Tenured Gen`이다. 오래 살아남은 객체가 쌓이는 `Tenured Gen`의 사용률로 판단한다. 메모리는 순간적으로 오르내릴 수 있어 지속 시간을 5분으로 길게 둔다. GC 방식이나 JVM 옵션이 바뀌면 `id` 값을 다시 확인한다.
+- Description: `GC 후에도 힙 사용률 85% 초과, 5분 이상 지속`
+- 근거: 서버는 Serial GC를 사용한다(Dockerfile에 GC 옵션이 없어 JVM이 컨테이너 사양을 보고 자동으로 고른다). Serial GC는 old 영역이 거의 찰 때까지 기다렸다가 Full GC로 한 번에 비우기 때문에, 현재 사용량으로 판단하면 누수가 없어도 정리 직전에 85%를 넘어 머물 수 있다. 그래서 GC 직후 사용률(`jvm_memory_usage_after_gc`, 0~1)로 "정리해도 메모리가 줄지 않는지"를 판단한다. 이 지표에는 영역 이름(`id`) 라벨이 없어서 서버 사양을 올려 G1 GC 등으로 바뀌어도 쿼리를 바꾸지 않아도 된다. 메모리는 순간적으로 오르내릴 수 있어 지속 시간을 5분으로 길게 둔다.
 
 ## 평소 지표 기준
 
@@ -70,7 +70,7 @@ Grafana에 구성한 알림 규칙의 쿼리·임계치·지속 시간·메시�
 | 전체 요청 수(5분) | 대부분 0에 가까움, 부하 테스트 구간 최대 약 3,000건 |
 | 활성 인스턴스 수 | 1 (blue·green 중 한쪽만 실행) |
 | HikariCP 최대 연결 / 사용 | 최대 10개 / 사용 최대 1개(10%), 대기 요청 0 |
-| Tenured Gen 사용률 | 약 15~24%, 배포로 재시작하면 낮아짐. 최대 크기 약 360MB |
+| GC 직후 힙 사용률 | 약 15~24%, 배포로 재시작하면 낮아짐 |
 
 ## 알림 정책
 
