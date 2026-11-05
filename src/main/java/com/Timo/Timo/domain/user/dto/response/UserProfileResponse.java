@@ -18,10 +18,19 @@ public record UserProfileResponse(
 	String zoneId,
 	@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
 	boolean calendarConnected,
-	String calendarEmail
+	String calendarEmail,
+	@Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+	boolean appleCalendarConnected,
+	String appleCalendarId
 ) {
 
-	public static UserProfileResponse from(User user, boolean calendarConnected, String calendarEmail) {
+	public static UserProfileResponse from(
+		User user,
+		boolean calendarConnected,
+		String calendarEmail,
+		boolean appleCalendarConnected,
+		String appleCalendarId
+	) {
 		return new UserProfileResponse(
 			user.getId(),
 			user.getName(),
@@ -30,7 +39,9 @@ public record UserProfileResponse(
 			user.getLanguage().name(),
 			user.getZoneId(),
       calendarConnected,
-      calendarEmail
+      calendarEmail,
+      appleCalendarConnected,
+      appleCalendarId
 		);
 	}
 }
