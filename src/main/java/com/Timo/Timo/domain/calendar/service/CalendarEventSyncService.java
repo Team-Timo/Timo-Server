@@ -1,8 +1,7 @@
 package com.Timo.Timo.domain.calendar.service;
 
-import com.Timo.Timo.domain.calendar.dto.event.ExternalCalendarEvent;
-import com.Timo.Timo.domain.calendar.dto.response.CalendarSourceFailureResponse;
-import com.Timo.Timo.domain.calendar.dto.response.CalendarSyncResponse;
+import com.Timo.Timo.domain.calendar.client.GoogleOAuthClient;
+import com.Timo.Timo.domain.calendar.dto.client.CalendarEventItem;
 import com.Timo.Timo.domain.calendar.exception.CalendarErrorCode;
 import com.Timo.Timo.domain.home.enums.HomeFilter;
 import com.Timo.Timo.domain.user.entity.User;
@@ -22,10 +21,11 @@ import org.springframework.stereotype.Service;
 public class CalendarEventSyncService {
 
   private final UserRepository userRepository;
-  private final CalendarEventProviders calendarEventProviders;
+  private final CalendarTokenService calendarTokenService;
+  private final GoogleOAuthClient googleOAuthClient;
   private final CalendarTodoSynchronizer calendarTodoSynchronizer;
 
-  public CalendarSyncResponse syncEvents(Long userId, String filterValue, String baseDateValue) {
+  public void syncEvents(Long userId, String filterValue, String baseDateValue) {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
     ZoneId userZone = ZoneId.of(user.getZoneId());
@@ -35,14 +35,13 @@ public class CalendarEventSyncService {
     LocalDate from = filter.rangeStart(baseDate);
     LocalDate to = filter.rangeEnd(baseDate);
 
+    String accessToken = calendarTokenService.ensureValidAccessToken(userId);
+
     Instant timeMin = from.atStartOfDay(userZone).toInstant();
     Instant timeMax = to.plusDays(1).atStartOfDay(userZone).toInstant();
+    List<CalendarEventItem> items = googleOAuthClient.fetchEvents(accessToken, timeMin, timeMax);
 
-    List<CalendarSourceFailureResponse> failedSources = calendarEventProviders.forEachConnected(userId, provider -> {
-      List<ExternalCalendarEvent> events = provider.fetchEvents(userId, timeMin, timeMax);
-      calendarTodoSynchronizer.synchronize(userId, provider, events, from, to, userZone);
-    });
-    return CalendarSyncResponse.of(failedSources);
+    calendarTodoSynchronizer.synchronize(userId, items, from, to, userZone);
   }
 
   private HomeFilter parseFilter(String filterValue) {

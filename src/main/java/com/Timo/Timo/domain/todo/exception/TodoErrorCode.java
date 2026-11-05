@@ -24,8 +24,8 @@ public enum TodoErrorCode implements BaseErrorCode {
 	COMPLETED_CANNOT_REORDER(HttpStatus.CONFLICT, "TODO_409", "완료된 투두는 순서를 변경할 수 없습니다."),
 	COMPLETED_SUBTASK_CANNOT_REORDER(HttpStatus.CONFLICT, "SUBTASK_409", "완료된 하위 태스크는 순서를 변경할 수 없습니다."),
 	TIMER_RUNNING(HttpStatus.CONFLICT, "TODO_409", "타이머가 실행 중인 TODO는 변경할 수 없습니다. 타이머를 먼저 종료해주세요."),
-	CALENDAR_EVENT_NOT_MODIFIABLE(HttpStatus.CONFLICT, "TODO_409", "캘린더에서 가져온 일정은 제목과 날짜를 수정할 수 없습니다."),
-	CALENDAR_EVENT_NOT_DELETABLE(HttpStatus.CONFLICT, "TODO_409", "캘린더에서 가져온 일정은 삭제할 수 없습니다."),
+	GOOGLE_EVENT_NOT_MODIFIABLE(HttpStatus.CONFLICT, "TODO_409", "구글 캘린더에서 가져온 일정은 제목과 날짜를 수정할 수 없습니다."),
+	GOOGLE_EVENT_NOT_DELETABLE(HttpStatus.CONFLICT, "TODO_409", "구글 캘린더에서 가져온 일정은 삭제할 수 없습니다."),
 	;
 
 	private final HttpStatus httpStatus;

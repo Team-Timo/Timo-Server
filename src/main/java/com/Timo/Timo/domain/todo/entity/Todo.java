@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import com.Timo.Timo.domain.todo.enums.CalendarSource;
 import com.Timo.Timo.domain.todo.enums.RepeatType;
 import com.Timo.Timo.domain.todo.enums.TodoIcon;
 import com.Timo.Timo.domain.todo.enums.TodoPriority;
@@ -114,20 +113,16 @@ public class Todo extends BaseTimeEntity {
 	@Column(name = "memo")
 	private String memo;
 
-	@Enumerated(EnumType.STRING)
-	@Column(name = "calendar_source", length = 20)
-	private CalendarSource calendarSource;
-
 	@Column(name = "external_event_id", length = 255)
 	private String externalEventId;
 
 	@ColumnDefault("false")
-	@Column(name = "deleted_from_calendar", nullable = false)
-	private boolean deletedFromCalendar;
+	@Column(name = "deleted_from_google", nullable = false)
+	private boolean deletedFromGoogle;
 
 	@ColumnDefault("false")
-	@Column(name = "disconnected_from_calendar", nullable = false)
-	private boolean disconnectedFromCalendar;
+	@Column(name = "disconnected_from_google", nullable = false)
+	private boolean disconnectedFromGoogle;
 
 	@Builder(access = AccessLevel.PRIVATE)
 	private Todo(
@@ -143,7 +138,6 @@ public class Todo extends BaseTimeEntity {
 			TodoPriority priority,
 			Long tagId,
 			String memo,
-			CalendarSource calendarSource,
 			String externalEventId
 	) {
 		this.user = user;
@@ -159,13 +153,11 @@ public class Todo extends BaseTimeEntity {
 		this.priority = priority;
 		this.tagId = tagId;
 		this.memo = memo;
-		this.calendarSource = calendarSource;
 		this.externalEventId = externalEventId;
 	}
 
-	public static Todo createFromCalendarEvent(
+	public static Todo createFromGoogleEvent(
 			User user,
-			CalendarSource calendarSource,
 			String title,
 			LocalDate date,
 			String externalEventId
@@ -177,7 +169,6 @@ public class Todo extends BaseTimeEntity {
 				.endDate(date)
 				.repeatType(RepeatType.NONE)
 				.durationSeconds(0)
-				.calendarSource(calendarSource)
 				.externalEventId(externalEventId)
 				.build();
 	}
@@ -327,32 +318,32 @@ public class Todo extends BaseTimeEntity {
 		return Collections.unmodifiableList(repeatWeekdays);
 	}
 
-	public boolean isCalendarEvent() {
-		return calendarSource != null;
+	public boolean isGoogleEvent() {
+		return externalEventId != null;
 	}
 
-	public void markDeletedFromCalendar() {
-		this.deletedFromCalendar = true;
+	public void markDeletedFromGoogle() {
+		this.deletedFromGoogle = true;
 	}
 
-	public void unmarkDeletedFromCalendar() {
-		this.deletedFromCalendar = false;
+	public void unmarkDeletedFromGoogle() {
+		this.deletedFromGoogle = false;
 	}
 
-	public void markDisconnectedFromCalendar() {
-		this.disconnectedFromCalendar = true;
+	public void markDisconnectedFromGoogle() {
+		this.disconnectedFromGoogle = true;
 	}
 
-	public void unmarkDisconnectedFromCalendar() {
-		this.disconnectedFromCalendar = false;
+	public void unmarkDisconnectedFromGoogle() {
+		this.disconnectedFromGoogle = false;
 	}
 
-	public void moveCalendarEvent(LocalDate date, String externalEventId) {
+	public void moveGoogleEvent(LocalDate date, String externalEventId) {
 		this.startDate = date;
 		this.endDate = date;
 		this.externalEventId = externalEventId;
-		this.deletedFromCalendar = false;
-		this.disconnectedFromCalendar = false;
+		this.deletedFromGoogle = false;
+		this.disconnectedFromGoogle = false;
 	}
 
 	private void addSubtask(Subtask subtask) {
