@@ -51,6 +51,9 @@ dependencies {
 	// Sentry
 	implementation 'io.sentry:sentry-spring-boot-starter-jakarta:8.48.0'
 
+	// iCalendar (애플 캘린더 CalDAV 일정 파싱)
+	implementation 'org.mnode.ical4j:ical4j:4.1.1'
+
 	// Lombok
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
