@@ -32,10 +32,9 @@ public class HomeTodoMapper {
 				mapTag(context.tag()),
 				hasMemo(todo, instance),
 				todo.getRepeatType() != RepeatType.NONE,
-				todo.isCalendarEvent(),
-				todo.getCalendarSource(),
-				todo.isDeletedFromCalendar(),
-				todo.isDisconnectedFromCalendar(),
+				todo.isGoogleEvent(),
+				todo.isDeletedFromGoogle(),
+				todo.isDisconnectedFromGoogle(),
 				resolveTimerStatus(instance),
 				instance != null ? instance.getSortOrder() : context.defaultSortOrder(),
 				mapSubtasks(todo.getSubtasks(), context.subtaskStates())

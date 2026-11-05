@@ -12,7 +12,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.Timo.Timo.domain.todo.entity.Todo;
-import com.Timo.Timo.domain.todo.enums.CalendarSource;
 
 public interface TodoRepository extends JpaRepository<Todo, Long> {
 
@@ -23,12 +22,11 @@ public interface TodoRepository extends JpaRepository<Todo, Long> {
 	@Query("""
 		select t from Todo t
 		where t.user.id = :userId
-		  and t.calendarSource = :source
+		  and t.externalEventId is not null
 		  and t.startDate between :from and :to
 		""")
-	List<Todo> findCalendarEventsInRange(
+	List<Todo> findGoogleEventsInRange(
 			@Param("userId") Long userId,
-			@Param("source") CalendarSource source,
 			@Param("from") LocalDate from,
 			@Param("to") LocalDate to
 	);
@@ -36,27 +34,25 @@ public interface TodoRepository extends JpaRepository<Todo, Long> {
 	@Query("""
 		select t from Todo t
 		where t.user.id = :userId
-		  and t.calendarSource = :source
+		  and t.externalEventId is not null
 		  and t.startDate > :date
 		""")
-	List<Todo> findCalendarEventsAfter(
+	List<Todo> findGoogleEventsAfter(
 			@Param("userId") Long userId,
-			@Param("source") CalendarSource source,
 			@Param("date") LocalDate date
 	);
 
 	@Modifying(flushAutomatically = true)
 	@Query("""
 		update Todo t
-		set t.disconnectedFromCalendar = true, t.updatedAt = :now
+		set t.disconnectedFromGoogle = true, t.updatedAt = :now
 		where t.user.id = :userId
-		  and t.calendarSource = :source
+		  and t.externalEventId is not null
 		  and t.startDate <= :date
-		  and t.disconnectedFromCalendar = false
+		  and t.disconnectedFromGoogle = false
 		""")
-	int markDisconnectedFromCalendarUpTo(
+	int markDisconnectedFromGoogleUpTo(
 			@Param("userId") Long userId,
-			@Param("source") CalendarSource source,
 			@Param("date") LocalDate date,
 			@Param("now") LocalDateTime now
 	);
@@ -81,14 +77,13 @@ public interface TodoRepository extends JpaRepository<Todo, Long> {
 	@Modifying(flushAutomatically = true)
 	@Query("""
 		update Todo t
-		set t.disconnectedFromCalendar = false, t.updatedAt = :now
+		set t.disconnectedFromGoogle = false, t.updatedAt = :now
 		where t.user.id = :userId
-		  and t.calendarSource = :source
-		  and t.disconnectedFromCalendar = true
+		  and t.externalEventId is not null
+		  and t.disconnectedFromGoogle = true
 		""")
-	int clearDisconnectedFromCalendar(
+	int clearDisconnectedFromGoogleByUserId(
 			@Param("userId") Long userId,
-			@Param("source") CalendarSource source,
 			@Param("now") LocalDateTime now
 	);
 
