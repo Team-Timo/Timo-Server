@@ -71,6 +71,13 @@ public class AnalyticsEventSender {
     }
     running = false;
     worker.join(SHUTDOWN_TIMEOUT_MILLIS);
+
+    List<PendingEvent> remaining = new ArrayList<>();
+    queue.drainTo(remaining);
+    if (!remaining.isEmpty()) {
+      log.warn("Analytics events dropped on shutdown. size={}", remaining.size());
+      remaining.forEach(pendingEvent -> recordDropped(pendingEvent.event(), DropReason.SHUTDOWN_TIMEOUT));
+    }
   }
 
   public void send(Long userId, AnalyticsEvent event) {
@@ -186,7 +193,8 @@ public class AnalyticsEventSender {
   private enum DropReason {
     BUILD_FAILED("build_failed"),
     QUEUE_FULL("queue_full"),
-    SEND_FAILED("send_failed");
+    SEND_FAILED("send_failed"),
+    SHUTDOWN_TIMEOUT("shutdown_timeout");
 
     private final String tag;
 
