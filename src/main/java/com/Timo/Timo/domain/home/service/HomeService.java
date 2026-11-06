@@ -18,6 +18,8 @@ import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.enums.Language;
 import com.Timo.Timo.domain.user.exception.UserErrorCode;
 import com.Timo.Timo.domain.user.repository.UserRepository;
+import com.Timo.Timo.global.analytics.AnalyticsEvent;
+import com.Timo.Timo.global.analytics.AnalyticsEventSender;
 import com.Timo.Timo.global.exception.CustomException;
 
 import lombok.RequiredArgsConstructor;
@@ -30,11 +32,13 @@ public class HomeService {
 	private final UserRepository userRepository;
 	private final HomeTodoReader homeTodoReader;
 	private final HolidayChecker holidayChecker;
+	private final AnalyticsEventSender analyticsEventSender;
 
 	public HomeResponse getHome(Long userId, String filterValue, String baseDateValue) {
 		User user = getUser(userId);
 		ZoneId userZone = ZoneId.of(user.getZoneId());
 		Language language = user.getLanguage();
+		analyticsEventSender.send(userId, AnalyticsEvent.HOME_VIEWED);
 
 		HomeFilter filter = HomeFilter.from(filterValue);
 		LocalDate baseDate = parseBaseDate(baseDateValue, userZone);
@@ -59,6 +63,7 @@ public class HomeService {
 	public TodayResponse getToday(Long userId) {
 		User user = getUser(userId);
 		LocalDate today = LocalDate.now(ZoneId.of(user.getZoneId()));
+		analyticsEventSender.send(userId, AnalyticsEvent.TODAY_VIEWED);
 
 		LoadedTodos loaded = homeTodoReader.load(userId, today, today);
 

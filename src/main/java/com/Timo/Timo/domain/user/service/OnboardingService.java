@@ -5,9 +5,12 @@ import com.Timo.Timo.domain.user.dto.response.OnboardingResponse;
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.exception.UserErrorCode;
 import com.Timo.Timo.domain.user.repository.UserRepository;
+import com.Timo.Timo.global.analytics.AnalyticsEvent;
+import com.Timo.Timo.global.analytics.AnalyticsEventSender;
 import com.Timo.Timo.global.exception.CustomException;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +22,7 @@ public class OnboardingService {
   private static final String MIDNIGHT_24_FORMAT = "24:00";
 
   private final UserRepository userRepository;
+  private final AnalyticsEventSender analyticsEventSender;
 
   @Transactional
   public OnboardingResponse completeOnboarding(Long userId, OnboardingRequest request){
@@ -39,6 +43,13 @@ public class OnboardingService {
         wakeUpTime,
         bedTime
     );
+
+    analyticsEventSender.send(userId, AnalyticsEvent.ONBOARDING_COMPLETED, Map.of(
+        "language", request.language().name(),
+        "prediction_accuracy", request.predictionAccuracy(),
+        "wake_up_time", request.wakeUpTime(),
+        "bed_time", request.bedTime()
+    ));
 
     return OnboardingResponse.builder()
         .onboardingCompleted(true)

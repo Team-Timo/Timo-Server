@@ -3,6 +3,8 @@ package com.Timo.Timo.global.auth.service;
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.enums.Provider;
 import com.Timo.Timo.domain.user.repository.UserRepository;
+import com.Timo.Timo.global.analytics.AnalyticsEvent;
+import com.Timo.Timo.global.analytics.AnalyticsEventSender;
 import com.Timo.Timo.global.auth.exception.AuthErrorCode;
 import com.Timo.Timo.global.auth.principal.CustomUserDetails;
 import java.util.Map;
@@ -23,6 +25,7 @@ import org.springframework.util.StringUtils;
 public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
 
   private final UserRepository userRepository;
+  private final AnalyticsEventSender analyticsEventSender;
 
   @Override
   @Transactional
@@ -53,15 +56,19 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
             existing.update(name, imageUrl);
             return existing;
           })
-          .orElseGet(() -> userRepository.save(
-              User.builder()
-                  .name(name)
-                  .email(email)
-                  .profileImageUrl(imageUrl)
-                  .provider(provider)
-                  .providerId(providerId)
-                  .build()
-          ));
+          .orElseGet(() -> {
+            User newUser = userRepository.save(
+                User.builder()
+                    .name(name)
+                    .email(email)
+                    .profileImageUrl(imageUrl)
+                    .provider(provider)
+                    .providerId(providerId)
+                    .build()
+            );
+            analyticsEventSender.send(newUser.getId(), AnalyticsEvent.SIGN_UP_COMPLETED);
+            return newUser;
+          });
     } catch (DataIntegrityViolationException e) {
       user = userRepository.findByProviderAndProviderId(provider, providerId)
           .orElseThrow(() -> new OAuth2AuthenticationException(

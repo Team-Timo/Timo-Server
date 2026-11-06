@@ -17,6 +17,7 @@ import com.Timo.Timo.domain.todo.enums.CalendarSource;
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.enums.Provider;
 import com.Timo.Timo.domain.user.repository.UserRepository;
+import com.Timo.Timo.global.analytics.AnalyticsEventSender;
 import com.Timo.Timo.global.exception.CustomException;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -30,6 +31,7 @@ class CalendarEventQueryServiceTest {
   private static final Long USER_ID = 1L;
 
   private final UserRepository userRepository = mock(UserRepository.class);
+  private final AnalyticsEventSender analyticsEventSender = mock(AnalyticsEventSender.class);
 
   @Test
   @DisplayName("연동된 모든 캘린더의 일정을 날짜별로 합치고 일정마다 출처를 표시한다")
@@ -40,7 +42,7 @@ class CalendarEventQueryServiceTest {
     CalendarEventProvider apple = provider(CalendarSource.APPLE, true,
         List.of(allDayEvent("a1", "애플 약속", date(15)), allDayEvent("a2", "애플 운동", date(16))));
     CalendarEventQueryService service = new CalendarEventQueryService(
-        userRepository, new CalendarEventProviders(List.of(apple, google)));
+        userRepository, new CalendarEventProviders(List.of(apple, google)), analyticsEventSender);
 
     CalendarEventsResponse response = service.getEvents(USER_ID, "DAY", "2026-10-15");
 
@@ -62,7 +64,7 @@ class CalendarEventQueryServiceTest {
     CalendarEventProvider apple = provider(CalendarSource.APPLE, true,
         List.of(allDayEvent("a1", "애플 약속", date(15))));
     CalendarEventQueryService service = new CalendarEventQueryService(
-        userRepository, new CalendarEventProviders(List.of(google, apple)));
+        userRepository, new CalendarEventProviders(List.of(google, apple)), analyticsEventSender);
 
     CalendarEventsResponse response = service.getEvents(USER_ID, "DAY", "2026-10-15");
 
@@ -80,7 +82,7 @@ class CalendarEventQueryServiceTest {
     CalendarEventProvider apple = provider(CalendarSource.APPLE, true,
         List.of(allDayEvent("a1", "애플 약속", date(15))));
     CalendarEventQueryService service = new CalendarEventQueryService(
-        userRepository, new CalendarEventProviders(List.of(google, apple)));
+        userRepository, new CalendarEventProviders(List.of(google, apple)), analyticsEventSender);
 
     CalendarEventsResponse response = service.getEvents(USER_ID, "DAY", "2026-10-15");
 
@@ -103,7 +105,7 @@ class CalendarEventQueryServiceTest {
         allDayEvent("a2", "생일", date(15))
     ));
     CalendarEventQueryService service = new CalendarEventQueryService(
-        userRepository, new CalendarEventProviders(List.of(google, apple)));
+        userRepository, new CalendarEventProviders(List.of(google, apple)), analyticsEventSender);
 
     CalendarEventsResponse response = service.getEvents(USER_ID, "DAY", "2026-10-15");
 
@@ -124,7 +126,7 @@ class CalendarEventQueryServiceTest {
     CalendarEventProvider google = provider(CalendarSource.GOOGLE, true,
         List.of(timedEvent("g1", "구글 회의", "2026-10-15T01:00:00Z")));
     CalendarEventQueryService service = new CalendarEventQueryService(
-        userRepository, new CalendarEventProviders(List.of(apple, google)));
+        userRepository, new CalendarEventProviders(List.of(apple, google)), analyticsEventSender);
 
     CalendarEventsResponse response = service.getEvents(USER_ID, "DAY", "2026-10-15");
 

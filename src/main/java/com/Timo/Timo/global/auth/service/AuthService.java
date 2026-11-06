@@ -6,12 +6,17 @@ import com.Timo.Timo.domain.calendar.google.repository.GoogleTokenRevocationOutb
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.exception.UserErrorCode;
 import com.Timo.Timo.domain.user.repository.UserRepository;
+import com.Timo.Timo.global.analytics.AnalyticsEvent;
+import com.Timo.Timo.global.analytics.AnalyticsEventSender;
 import com.Timo.Timo.global.auth.dto.ReissueResult;
 import com.Timo.Timo.global.auth.dto.response.AuthTokenResponse;
 import com.Timo.Timo.global.auth.exception.AuthErrorCode;
 import com.Timo.Timo.global.exception.CustomException;
 import com.Timo.Timo.global.exception.code.ErrorCode;
 import com.Timo.Timo.global.jwt.provider.JwtTokenProvider;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -31,6 +36,7 @@ public class AuthService {
   private final BlackListService blacklistService;
   private final GoogleCalendarConnectionRepository googleCalendarConnectionRepository;
   private final GoogleTokenRevocationOutboxRepository googleTokenRevocationOutboxRepository;
+  private final AnalyticsEventSender analyticsEventSender;
 
   public AuthTokenResponse exchangeCodeForToken(String code) {
 
@@ -52,6 +58,8 @@ public class AuthService {
         .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
     String accessToken = jwtTokenProvider.generateAccessToken(userId);
+
+    analyticsEventSender.send(userId, AnalyticsEvent.LOGGED_IN);
 
     return AuthTokenResponse.builder()
         .accessToken(accessToken)
@@ -100,6 +108,8 @@ public class AuthService {
     if (sessionId != null) {
       refreshTokenService.deleteRefreshToken(String.valueOf(userId), sessionId);
     }
+
+    analyticsEventSender.send(userId, AnalyticsEvent.LOGGED_OUT);
   }
 
   @Transactional
@@ -110,7 +120,10 @@ public class AuthService {
 
     revokeCalendarConnectionIfExists(userId);
 
+    long daysSinceSignup = ChronoUnit.DAYS.between(user.getCreatedAt(), LocalDateTime.now());
     userRepository.delete(user);
+    analyticsEventSender.send(userId, AnalyticsEvent.ACCOUNT_WITHDRAWN,
+        Map.of("days_since_signup", daysSinceSignup));
 
     TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
       @Override
