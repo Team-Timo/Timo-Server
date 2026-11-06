@@ -58,3 +58,6 @@ ai:
 
 holiday:
   api-key: ${HOLIDAY_API_KEY:}
+
+mixpanel:
+  token: ${MIXPANEL_TOKEN:}

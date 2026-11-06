@@ -27,6 +27,20 @@ public class AsyncConfig {
     return executor;
   }
 
+  @Bean(name = "analyticsExecutor")
+  public Executor analyticsExecutor() {
+    ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+    executor.setThreadNamePrefix("analytics-");
+    executor.setCorePoolSize(2);
+    executor.setMaxPoolSize(2);
+    executor.setQueueCapacity(500);
+    executor.setTaskDecorator(new MdcTaskDecorator());
+    executor.setWaitForTasksToCompleteOnShutdown(true);
+    executor.setAwaitTerminationSeconds(5);
+    executor.initialize();
+    return executor;
+  }
+
   @Bean(name = "holidayExecutor")
   public Executor holidayExecutor() {
     ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();

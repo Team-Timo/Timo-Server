@@ -54,6 +54,9 @@ dependencies {
 	// iCalendar (애플 캘린더 CalDAV 일정 파싱)
 	implementation 'org.mnode.ical4j:ical4j:4.1.1'
 
+	// Mixpanel
+	implementation 'com.mixpanel:mixpanel-java:1.5.3'
+
 	// Lombok
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
