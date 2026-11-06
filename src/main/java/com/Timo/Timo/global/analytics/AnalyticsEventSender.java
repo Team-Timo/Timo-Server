@@ -14,22 +14,29 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import com.mixpanel.mixpanelapi.MessageBuilder;
 import com.mixpanel.mixpanelapi.MixpanelAPI;
 
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
 public class AnalyticsEventSender {
 
+  private static final String DROPPED_METRIC = "analytics.events.dropped";
+
   private final MixpanelAPI mixpanelApi = new MixpanelAPI();
   private final MessageBuilder messageBuilder;
   private final Executor analyticsExecutor;
+  private final MeterRegistry meterRegistry;
 
   public AnalyticsEventSender(
       @Value("${mixpanel.token:}") String token,
-      @Qualifier("analyticsExecutor") Executor analyticsExecutor
+      @Qualifier("analyticsExecutor") Executor analyticsExecutor,
+      MeterRegistry meterRegistry
   ) {
     this.messageBuilder = token == null || token.isBlank() ? null : new MessageBuilder(token);
     this.analyticsExecutor = analyticsExecutor;
+    this.meterRegistry = meterRegistry;
   }
 
   public void send(Long userId, AnalyticsEvent event) {
@@ -57,6 +64,7 @@ public class AnalyticsEventSender {
       message = messageBuilder.event(distinctId, event.getEventName(), new JSONObject(properties));
     } catch (RuntimeException exception) {
       log.warn("Failed to build analytics event. event={}", event.getEventName(), exception);
+      recordDropped(event, DropReason.BUILD_FAILED);
       return;
     }
 
@@ -78,6 +86,7 @@ public class AnalyticsEventSender {
       analyticsExecutor.execute(() -> deliver(event, message));
     } catch (RejectedExecutionException exception) {
       log.warn("Analytics event dropped because executor is full. event={}", event.getEventName());
+      recordDropped(event, DropReason.QUEUE_FULL);
     }
   }
 
@@ -86,6 +95,31 @@ public class AnalyticsEventSender {
       mixpanelApi.sendMessage(message);
     } catch (Exception exception) {
       log.warn("Failed to send analytics event. event={}", event.getEventName(), exception);
+      recordDropped(event, DropReason.SEND_FAILED);
+    }
+  }
+
+  private void recordDropped(AnalyticsEvent event, DropReason reason) {
+    Counter.builder(DROPPED_METRIC)
+        .tag("event", event.getEventName())
+        .tag("reason", reason.getTag())
+        .register(meterRegistry)
+        .increment();
+  }
+
+  private enum DropReason {
+    BUILD_FAILED("build_failed"),
+    QUEUE_FULL("queue_full"),
+    SEND_FAILED("send_failed");
+
+    private final String tag;
+
+    DropReason(String tag) {
+      this.tag = tag;
+    }
+
+    String getTag() {
+      return tag;
     }
   }
 }
