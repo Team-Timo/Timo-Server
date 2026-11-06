@@ -248,12 +248,27 @@ public class AppleCalDavClient {
   // 여러 propstat 중 200 상태의 prop만 사용한다.
   private Element findSuccessProp(Element responseElement) {
     for (Element propStat : elements(responseElement, DAV_NS, "propstat")) {
-      String status = textOf(propStat, DAV_NS, "status");
-      if (status != null && status.contains(" 200 ")) {
+      if (parseStatusCode(textOf(propStat, DAV_NS, "status")) == 200) {
         return firstElement(propStat, DAV_NS, "prop");
       }
     }
     return null;
+  }
+
+  // "HTTP/1.1 200 OK" 형식에서 상태 코드 숫자만 꺼낸다.
+  private int parseStatusCode(String statusLine) {
+    if (statusLine == null) {
+      return -1;
+    }
+    String[] parts = statusLine.strip().split("\\s+");
+    if (parts.length < 2) {
+      return -1;
+    }
+    try {
+      return Integer.parseInt(parts[1]);
+    } catch (NumberFormatException exception) {
+      return -1;
+    }
   }
 
   // 외부 엔티티·DTD를 막아 XXE를 방어한다.
