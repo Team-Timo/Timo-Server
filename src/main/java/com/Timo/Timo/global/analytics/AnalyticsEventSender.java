@@ -153,9 +153,17 @@ public class AnalyticsEventSender {
   }
 
   private void deliver(List<PendingEvent> batch) {
-    ClientDelivery delivery = new ClientDelivery();
-    batch.forEach(pendingEvent -> delivery.addMessage(pendingEvent.message()));
+    try {
+      ClientDelivery delivery = new ClientDelivery();
+      batch.forEach(pendingEvent -> delivery.addMessage(pendingEvent.message()));
+      send(delivery, batch);
+    } catch (RuntimeException exception) {
+      log.warn("Unexpected error while sending analytics events. size={}", batch.size(), exception);
+      recordDropped(batch);
+    }
+  }
 
+  private void send(ClientDelivery delivery, List<PendingEvent> batch) {
     try {
       mixpanelApi.deliver(delivery);
     } catch (MixpanelServerException exception) {
