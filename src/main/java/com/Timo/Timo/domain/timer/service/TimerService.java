@@ -24,6 +24,8 @@ import com.Timo.Timo.domain.todo.service.TodoInstanceReorderer;
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.exception.UserErrorCode;
 import com.Timo.Timo.domain.user.repository.UserRepository;
+import com.Timo.Timo.global.analytics.AnalyticsEvent;
+import com.Timo.Timo.global.analytics.AnalyticsEventSender;
 import com.Timo.Timo.global.exception.CustomException;
 import com.Timo.Timo.global.exception.code.ErrorCode;
 import java.time.Duration;
@@ -31,6 +33,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -57,13 +60,17 @@ public class TimerService {
   private final AiHistoryCacheService aiHistoryCacheService;
   private final AiFeedbackPersistenceService aiFeedbackPersistenceService;
   private final PlatformTransactionManager transactionManager;
+  private final AnalyticsEventSender analyticsEventSender;
 
   @Transactional
   public TimerStartResponse startTimer(Long userId, Long todoId, LocalDate targetDate) {
     User user = userRepository.findByIdForUpdate(userId)
         .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
-    return startTimerInternal(user, todoId, targetDate);
+    TimerStartResponse response = startTimerInternal(user, todoId, targetDate);
+    analyticsEventSender.send(userId, AnalyticsEvent.TIMER_STARTED,
+        Map.of("planned_seconds", response.plannedSeconds()));
+    return response;
   }
 
   private TimerStartResponse startTimerInternal(User user, Long todoId, LocalDate targetDate) {
@@ -127,6 +134,9 @@ public class TimerService {
     aiHistoryCacheService.bumpUserHistoryVersionAfterCommit(userId);
 
     TimerStartResponse started = startTimerInternal(user, todoId, targetDate);
+    analyticsEventSender.send(userId, AnalyticsEvent.TIMER_SWITCHED);
+    analyticsEventSender.send(userId, AnalyticsEvent.TIMER_STARTED,
+        Map.of("planned_seconds", started.plannedSeconds()));
 
     return TimerSwitchResponse.of(stoppedRecord, started);
   }
@@ -150,6 +160,7 @@ public class TimerService {
           .orElseThrow(() -> new CustomException(TimerErrorCode.TIMER_INVALID_STATUS_TRANSITION));
       activeSession.pause(now);
       instance.pauseTimer();
+      analyticsEventSender.send(userId, AnalyticsEvent.TIMER_PAUSED);
     } else if (action == TimerAction.RESUME) {
       timerRecord.resume();
       TimerSession newSession = TimerSession.builder()
@@ -158,6 +169,7 @@ public class TimerService {
           .build();
       timerSessionRepository.save(newSession);
       instance.startTimer();
+      analyticsEventSender.send(userId, AnalyticsEvent.TIMER_RESUMED);
     }  else {
       throw new CustomException(TimerErrorCode.TIMER_INVALID_STATUS_TRANSITION);
     }
@@ -178,6 +190,8 @@ public class TimerService {
 
     int extendSeconds = extendMinutes * 60;
     timerRecord.extend(extendSeconds);
+    analyticsEventSender.send(userId, AnalyticsEvent.TIMER_EXTENDED,
+        Map.of("extended_seconds", extendSeconds));
 
     LocalDateTime now = LocalDateTime.now();
     int elapsedSeconds = calculateElapsedSeconds(timerId, now);
@@ -272,7 +286,29 @@ public class TimerService {
 
   private FinishedTimer finishTimerInTransaction(Long userId, Long timerId, TimerStatus targetStatus) {
     TimerRecord timerRecord = getOwnedTimerForUpdate(userId, timerId);
-    return finish(userId, timerRecord, targetStatus);
+    FinishedTimer finishedTimer = finish(userId, timerRecord, targetStatus);
+    sendFinishEvent(userId, timerRecord, targetStatus);
+    return finishedTimer;
+  }
+
+  private void sendFinishEvent(Long userId, TimerRecord timerRecord, TimerStatus targetStatus) {
+    int plannedSeconds = timerRecord.getPlannedSeconds();
+    int actualSeconds = timerRecord.getActualSeconds();
+
+    if (targetStatus == TimerStatus.COMPLETED) {
+      analyticsEventSender.send(userId, AnalyticsEvent.TIMER_COMPLETED, Map.of(
+          "planned_seconds", plannedSeconds,
+          "actual_seconds", actualSeconds,
+          "diff_seconds", actualSeconds - plannedSeconds,
+          "extended", timerRecord.getExtendedSeconds() > 0
+      ));
+      return;
+    }
+
+    analyticsEventSender.send(userId, AnalyticsEvent.TIMER_STOPPED, Map.of(
+        "planned_seconds", plannedSeconds,
+        "elapsed_seconds", actualSeconds
+    ));
   }
 
   private TimerRecord getOwnedTimerForUpdate(Long userId, Long timerId) {

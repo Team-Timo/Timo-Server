@@ -18,6 +18,8 @@ import com.Timo.Timo.domain.timer.repository.TimerSessionRepository;
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.exception.UserErrorCode;
 import com.Timo.Timo.domain.user.repository.UserRepository;
+import com.Timo.Timo.global.analytics.AnalyticsEvent;
+import com.Timo.Timo.global.analytics.AnalyticsEventSender;
 import com.Timo.Timo.global.exception.CustomException;
 
 import lombok.RequiredArgsConstructor;
@@ -32,12 +34,14 @@ public class TimeBoxService {
 	private final TimerSessionRepository timerSessionRepository;
 	private final UserRepository userRepository;
 	private final TimeBoxDateParser dateParser;
+	private final AnalyticsEventSender analyticsEventSender;
 
 	public List<TimeBoxResponse> getTimeBoxes(Long userId, String dateValue) {
 		LocalDate date = dateParser.parse(dateValue);
 		User user = userRepository.findById(userId)
 			.orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 		ZoneId userZoneId = ZoneId.of(user.getZoneId());
+		analyticsEventSender.send(userId, AnalyticsEvent.TIMEBOX_VIEWED);
 
 		LocalDateTime dayStart = date.atStartOfDay();
 		LocalDateTime nextDayStart = date.plusDays(1).atStartOfDay();

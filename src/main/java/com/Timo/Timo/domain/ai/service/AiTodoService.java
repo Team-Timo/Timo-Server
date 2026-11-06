@@ -20,6 +20,8 @@ import com.Timo.Timo.domain.todo.exception.TodoErrorCode;
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.exception.UserErrorCode;
 import com.Timo.Timo.domain.user.repository.UserRepository;
+import com.Timo.Timo.global.analytics.AnalyticsEvent;
+import com.Timo.Timo.global.analytics.AnalyticsEventSender;
 import com.Timo.Timo.global.exception.CustomException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -43,6 +45,7 @@ public class AiTodoService {
 	private final GeminiService geminiService;
 	private final ObjectMapper objectMapper;
 	private final AiRequestRateLimiter rateLimiter;
+	private final AnalyticsEventSender analyticsEventSender;
 
 	public RecommendDurationResponse recommendDuration(Long userId, RecommendDurationRequest request) {
 		ZoneId userZoneId = getUserZoneId(userId);
@@ -66,7 +69,9 @@ public class AiTodoService {
 
 		String geminiJson = geminiService.generateJson(prompt);
 		GeminiDurationRecommendation recommendation = parseRecommendation(geminiJson);
-		return validate(recommendation);
+		RecommendDurationResponse response = validate(recommendation);
+		analyticsEventSender.send(userId, AnalyticsEvent.AI_DURATION_PREDICTED);
+		return response;
 	}
 
 	public String createFeedback(Long userId, Long todoId) {

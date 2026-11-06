@@ -4,7 +4,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.time.ZoneId;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -44,6 +46,8 @@ import com.Timo.Timo.domain.todo.vo.SubtaskStates;
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.exception.UserErrorCode;
 import com.Timo.Timo.domain.user.repository.UserRepository;
+import com.Timo.Timo.global.analytics.AnalyticsEvent;
+import com.Timo.Timo.global.analytics.AnalyticsEventSender;
 import com.Timo.Timo.global.exception.CustomException;
 
 import lombok.RequiredArgsConstructor;
@@ -64,6 +68,7 @@ public class TodoService {
 	private final SubtaskReorderer subtaskReorderer;
 	private final TimerService timerService;
 	private final AiHistoryCacheService aiHistoryCacheService;
+	private final AnalyticsEventSender analyticsEventSender;
 
 	@Transactional
 	public TodoCreateResponse createTodo(Long userId, TodoCreateRequest request) {
@@ -96,6 +101,13 @@ public class TodoService {
 		);
 
 		Todo savedTodo = todoRepository.save(todo);
+
+		Map<String, Object> properties = todoTypeProperties(savedTodo);
+		properties.put("subtask_count", savedTodo.getSubtasks().size());
+		properties.put("has_tag", savedTodo.getTagId() != null);
+		properties.put("duration_seconds", savedTodo.getDurationSeconds());
+		analyticsEventSender.send(userId, AnalyticsEvent.TODO_CREATED, properties);
+
 		return TodoCreateResponse.from(savedTodo);
 	}
 
@@ -118,6 +130,7 @@ public class TodoService {
 
 		SubtaskStates subtaskStates = resolveSubtaskStates(instance);
 
+		analyticsEventSender.send(userId, AnalyticsEvent.TODO_DETAIL_VIEWED);
 		return TodoDetailResponse.of(todo, instance, date, tag, subtaskStates);
 	}
 
@@ -146,6 +159,13 @@ public class TodoService {
     }
 
 		TodoInstance instance = todoInstanceReorderer.applyCompletion(userId, todo, date, request.isCompleted());
+
+		if (request.isCompleted()) {
+			analyticsEventSender.send(userId, AnalyticsEvent.TODO_COMPLETED, todoTypeProperties(todo));
+		} else {
+			analyticsEventSender.send(userId, AnalyticsEvent.TODO_UNCOMPLETED);
+		}
+
 		return TodoStatusChangeResponse.from(todoId, instance);
 	}
 
@@ -164,6 +184,11 @@ public class TodoService {
 
 		TodoInstance instance = lockInstance(userId, todo, date);
 		SubtaskCompletion completion = subtaskReorderer.applyCompletion(todo, instance, subtask, request.isCompleted());
+
+		if (request.isCompleted()) {
+			analyticsEventSender.send(userId, AnalyticsEvent.SUBTASK_COMPLETED);
+		}
+
 		return SubtaskStatusChangeResponse.from(completion);
 	}
 
@@ -177,6 +202,7 @@ public class TodoService {
 		// 메모는 생성 이후 항상 날짜별로 저장한다. 대상 인스턴스를 확정한 뒤 override를 설정.
 		TodoInstance instance = todoInstanceReorderer.materializeInstance(userId, todo, date);
 		instance.updateMemo(memo);
+		analyticsEventSender.send(userId, AnalyticsEvent.TODO_MEMO_UPDATED);
 	}
 
 	// 하위 태스크 완료·순서는 날짜별 인스턴스에 저장하므로 인스턴스를 확정한 뒤 잠근다.
@@ -205,6 +231,7 @@ public class TodoService {
 		}
 
 		TodoInstance instance = todoInstanceReorderer.applyReorder(userId, todo, date, request.newIndex());
+		analyticsEventSender.send(userId, AnalyticsEvent.TODO_REORDERED, Map.of("target", "todo"));
 		return TodoReorderResponse.from(todoId, instance);
 	}
 
@@ -224,6 +251,7 @@ public class TodoService {
 
 		TodoInstance instance = lockInstance(userId, todo, date);
 		SubtaskCompletion completion = subtaskReorderer.applyReorder(todo, instance, subtask, request.newIndex());
+		analyticsEventSender.send(userId, AnalyticsEvent.TODO_REORDERED, Map.of("target", "subtask"));
 		return SubtaskReorderResponse.from(completion);
 	}
 
@@ -276,6 +304,8 @@ public class TodoService {
 		if (changesHistoryKey) {
 			aiHistoryCacheService.bumpUserHistoryVersionAfterCommit(userId);
 		}
+
+		analyticsEventSender.send(userId, AnalyticsEvent.TODO_UPDATED);
 	}
 
 	@Transactional
@@ -297,6 +327,14 @@ public class TodoService {
 		}
 
 		aiHistoryCacheService.bumpUserHistoryVersionAfterCommit(userId);
+		analyticsEventSender.send(userId, AnalyticsEvent.TODO_DELETED);
+	}
+
+	private Map<String, Object> todoTypeProperties(Todo todo) {
+		Map<String, Object> properties = new HashMap<>();
+		properties.put("priority", todo.getPriority() != null ? todo.getPriority().name() : null);
+		properties.put("repeat_type", todo.getRepeatType() != null ? todo.getRepeatType().name() : null);
+		return properties;
 	}
 
 	private void removeTodoFrom(Todo todo, LocalDate date) {

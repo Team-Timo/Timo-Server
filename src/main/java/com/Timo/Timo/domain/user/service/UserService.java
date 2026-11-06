@@ -4,6 +4,7 @@ import com.Timo.Timo.domain.calendar.google.repository.GoogleCalendarConnectionR
 
 import java.time.DateTimeException;
 import java.time.ZoneId;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +17,8 @@ import com.Timo.Timo.domain.user.dto.response.UpdateTimezoneResponse;
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.exception.UserErrorCode;
 import com.Timo.Timo.domain.user.repository.UserRepository;
+import com.Timo.Timo.global.analytics.AnalyticsEvent;
+import com.Timo.Timo.global.analytics.AnalyticsEventSender;
 import com.Timo.Timo.global.exception.CustomException;
 
 import lombok.RequiredArgsConstructor;
@@ -27,6 +30,7 @@ public class UserService {
 
 	private final UserRepository userRepository;
   private final GoogleCalendarConnectionRepository googleCalendarConnectionRepository;
+  private final AnalyticsEventSender analyticsEventSender;
 
 	public UserProfileResponse getMyProfile(Long userId) {
     User user = userRepository.findById(userId)
@@ -37,6 +41,7 @@ public class UserService {
         .map(connection -> connection.getCalendarEmail())
         .orElse(null);
 
+    analyticsEventSender.send(userId, AnalyticsEvent.PROFILE_VIEWED);
     return UserProfileResponse.from(user, calendarConnected, calendarEmail);
   }
 
@@ -46,6 +51,7 @@ public class UserService {
 			.orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
 		user.updateLanguage(request.language());
+		analyticsEventSender.send(userId, AnalyticsEvent.PROFILE_UPDATED);
 
 		return new UpdateLanguageResponse(user.getLanguage());
 	}
@@ -61,6 +67,7 @@ public class UserService {
 		}
 
 		user.updateZoneId(zoneId);
+		analyticsEventSender.send(userId, AnalyticsEvent.TIMEZONE_UPDATED, Map.of("zone_id", zoneId));
 		return new UpdateTimezoneResponse(user.getZoneId());
 	}
 

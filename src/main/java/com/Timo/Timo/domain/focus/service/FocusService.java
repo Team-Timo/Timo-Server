@@ -22,6 +22,8 @@ import com.Timo.Timo.domain.todo.repository.TodoInstanceRepository;
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.exception.UserErrorCode;
 import com.Timo.Timo.domain.user.repository.UserRepository;
+import com.Timo.Timo.global.analytics.AnalyticsEvent;
+import com.Timo.Timo.global.analytics.AnalyticsEventSender;
 import com.Timo.Timo.global.exception.CustomException;
 
 import lombok.RequiredArgsConstructor;
@@ -37,9 +39,11 @@ public class FocusService {
 	private final HomeTodoReader homeTodoReader;
 	private final TimerRecordRepository timerRecordRepository;
 	private final TodoInstanceRepository todoInstanceRepository;
+	private final AnalyticsEventSender analyticsEventSender;
 
 	public FocusTodoResult getFocusTodo(Long userId) {
 		User user = getUser(userId);
+		analyticsEventSender.send(userId, AnalyticsEvent.FOCUS_VIEWED);
 		ZoneId userZone = ZoneId.of(user.getZoneId());
 		LocalDate today = LocalDate.now(userZone);
 

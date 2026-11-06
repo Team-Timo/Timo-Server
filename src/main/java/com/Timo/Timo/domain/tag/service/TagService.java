@@ -14,6 +14,8 @@ import com.Timo.Timo.domain.todo.service.TodoService;
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.exception.UserErrorCode;
 import com.Timo.Timo.domain.user.repository.UserRepository;
+import com.Timo.Timo.global.analytics.AnalyticsEvent;
+import com.Timo.Timo.global.analytics.AnalyticsEventSender;
 import com.Timo.Timo.global.exception.CustomException;
 
 import lombok.RequiredArgsConstructor;
@@ -26,6 +28,7 @@ public class TagService {
 	private final TagRepository tagRepository;
 	private final UserRepository userRepository;
 	private final TodoService todoService;
+	private final AnalyticsEventSender analyticsEventSender;
 
 	public TagCreateResponse createTag(Long userId, TagCreateRequest request) {
 		User user = userRepository.findById(userId)
@@ -37,6 +40,7 @@ public class TagService {
 
 		try {
 			Tag tag = tagRepository.saveAndFlush(Tag.ofUser(user, request.name()));
+			analyticsEventSender.send(userId, AnalyticsEvent.TAG_CREATED);
 			return TagCreateResponse.from(tag);
 		} catch (DataIntegrityViolationException exception) {
 			throw new CustomException(TagErrorCode.DUPLICATE_TAG_NAME);
@@ -66,6 +70,7 @@ public class TagService {
 
 		tagRepository.delete(tag);
 		todoService.removeTagFromTodos(tagId);
+		analyticsEventSender.send(userId, AnalyticsEvent.TAG_DELETED);
 	}
 
 	private boolean isOwnedBy(Tag tag, Long userId) {

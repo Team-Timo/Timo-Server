@@ -12,6 +12,8 @@ import com.Timo.Timo.domain.todo.enums.CalendarSource;
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.domain.user.exception.UserErrorCode;
 import com.Timo.Timo.domain.user.repository.UserRepository;
+import com.Timo.Timo.global.analytics.AnalyticsEvent;
+import com.Timo.Timo.global.analytics.AnalyticsEventSender;
 import com.Timo.Timo.global.exception.CustomException;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -37,6 +39,7 @@ public class CalendarEventQueryService {
 
   private final UserRepository userRepository;
   private final CalendarEventProviders calendarEventProviders;
+  private final AnalyticsEventSender analyticsEventSender;
 
   public CalendarEventsResponse getEvents(Long userId, String filterValue, String baseDateValue) {
     User user = getUser(userId);
@@ -60,6 +63,7 @@ public class CalendarEventQueryService {
         .map(date -> CalendarDayResponse.of(date, toSortedResponses(eventsByDate.getOrDefault(date, List.of()))))
         .toList();
 
+    analyticsEventSender.send(userId, AnalyticsEvent.CALENDAR_EVENTS_VIEWED);
     return CalendarEventsResponse.of(filter, baseDate, days, failedSources);
   }
 
