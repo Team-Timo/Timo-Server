@@ -137,8 +137,9 @@ public class AppleCalDavClient {
     try {
       response = send(REPORT, calendarUrl, "1", body, toBasicAuthorization(appleId, appPassword));
     } catch (CalDavNotFoundException exception) {
-      // 목록 조회 직후 삭제된 캘린더는 일정이 없는 것으로 본다.
-      return List.of();
+      // 일정이 없는 것으로 보면 동기화가 기존 투두를 삭제하므로 실패로 처리한다.
+      log.warn("애플 캘린더 일정 조회 대상 캘린더를 찾지 못했습니다.");
+      throw new CustomException(CalendarErrorCode.APPLE_CALENDAR_UPSTREAM_ERROR);
     }
 
     List<String> calendarData = new ArrayList<>();

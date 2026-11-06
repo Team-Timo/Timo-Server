@@ -2,6 +2,8 @@ package com.Timo.Timo.domain.calendar.apple.utils;
 
 import com.Timo.Timo.domain.calendar.dto.event.ExternalCalendarEvent;
 import com.Timo.Timo.domain.calendar.dto.event.ExternalEventDateTime;
+import com.Timo.Timo.domain.calendar.exception.CalendarErrorCode;
+import com.Timo.Timo.global.exception.CustomException;
 import java.io.StringReader;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -43,6 +45,7 @@ public class ICalendarEventParser {
       DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'").withZone(ZoneOffset.UTC);
 
   // CalDAV 일정 리소스 하나(같은 UID의 원본 일정과 따로 수정한 회차)를 조회 기간의 공통 일정 목록으로 바꾼다.
+  // 읽지 못한 일정을 건너뛰면 동기화가 기존 투두를 삭제된 일정으로 보므로, 실패는 애플 캘린더 오류로 알린다.
   public static List<ExternalCalendarEvent> parse(
       String calendarData, Instant timeMin, Instant timeMax, ZoneId userZone
   ) {
@@ -50,8 +53,8 @@ public class ICalendarEventParser {
     try {
       calendar = new CalendarBuilder().build(new StringReader(calendarData));
     } catch (Exception exception) {
-      log.warn("애플 일정 iCalendar 파싱 실패, 해당 일정을 건너뜁니다. reason={}", exception.getClass().getSimpleName());
-      return List.of();
+      log.warn("애플 일정 iCalendar 파싱 실패. reason={}", exception.getClass().getSimpleName());
+      throw new CustomException(CalendarErrorCode.APPLE_CALENDAR_UPSTREAM_ERROR);
     }
 
     Map<String, List<VEvent>> eventsByUid = new LinkedHashMap<>();
@@ -68,7 +71,8 @@ public class ICalendarEventParser {
       try {
         results.addAll(toExternalEvents(uid, events, timeMin, timeMax, userZone));
       } catch (RuntimeException exception) {
-        log.warn("애플 일정 변환 실패, 해당 일정을 건너뜁니다. reason={}", exception.getClass().getSimpleName());
+        log.warn("애플 일정 변환 실패. reason={}", exception.getClass().getSimpleName());
+        throw new CustomException(CalendarErrorCode.APPLE_CALENDAR_UPSTREAM_ERROR);
       }
     });
     return results;
