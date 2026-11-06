@@ -6,11 +6,9 @@ import com.Timo.Timo.domain.calendar.apple.repository.AppleCalendarConnectionRep
 import com.Timo.Timo.domain.calendar.exception.CalendarErrorCode;
 import com.Timo.Timo.domain.calendar.service.CalendarTodoSynchronizer;
 import com.Timo.Timo.domain.todo.enums.CalendarSource;
-import com.Timo.Timo.domain.todo.repository.TodoRepository;
 import com.Timo.Timo.domain.user.entity.User;
 import com.Timo.Timo.global.exception.CustomException;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -26,8 +24,8 @@ public class AppleCalendarConnectionCommandService {
 
   private final AppleCalendarConnectionRepository calendarConnectionRepository;
   private final CalendarTodoSynchronizer calendarTodoSynchronizer;
-  private final TodoRepository todoRepository;
 
+  // Apple ID가 바뀌어 재연동될 수 있어 연동 해제 표시는 일괄로 지우지 않고, 동기화에서 실제로 확인한 일정만 지운다.
   @Transactional
   public AppleCalendarConnectResponse saveConnection(
       User user, String appleId, String appPassword, String calendarHomeUrl
@@ -44,8 +42,6 @@ public class AppleCalendarConnectionCommandService {
     } catch (DataIntegrityViolationException e) {
       throw new CustomException(CalendarErrorCode.APPLE_CALENDAR_ALREADY_CONNECTED);
     }
-
-    todoRepository.clearDisconnectedFromCalendar(user.getId(), CalendarSource.APPLE, LocalDateTime.now());
 
     return AppleCalendarConnectResponse.builder()
         .appleCalendarConnected(true)
