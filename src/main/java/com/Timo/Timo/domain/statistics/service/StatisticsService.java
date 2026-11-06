@@ -192,7 +192,7 @@ public class StatisticsService {
 		return secondsByDateAndTodoId.entrySet().stream()
 			.collect(Collectors.toMap(
 				Map.Entry::getKey,
-				entry -> entry.getValue().values().stream().mapToLong(this::toMinutes).sum()
+				entry -> entry.getValue().values().stream().mapToLong(this::toRoundedMinutes).sum()
 			));
 	}
 
@@ -216,7 +216,7 @@ public class StatisticsService {
 		return new DailyTodoResponse(
 			todo.getId(),
 			todo.getTitle(),
-			toMinutes(actualSecondsByTodoId.getOrDefault(todo.getId(), 0L)),
+			toRoundedMinutes(actualSecondsByTodoId.getOrDefault(todo.getId(), 0L)),
 			toMinutes(todo.getDurationSeconds()),
 			toTagResponse(todo.getTagId(), tagNamesById)
 		);
@@ -242,6 +242,10 @@ public class StatisticsService {
 
 	private long toMinutes(long seconds) {
 		return seconds / SECONDS_PER_MINUTE;
+	}
+
+	private long toRoundedMinutes(long seconds) {
+		return Math.round((double)seconds / SECONDS_PER_MINUTE);
 	}
 
 	private record ResolvedTimerRecord(Long todoId, LocalDate date, long actualSeconds) {
