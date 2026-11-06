@@ -26,7 +26,7 @@ public record StatisticsDailyResponse(
 		@Schema(description = "투두명", example = "와이어프레임 제작", requiredMode = Schema.RequiredMode.REQUIRED)
 		String title,
 
-		@Schema(description = "해당 날짜에 계획된 이 투두의 타이머 기록 합계(분), 기록이 없으면 0", example = "90", requiredMode = Schema.RequiredMode.REQUIRED)
+		@Schema(description = "해당 날짜에 계획된 이 투두의 타이머 기록 합계(분, 초는 반올림), 기록이 없으면 0", example = "90", requiredMode = Schema.RequiredMode.REQUIRED)
 		Long actualTimeMinutes,
 
 		@Schema(description = "예상 소요 시간(분)", example = "60")
