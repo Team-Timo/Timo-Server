@@ -13,6 +13,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
@@ -34,6 +35,7 @@ import org.w3c.dom.NodeList;
 @Component
 public class AppleCalDavClient {
 
+  private static final String ICLOUD_HOST = "icloud.com";
   private static final URI ICLOUD_CALDAV_URL = URI.create("https://caldav.icloud.com/");
   private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(5);
   private static final Duration READ_TIMEOUT = Duration.ofSeconds(10);
@@ -156,6 +158,7 @@ public class AppleCalDavClient {
   private CalDavResponse send(HttpMethod method, URI url, String depth, String body, String authorization) {
     URI requestUrl = url;
     for (int redirectCount = 0; redirectCount <= MAX_REDIRECTS; redirectCount++) {
+      validateAppleUrl(requestUrl);
       CalDavResponse response = exchange(method, requestUrl, depth, body, authorization);
       int status = response.status();
       if (status == 207 || (status >= 200 && status < 300)) {
@@ -169,6 +172,16 @@ public class AppleCalDavClient {
     }
     log.warn("애플 캘린더 리다이렉트 횟수 초과. method={}", method);
     throw new CustomException(CalendarErrorCode.APPLE_CALENDAR_UPSTREAM_ERROR);
+  }
+
+  // 응답의 href·Location이나 저장된 주소가 다른 곳을 가리켜도 인증 정보가 iCloud 밖으로 나가지 않게 한다.
+  private void validateAppleUrl(URI url) {
+    String host = url.getHost() != null ? url.getHost().toLowerCase(Locale.ROOT) : null;
+    boolean appleHost = host != null && (host.equals(ICLOUD_HOST) || host.endsWith("." + ICLOUD_HOST));
+    if (!"https".equalsIgnoreCase(url.getScheme()) || !appleHost) {
+      log.warn("애플 캘린더 요청 주소가 iCloud HTTPS 주소가 아닙니다. host={}", host);
+      throw new CustomException(CalendarErrorCode.APPLE_CALENDAR_UPSTREAM_ERROR);
+    }
   }
 
   private CalDavResponse exchange(HttpMethod method, URI url, String depth, String body, String authorization) {
