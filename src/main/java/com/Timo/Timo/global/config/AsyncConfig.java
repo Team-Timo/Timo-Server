@@ -35,6 +35,8 @@ public class AsyncConfig {
     executor.setMaxPoolSize(2);
     executor.setQueueCapacity(500);
     executor.setTaskDecorator(new MdcTaskDecorator());
+    executor.setWaitForTasksToCompleteOnShutdown(true);
+    executor.setAwaitTerminationSeconds(5);
     executor.initialize();
     return executor;
   }
