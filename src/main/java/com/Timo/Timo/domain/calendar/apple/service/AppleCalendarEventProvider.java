@@ -13,7 +13,9 @@ import java.net.URI;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -43,13 +45,16 @@ public class AppleCalendarEventProvider implements CalendarEventProvider {
     String appPassword = connection.getAppPassword();
     ZoneId userZone = ZoneId.of(connection.getUser().getZoneId());
 
-    List<ExternalCalendarEvent> events = new ArrayList<>();
+    // 공유받은 캘린더의 일정에 초대도 받으면 같은 UID 일정이 여러 캘린더에 있으므로 처음 것만 남긴다.
+    Map<String, ExternalCalendarEvent> eventsById = new LinkedHashMap<>();
     for (URI calendarUrl : findEventCalendarUrls(userId, connection)) {
       for (String calendarData : appleCalDavClient.fetchCalendarData(appleId, appPassword, calendarUrl, timeMin, timeMax)) {
-        events.addAll(ICalendarEventParser.parse(calendarData, timeMin, timeMax, userZone));
+        for (ExternalCalendarEvent event : ICalendarEventParser.parse(calendarData, timeMin, timeMax, userZone)) {
+          eventsById.putIfAbsent(event.eventId(), event);
+        }
       }
     }
-    return events;
+    return new ArrayList<>(eventsById.values());
   }
 
   // 저장한 캘린더 홈 주소가 바뀌었으면 다시 찾아 저장한다.
