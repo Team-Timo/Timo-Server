@@ -9,6 +9,8 @@ import com.Timo.Timo.domain.calendar.exception.CalendarErrorCode;
 import com.Timo.Timo.domain.calendar.service.CalendarEventProvider;
 import com.Timo.Timo.domain.todo.enums.CalendarSource;
 import com.Timo.Timo.global.exception.CustomException;
+import io.sentry.Sentry;
+import io.sentry.SentryLevel;
 import java.net.URI;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -22,6 +24,8 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class AppleCalendarEventProvider implements CalendarEventProvider {
+
+  private static final String PARSE_FAILURE_MESSAGE = "애플 일정 iCalendar 파싱 실패";
 
   private final AppleCalendarConnectionRepository calendarConnectionRepository;
   private final AppleCalendarConnectionCommandService commandService;
@@ -49,12 +53,28 @@ public class AppleCalendarEventProvider implements CalendarEventProvider {
     Map<String, ExternalCalendarEvent> eventsById = new LinkedHashMap<>();
     for (URI calendarUrl : findEventCalendarUrls(userId, connection)) {
       for (String calendarData : appleCalDavClient.fetchCalendarData(appleId, appPassword, calendarUrl, timeMin, timeMax)) {
-        for (ExternalCalendarEvent event : ICalendarEventParser.parse(calendarData, timeMin, timeMax, userZone)) {
+        for (ExternalCalendarEvent event : parse(userId, calendarData, timeMin, timeMax, userZone)) {
           eventsById.putIfAbsent(event.eventId(), event);
         }
       }
     }
     return new ArrayList<>(eventsById.values());
+  }
+
+  // 깨진 일정이 iCloud에 남아 있으면 그 사용자의 애플 동기화·조회가 계속 실패하므로 Sentry로 알린다.
+  // 일정 내용이 섞이지 않도록 예외 대신 고정 메시지와 사용자 ID만 보낸다.
+  private List<ExternalCalendarEvent> parse(
+      Long userId, String calendarData, Instant timeMin, Instant timeMax, ZoneId userZone
+  ) {
+    try {
+      return ICalendarEventParser.parse(calendarData, timeMin, timeMax, userZone);
+    } catch (CustomException exception) {
+      Sentry.captureMessage(PARSE_FAILURE_MESSAGE, SentryLevel.WARNING, scope -> {
+        scope.setTag("calendarSource", CalendarSource.APPLE.name());
+        scope.setTag("userId", String.valueOf(userId));
+      });
+      throw exception;
+    }
   }
 
   // 저장한 캘린더 홈 주소가 바뀌었으면 다시 찾아 저장한다.
