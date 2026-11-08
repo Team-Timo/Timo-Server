@@ -34,7 +34,7 @@ public interface CalendarControllerDocs {
         한 캘린더만 연동되어 있으면 그 캘린더의 일정만 반환하고, 연동된 캘린더가 하나도 없으면 404(CALENDAR_404)를 반환합니다.
 
         한 캘린더 조회가 실패해도(인증 만료, 캘린더 서버 장애 등) 나머지 캘린더는 계속 조회하며 응답은 200입니다.
-        실패한 캘린더는 failedSources에 calendarSource와 errorCode(예: GOOGLE_CALENDAR_401)로 담기며, 해당 캘린더의 일정은 응답에 포함되지 않습니다.
+        실패한 캘린더는 failedSources에 calendarSource와 errorCode(예: GOOGLE_CALENDAR_401, APPLE_CALENDAR_401)로 담기며, 해당 캘린더의 일정은 응답에 포함되지 않습니다.
         """,
       security = @SecurityRequirement(name = "bearerAuth")
   )
@@ -61,8 +61,8 @@ public interface CalendarControllerDocs {
         filter(DEFAULT/WEEK)와 baseDate 범위의 연동된 모든 캘린더(구글·애플) 일정을 투두로 저장/갱신합니다.
         캘린더마다 따로 동기화하며, 각 투두는 calendarSource로 출처를 구분합니다.
         한 캘린더 동기화가 실패해도(인증 만료, 캘린더 서버 장애 등) 나머지 캘린더는 계속 동기화하며 응답은 200입니다.
-        실패한 캘린더는 failedSources에 calendarSource와 errorCode(예: GOOGLE_CALENDAR_401)로 담기며, 해당 캘린더의 투두는 변경되지 않습니다.
-        errorCode가 GOOGLE_CALENDAR_401이면 구글 캘린더 재연동을 안내해야 합니다.
+        실패한 캘린더는 failedSources에 calendarSource와 errorCode(예: GOOGLE_CALENDAR_401, APPLE_CALENDAR_401)로 담기며, 해당 캘린더의 투두는 변경되지 않습니다.
+        errorCode가 GOOGLE_CALENDAR_401이면 구글 캘린더 재연동을, APPLE_CALENDAR_401이면 앱 전용 암호가 삭제·변경된 것이므로 애플 캘린더 재연동을 안내해야 합니다.
 
         DEFAULT: baseDate-7일 ~ baseDate+7일 (총 15일)
 
