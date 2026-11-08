@@ -1,5 +1,6 @@
 package com.Timo.Timo.domain.user.service;
 
+import com.Timo.Timo.domain.calendar.apple.repository.AppleCalendarConnectionRepository;
 import com.Timo.Timo.domain.calendar.google.repository.GoogleCalendarConnectionRepository;
 
 import java.time.DateTimeException;
@@ -29,8 +30,9 @@ import lombok.RequiredArgsConstructor;
 public class UserService {
 
 	private final UserRepository userRepository;
-  private final GoogleCalendarConnectionRepository googleCalendarConnectionRepository;
-  private final AnalyticsEventSender analyticsEventSender;
+	private final GoogleCalendarConnectionRepository googleCalendarConnectionRepository;
+	private final AppleCalendarConnectionRepository appleCalendarConnectionRepository;
+	private final AnalyticsEventSender analyticsEventSender;
 
 	public UserProfileResponse getMyProfile(Long userId) {
     User user = userRepository.findById(userId)
@@ -41,8 +43,12 @@ public class UserService {
         .map(connection -> connection.getCalendarEmail())
         .orElse(null);
 
+    String appleCalendarId = appleCalendarConnectionRepository.findByUserId(userId)
+        .map(connection -> connection.getAppleId())
+        .orElse(null);
+
     analyticsEventSender.send(userId, AnalyticsEvent.PROFILE_VIEWED);
-    return UserProfileResponse.from(user, calendarConnected, calendarEmail);
+    return UserProfileResponse.from(user, calendarConnected, calendarEmail, appleCalendarId != null, appleCalendarId);
   }
 
 	@Transactional

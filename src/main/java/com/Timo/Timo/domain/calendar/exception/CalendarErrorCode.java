@@ -22,6 +22,13 @@ public enum CalendarErrorCode implements BaseErrorCode {
   GOOGLE_CALENDAR_REVOKE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "GOOGLE_CALENDAR_500", "구글 토큰 해제에 실패했습니다."),
   GOOGLE_CALENDAR_UPSTREAM_ERROR(HttpStatus.BAD_GATEWAY, "GOOGLE_CALENDAR_502", "구글 캘린더 서버와 통신 중 오류가 발생했습니다."),
   GOOGLE_CALENDAR_TIMEOUT(HttpStatus.SERVICE_UNAVAILABLE, "GOOGLE_CALENDAR_503", "구글 서버 응답이 지연되고 있습니다. 잠시 후 다시 시도해주세요."),
+
+  APPLE_CALENDAR_AUTH_FAILED(HttpStatus.UNAUTHORIZED, "APPLE_CALENDAR_401", "애플 캘린더 인증에 실패했습니다. Apple ID와 앱 전용 암호를 확인해주세요."),
+  APPLE_CALENDAR_NOT_CONNECTED(HttpStatus.NOT_FOUND, "APPLE_CALENDAR_404", "연동된 애플 캘린더가 없습니다."),
+  APPLE_CALENDAR_ALREADY_CONNECTED(HttpStatus.CONFLICT, "APPLE_CALENDAR_409", "이미 애플 캘린더가 연동되어 있습니다."),
+  APPLE_CALENDAR_RATE_LIMITED(HttpStatus.TOO_MANY_REQUESTS, "APPLE_CALENDAR_429", "애플 캘린더 요청이 일시적으로 제한되었습니다. 잠시 후 다시 시도해주세요."),
+  APPLE_CALENDAR_UPSTREAM_ERROR(HttpStatus.BAD_GATEWAY, "APPLE_CALENDAR_502", "애플 캘린더 서버와 통신 중 오류가 발생했습니다."),
+  APPLE_CALENDAR_TIMEOUT(HttpStatus.SERVICE_UNAVAILABLE, "APPLE_CALENDAR_503", "애플 서버 응답이 지연되고 있습니다. 잠시 후 다시 시도해주세요."),
   ;
   private final HttpStatus httpStatus;
   private final String code;
