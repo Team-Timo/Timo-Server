@@ -127,3 +127,16 @@ jobs:
                 labels: labelsToAdd
               });
             }
+
+            // 처음 열릴 때 담당자가 없으면 작성자를 담당자로 지정한다.
+            const hasAssignees = (item.assignees || []).length > 0;
+            const isBot = item.user.type === 'Bot';
+
+            if (context.payload.action === 'opened' && !hasAssignees && !isBot) {
+              await github.rest.issues.addAssignees({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: item.number,
+                assignees: [author]
+              });
+            }
