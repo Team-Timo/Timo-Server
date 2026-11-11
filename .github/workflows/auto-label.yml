@@ -4,7 +4,7 @@ on:
   issues:
     types: [opened, edited]
   pull_request_target:
-    types: [opened, edited, reopened, synchronize]
+    types: [opened, edited, reopened]
 
 permissions:
   issues: write
@@ -12,6 +12,8 @@ permissions:
 
 jobs:
   label:
+    # 본문만 수정한 경우에는 라벨을 다시 계산하지 않는다.
+    if: github.event.action != 'edited' || github.event.changes.title != null
     runs-on: ubuntu-latest
     steps:
       - uses: actions/github-script@v8
@@ -100,7 +102,11 @@ jobs:
             }
 
             const currentLabels = (item.labels || []).map(label => label.name || label);
-            const labelsToRemove = currentLabels.filter(label => managedLabels.has(label));
+            // 바뀐 라벨만 제거·추가해 불필요한 라벨 이벤트와 알림을 만들지 않는다.
+            const labelsToRemove = currentLabels.filter(
+              label => managedLabels.has(label) && !labels.has(label)
+            );
+            const labelsToAdd = [...labels].filter(label => !currentLabels.includes(label));
 
             await Promise.all(labelsToRemove.map(label => github.rest.issues.removeLabel({
               owner: context.repo.owner,
@@ -113,11 +119,11 @@ jobs:
               }
             })));
 
-            if (labels.size > 0) {
+            if (labelsToAdd.length > 0) {
               await github.rest.issues.addLabels({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: item.number,
-                labels: [...labels]
+                labels: labelsToAdd
               });
             }
