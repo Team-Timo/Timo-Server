@@ -43,7 +43,7 @@ jobs:
                 patterns: [/\[hotfix\]/, /(?:^|[^a-z0-9])hotfix:/]
               },
               {
-                label: '📃 docs',
+                label: '📁 docs',
                 patterns: [/\[docs\]/, /(?:^|[^a-z0-9])docs:/]
               },
               {
@@ -71,12 +71,16 @@ jobs:
                 patterns: [/\[rename\]/, /(?:^|[^a-z0-9])rename:/]
               },
               {
-                label: '♻️ remove',
+                label: '↩️ remove',
                 patterns: [/\[remove\]/, /(?:^|[^a-z0-9])remove:/]
               },
               {
                 label: '⚙️ setting',
                 patterns: [/\[setting\]/, /(?:^|[^a-z0-9])setting:/]
+              },
+              {
+                label: '💻 deploy',
+                patterns: [/\[deploy\]/, /(?:^|[^a-z0-9])deploy:/]
               }
             ];
 
@@ -89,7 +93,7 @@ jobs:
             const authorLabels = {
               'Jy000n': '🌸 자윤',
               'aneykrap': '🌵 예나',
-              'laura-jung': '🍀️ 윤아'
+              'laura-jung': '🍀 윤아'
             };
 
             const managedLabels = new Set([
