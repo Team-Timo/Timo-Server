@@ -122,7 +122,7 @@ public class AuthService {
 
     long daysSinceSignup = ChronoUnit.DAYS.between(user.getCreatedAt(), LocalDateTime.now());
     userRepository.delete(user);
-    analyticsEventSender.send(userId, AnalyticsEvent.ACCOUNT_WITHDRAWN,
+    analyticsEventSender.sendAnonymous(AnalyticsEvent.ACCOUNT_WITHDRAWN,
         Map.of("days_since_signup", daysSinceSignup));
 
     TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
