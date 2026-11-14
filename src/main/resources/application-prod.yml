@@ -70,6 +70,7 @@ holiday:
 
 mixpanel:
   token: ${MIXPANEL_TOKEN:}
+  gdpr-token: ${MIXPANEL_GDPR_TOKEN:}
 
 logging:
   level:
