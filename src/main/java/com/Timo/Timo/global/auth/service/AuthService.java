@@ -124,6 +124,7 @@ public class AuthService {
     userRepository.delete(user);
     analyticsEventSender.sendAnonymous(AnalyticsEvent.ACCOUNT_WITHDRAWN,
         Map.of("days_since_signup", daysSinceSignup));
+    analyticsEventSender.requestUserDataDeletion(userId);
 
     TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
       @Override
