@@ -4,8 +4,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -46,6 +48,7 @@ public class AnalyticsEventSender {
 
   private final MixpanelAPI mixpanelApi = new MixpanelAPI();
   private final BlockingQueue<PendingTask> queue = new LinkedBlockingQueue<>(QUEUE_CAPACITY);
+  private final Set<PendingDeletion> inFlightDeletions = ConcurrentHashMap.newKeySet();
   private final MessageBuilder messageBuilder;
   private final MixpanelDataDeletionClient dataDeletionClient;
   private final MeterRegistry meterRegistry;
@@ -88,9 +91,17 @@ public class AnalyticsEventSender {
 
     List<PendingTask> remaining = new ArrayList<>();
     queue.drainTo(remaining);
+    List.copyOf(inFlightDeletions).stream()
+        .filter(inFlightDeletions::remove)
+        .forEach(remaining::add);
     if (!remaining.isEmpty()) {
       log.warn("Analytics tasks dropped on shutdown. size={}", remaining.size());
-      remaining.forEach(task -> recordDropped(task, DropReason.SHUTDOWN_TIMEOUT));
+      remaining.forEach(task -> {
+        if (task instanceof PendingDeletion deletion) {
+          log.warn("Analytics user data deletion dropped on shutdown. userId={}", deletion.distinctId());
+        }
+        recordDropped(task, DropReason.SHUTDOWN_TIMEOUT);
+      });
     }
   }
 
@@ -185,6 +196,11 @@ public class AnalyticsEventSender {
         List<PendingTask> batch = new ArrayList<>(MAX_BATCH_SIZE);
         batch.add(first);
         queue.drainTo(batch, MAX_BATCH_SIZE - 1);
+        batch.forEach(task -> {
+          if (task instanceof PendingDeletion deletion) {
+            inFlightDeletions.add(deletion);
+          }
+        });
         process(batch);
       } catch (InterruptedException exception) {
         Thread.currentThread().interrupt();
@@ -255,6 +271,8 @@ public class AnalyticsEventSender {
       retryDeletion(deletion);
     } catch (RuntimeException exception) {
       recordDeletionFailed(deletion, exception);
+    } finally {
+      inFlightDeletions.remove(deletion);
     }
   }
 
@@ -293,6 +311,9 @@ public class AnalyticsEventSender {
   }
 
   private void recordDeletionFailed(PendingDeletion deletion, RuntimeException exception) {
+    if (!inFlightDeletions.remove(deletion)) {
+      return;
+    }
     String status = exception instanceof HttpStatusCodeException statusError
         ? String.valueOf(statusError.getStatusCode().value())
         : "none";
