@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 public interface AppleCalendarControllerDocs {
 
   @Operation(
+      operationId = "connectAppleCalendar",
       summary = "애플 캘린더 연동",
       description = """
           Apple ID 이메일과 앱 전용 암호로 iCloud 캘린더(CalDAV)를 연동합니다.
@@ -58,6 +59,7 @@ public interface AppleCalendarControllerDocs {
   );
 
   @Operation(
+      operationId = "disconnectAppleCalendar",
       summary = "애플 캘린더 연동 해제",
       description = """
           저장된 애플 캘린더 연결 정보(Apple ID, 앱 전용 암호)를 삭제합니다.

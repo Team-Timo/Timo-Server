@@ -4,7 +4,7 @@ on:
   issues:
     types: [opened, edited]
   pull_request_target:
-    types: [opened, edited, reopened, synchronize]
+    types: [opened, edited, reopened]
 
 permissions:
   issues: write
@@ -12,6 +12,8 @@ permissions:
 
 jobs:
   label:
+    # 본문만 수정한 경우에는 라벨을 다시 계산하지 않는다.
+    if: github.event.action != 'edited' || github.event.changes.title != null
     runs-on: ubuntu-latest
     steps:
       - uses: actions/github-script@v8
@@ -41,7 +43,7 @@ jobs:
                 patterns: [/\[hotfix\]/, /(?:^|[^a-z0-9])hotfix:/]
               },
               {
-                label: '📃 docs',
+                label: '📁 docs',
                 patterns: [/\[docs\]/, /(?:^|[^a-z0-9])docs:/]
               },
               {
@@ -69,12 +71,16 @@ jobs:
                 patterns: [/\[rename\]/, /(?:^|[^a-z0-9])rename:/]
               },
               {
-                label: '♻️ remove',
+                label: '↩️ remove',
                 patterns: [/\[remove\]/, /(?:^|[^a-z0-9])remove:/]
               },
               {
                 label: '⚙️ setting',
                 patterns: [/\[setting\]/, /(?:^|[^a-z0-9])setting:/]
+              },
+              {
+                label: '💻 deploy',
+                patterns: [/\[deploy\]/, /(?:^|[^a-z0-9])deploy:/]
               }
             ];
 
@@ -87,7 +93,7 @@ jobs:
             const authorLabels = {
               'Jy000n': '🌸 자윤',
               'aneykrap': '🌵 예나',
-              'laura-jung': '🍀️ 윤아'
+              'laura-jung': '🍀 윤아'
             };
 
             const managedLabels = new Set([
@@ -100,7 +106,11 @@ jobs:
             }
 
             const currentLabels = (item.labels || []).map(label => label.name || label);
-            const labelsToRemove = currentLabels.filter(label => managedLabels.has(label));
+            // 바뀐 라벨만 제거·추가해 불필요한 라벨 이벤트와 알림을 만들지 않는다.
+            const labelsToRemove = currentLabels.filter(
+              label => managedLabels.has(label) && !labels.has(label)
+            );
+            const labelsToAdd = [...labels].filter(label => !currentLabels.includes(label));
 
             await Promise.all(labelsToRemove.map(label => github.rest.issues.removeLabel({
               owner: context.repo.owner,
@@ -113,11 +123,24 @@ jobs:
               }
             })));
 
-            if (labels.size > 0) {
+            if (labelsToAdd.length > 0) {
               await github.rest.issues.addLabels({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: item.number,
-                labels: [...labels]
+                labels: labelsToAdd
+              });
+            }
+
+            // 처음 열릴 때 담당자가 없으면 작성자를 담당자로 지정한다.
+            const hasAssignees = (item.assignees || []).length > 0;
+            const isBot = item.user.type === 'Bot';
+
+            if (context.payload.action === 'opened' && !hasAssignees && !isBot) {
+              await github.rest.issues.addAssignees({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: item.number,
+                assignees: [author]
               });
             }

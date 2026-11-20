@@ -70,6 +70,7 @@ public interface GoogleCalendarControllerDocs {
   );
 
   @Operation(
+      operationId = "connectGoogleCalendar",
       summary = "구글 캘린더 연동",
       description = """
 		  구글 OAuth 동의 완료 후 발급된 authorizationCode와 state로 구글 토큰을 교환하여 캘린더를 연동합니다.
@@ -97,6 +98,7 @@ public interface GoogleCalendarControllerDocs {
   );
 
   @Operation(
+      operationId = "disconnectGoogleCalendar",
       summary = "구글 캘린더 연동 해제",
       description = """
           연동된 구글 캘린더 정보를 삭제하고 구글 토큰을 revoke합니다.
