@@ -39,6 +39,7 @@ public class AnalyticsEventSender {
   private static final String DROPPED_METRIC = "analytics.events.dropped";
   private static final String DELETION_FAILED_METRIC = "analytics.deletions.failed";
   private static final String INSERT_ID_PROPERTY = "$insert_id";
+  private static final String NO_STATUS = "none";
   private static final int QUEUE_CAPACITY = 500;
   private static final int MAX_BATCH_SIZE = 50;
   private static final int TOO_MANY_REQUESTS = 429;
@@ -316,11 +317,11 @@ public class AnalyticsEventSender {
     }
     String status = exception instanceof HttpStatusCodeException statusError
         ? String.valueOf(statusError.getStatusCode().value())
-        : "none";
+        : NO_STATUS;
     log.warn("Failed to request analytics user data deletion. userId={}, status={}, cause={}",
         deletion.distinctId(), status,
         NestedExceptionUtils.getMostSpecificCause(exception).getClass().getSimpleName());
-    recordDeletionFailed(DropReason.SEND_FAILED);
+    recordDeletionFailed(DropReason.SEND_FAILED, status);
   }
 
   private void recordDropped(List<PendingEvent> batch) {
@@ -344,8 +345,13 @@ public class AnalyticsEventSender {
   }
 
   private void recordDeletionFailed(DropReason reason) {
+    recordDeletionFailed(reason, NO_STATUS);
+  }
+
+  private void recordDeletionFailed(DropReason reason, String status) {
     Counter.builder(DELETION_FAILED_METRIC)
         .tag("reason", reason.getTag())
+        .tag("status", status)
         .register(meterRegistry)
         .increment();
   }
