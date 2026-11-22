@@ -31,7 +31,7 @@ public interface AppleCalendarControllerDocs {
           연동 시 iCloud에 실제로 접속해 인증 정보를 확인하며, 틀리면 401(APPLE_CALENDAR_401)을 반환합니다.
           앱 전용 암호는 암호화해 저장하며 응답에 포함하지 않습니다.
 
-          연동 후 일정 조회·동기화는 공통 캘린더 API(/api/v1/users/calendar/events, /events/sync)를 사용합니다.
+          연동 후 일정 동기화는 공통 캘린더 API(/api/v1/users/calendar/events/sync)를 사용합니다.
           일정을 지원하는 모든 iCloud 캘린더(공유받은 캘린더 포함)의 일정을 가져오며, 미리 알림과 구독 캘린더는 제외합니다.
           """,
       security = @SecurityRequirement(name = "bearerAuth")
