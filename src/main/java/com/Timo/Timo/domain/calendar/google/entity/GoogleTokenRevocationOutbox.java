@@ -2,7 +2,9 @@ package com.Timo.Timo.domain.calendar.google.entity;
 
 import com.Timo.Timo.domain.calendar.google.enums.RevocationStatus;
 import com.Timo.Timo.global.common.BaseTimeEntity;
+import com.Timo.Timo.global.crypto.AesGcmConverter;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -26,6 +28,7 @@ public class GoogleTokenRevocationOutbox extends BaseTimeEntity {
   @Column(name = "id")
   private Long id;
 
+  @Convert(converter = AesGcmConverter.class)
   @Column(name = "token", nullable = false, length = 2048)
   private String token;
 
